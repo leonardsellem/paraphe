@@ -84,6 +84,10 @@ recommended, and lists the limits, links and expiry. A long-press reply
 answers it in your own words — or asks a question — and that text returns to
 the exact session that asked.
 
+![the approval card on a phone](docs/demo/phone-approval.png)
+
+The approval card as it arrives on the phone.
+
 [`docs/demo/console-loop.md`](docs/demo/console-loop.md) is a recorded run of
 exactly that, on a clean checkout, with no third-party credential and no
 external service: the agent asks, the card is printed, the agent's own
