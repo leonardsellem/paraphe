@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/leonardsellem/paraphe/discussions
+    about: Installing, configuring, wiring a destination — ask in Discussions instead of opening an issue.
+  - name: Report a vulnerability
+    url: https://github.com/leonardsellem/paraphe/security/advisories/new
+    about: Privately report a security issue — never a public issue.
