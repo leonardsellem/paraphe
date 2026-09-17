@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "paraphe"
-version = "0.1.0"
+version = "0.1.1"
 description = "Self-hosted owner decision inbox: an agent asks, the owner answers, the agent resumes."
 readme = "README.md"
 requires-python = ">=3.11"
