@@ -123,7 +123,7 @@ class TestMcpLifecycle(unittest.TestCase):
         notifier: object | None = None,
         clock: object = None,
     ) -> Inbox:
-        return Inbox(
+        inbox = Inbox(
             owner_telegram_id=999001,
             default_ttl_seconds=14400,
             floor_ttl_seconds=900,
@@ -133,6 +133,8 @@ class TestMcpLifecycle(unittest.TestCase):
             notifier=notifier if notifier is not None else FakeNotifier(),
             clock=self.clock if clock is None else clock,
         )
+        self.addCleanup(inbox.close)
+        return inbox
 
     def _ask(self, **fields: object) -> dict:
         args = {"question": "Ship the cut?", "external_id": "ext-ask-1", **fields}

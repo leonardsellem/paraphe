@@ -56,7 +56,7 @@ class _InboxHarness(unittest.TestCase):
         self.inbox = self._new_inbox()
 
     def _new_inbox(self) -> Inbox:
-        return Inbox(
+        inbox = Inbox(
             owner_telegram_id=OWNER_ID,
             default_ttl_seconds=14400,
             floor_ttl_seconds=900,
@@ -66,6 +66,8 @@ class _InboxHarness(unittest.TestCase):
             notifier=self.notifier,
             clock=self.clock,
         )
+        self.addCleanup(inbox.close)
+        return inbox
 
     def _ask(self, external_id: str, **fields: object) -> dict:
         args = {"question": "Ship the cut?", "external_id": external_id, **fields}

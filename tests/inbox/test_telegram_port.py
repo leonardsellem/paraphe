@@ -139,6 +139,7 @@ class TestTelegramPort(unittest.TestCase):
             bot_token=TOKEN,
             clock=self.clock,
         )
+        self.addCleanup(self.inbox.close)
         self.adapter = TelegramAdapter(self.inbox, self.api, owner_id=OWNER, bot_token=TOKEN)
         self.inbox._telegram = self.adapter
 

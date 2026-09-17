@@ -89,7 +89,9 @@ class TestSetup(unittest.TestCase):
         return path
 
     def _start(self, config_path: Path, environ: dict[str, str] | None = None):
-        return Inbox.start(config_path=config_path, environ=environ or {})
+        inbox = Inbox.start(config_path=config_path, environ=environ or {})
+        self.addCleanup(inbox.close)
+        return inbox
 
     def test_console_mode_starts_without_a_phone_destination(self) -> None:
         path = self._write_config(
@@ -326,6 +328,18 @@ class TestSetup(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("Paraphe", out.getvalue())
 
+    def test_console_command_prints_installed_version_without_configuration(self) -> None:
+        out = io.StringIO()
+        with (
+            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch.object(_entry, "version", return_value="1.2.3") as distribution_version,
+            contextlib.redirect_stdout(out),
+        ):
+            code = _entry.main(["--version"])
+        self.assertEqual(code, 0)
+        self.assertEqual(out.getvalue(), "1.2.3\n")
+        distribution_version.assert_called_once_with("paraphe")
+
     def test_console_command_fails_closed_on_incomplete_configuration(self) -> None:
         err = io.StringIO()
         with mock.patch.dict(os.environ, {"PARAPHE_OWNER_TELEGRAM_ID": "999001"}, clear=True), contextlib.redirect_stderr(err):
@@ -373,6 +387,7 @@ class TestAnswerPath(unittest.TestCase):
             mcp_create_bearer=CREATE,
             owner_answer_token=ANSWER,
         )
+        self.addCleanup(self.inbox.close)
         self.handle = self.inbox.serve(host="127.0.0.1", port=0)
         self.addCleanup(self.handle.close)
         self.base = f"http://127.0.0.1:{self.handle.port}"

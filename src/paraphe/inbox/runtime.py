@@ -44,6 +44,12 @@ class TelegramBotAPI:
             raise TelegramAPIError("Telegram returned invalid updates")
         return result
 
+    def get_me(self) -> dict[str, Any]:
+        result = self._call("getMe", {})
+        if not isinstance(result, dict):
+            raise TelegramAPIError("Telegram returned an invalid bot identity")
+        return result
+
     def send_message(
         self,
         chat_id: int,
