@@ -94,4 +94,18 @@ side silently unhooks a required check: change both in the same commit.
   ruleset requires that check.
 - **Fork pull requests.** GitHub does not hand repository secrets to fork
   pull requests, so `private-terms` and `messages` fail closed there and a
-  fork contribution needs a maintainer to re-run it from the repository.
+  fork contribution needs a maintainer to re-run it from the repository:
+  push the pull request's head into the repository so the push workflow can
+  read the secret, delete the fork's own run (its failed checks keep gating
+  the pull request even once the repository-side run is green, and approving
+  the fork run cannot help), then merge and delete the helper branch. If
+  `dev` has moved past the branch's base, sync the pull request branch onto
+  `dev` first and use the synced head.
+
+  ```bash
+  git fetch origin refs/pull/<number>/head:refs/heads/pr-<number>-head
+  git push origin pr-<number>-head
+  # wait for the push run: all ten checks green
+  gh api -X DELETE repos/leonardsellem/paraphe/actions/runs/<fork-run-id>
+  # merge the pull request, then: git push origin --delete pr-<number>-head
+  ```

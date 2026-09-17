@@ -35,7 +35,7 @@ class TestPublishedContracts(unittest.TestCase):
         self.tmpdir = Path(self._tmpdir.name)
 
     def _inbox(self, **kwargs: object) -> Inbox:
-        return Inbox(
+        inbox = Inbox(
             owner_telegram_id=999001,
             default_ttl_seconds=14400,
             floor_ttl_seconds=900,
@@ -43,6 +43,8 @@ class TestPublishedContracts(unittest.TestCase):
             mcp_create_bearer=CREATE,
             **kwargs,
         )
+        self.addCleanup(inbox.close)
+        return inbox
 
     def test_a_card_stores_the_source_thread_it_was_given(self) -> None:
         # The origin is descriptive: nothing is woken from it, so the value

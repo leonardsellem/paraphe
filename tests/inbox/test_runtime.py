@@ -549,6 +549,15 @@ class TestTelegramBotAPI(unittest.TestCase):
             sent = api.send_message(1, "hi", None)
         self.assertEqual(sent, {"message_id": 9})
 
+    def test_get_me_returns_the_bot_identity(self) -> None:
+        _runtime_module, api, _rejected = self._api()
+        body = json.dumps(
+            {"ok": True, "result": {"id": 42, "username": "paraphe_test_bot"}}
+        ).encode()
+        with mock.patch("urllib.request.urlopen", return_value=_FakeHTTPResponse(body)):
+            identity = api.get_me()
+        self.assertEqual(identity["username"], "paraphe_test_bot")
+
 
 if __name__ == "__main__":
     unittest.main()

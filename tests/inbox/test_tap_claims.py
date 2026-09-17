@@ -51,6 +51,7 @@ class TestTapClaims(unittest.TestCase):
             clock=self.clock,
             telegram_port=self.telegram,
         )
+        self.addCleanup(self.inbox.close)
 
     def _create(self) -> dict:
         return self.inbox.call_tool(

@@ -47,10 +47,25 @@ two lines; Paraphe reads it from the directory it runs in.
 Paraphe ready: mcp http://127.0.0.1:8787/mcp answer-path on
 ```
 
-Add a Telegram bot token and your Telegram user id to `paraphe.toml` and
-decisions arrive as a message with buttons instead of on the console. Without
-them the card is printed where you are looking, which is what the run above
-does.
+To send decisions to your phone:
+
+1. Open Telegram's BotFather, run `/newbot`, and keep the token it gives you
+   private.
+2. Open the new bot and send it `/start`. Find your own numeric Telegram user
+   id using a user-info bot you trust.
+3. Set `bot_token` and `owner_telegram_id` in `paraphe.toml`, then check the
+   pair before starting the server:
+
+   ```bash
+   .venv/bin/paraphe check telegram
+   .venv/bin/paraphe --config paraphe.toml
+   ```
+
+The check names the bot and sends a plain setup message to your phone. It does
+not print the token or create a decision card. If delivery is refused, verify
+the numeric id and make sure you opened a private chat with the bot first.
+Without the two phone settings, cards are printed where you are looking, which
+is what the local run above does.
 
 Or run the container, with the data location mounted:
 
