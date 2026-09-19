@@ -56,10 +56,20 @@ def relocate_store(
     target_path = Path(target)
 
     # 1. Refuse before changing the filesystem if the source is missing, the
-    # target is occupied, or both names resolve to the same location.
-    if not source_path.is_file():
+    # target is occupied, or both names resolve to the same location. A probe
+    # that cannot read the path — a service-owned legacy directory, say — must
+    # answer with a message naming it rather than raise out of the command.
+    try:
+        source_found = source_path.is_file()
+    except OSError as exc:
+        raise _setup_error(f"source store cannot be read: {source_path}") from exc
+    try:
+        target_found = target_path.exists()
+    except OSError as exc:
+        raise _setup_error(f"target store cannot be read: {target_path}") from exc
+    if not source_found:
         raise _setup_error(f"source store does not exist: {source_path}")
-    if target_path.exists():
+    if target_found:
         raise _setup_error(f"target store already exists: {target_path}")
     if source_path.resolve() == target_path.resolve():
         raise _setup_error("source and target store are the same")
@@ -101,13 +111,24 @@ def relocate_store(
             source_connection.close()
 
         # 5. Verify the completed snapshot before exposing it as the real store.
+        # The integrity check alone passes an empty or foreign database, which
+        # would install a store that is not the owner's data — so the snapshot
+        # must also carry the table every store has carried.
         verification = sqlite3.connect(temporary_path)
         try:
             result = verification.execute("PRAGMA integrity_check").fetchone()
+            tables = {
+                row[0]
+                for row in verification.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table'"
+                )
+            }
         finally:
             verification.close()
         if result != ("ok",):
             raise _setup_error("copied store failed its integrity check")
+        if "cards" not in tables:
+            raise _setup_error(f"source store is not a Paraphe store: {source_path}")
 
         # 6. Secure the file, then link it into place. os.link refuses if the
         # target appeared meanwhile, so a concurrent file is never overwritten.
@@ -153,7 +174,6 @@ def relocate_store(
                 pass
 
     return target_path
-
 
 
 class Store:

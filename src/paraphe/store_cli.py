@@ -28,7 +28,7 @@ def main(argv: list[str]) -> int:
     target = _store.default_store_path()
     try:
         _store.relocate_store(source, target, move=move)
-    except SetupError as exc:
+    except (SetupError, OSError) as exc:
         print(f"paraphe: {exc}", file=sys.stderr)
         return 2
 

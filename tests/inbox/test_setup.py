@@ -329,6 +329,57 @@ class TestSetup(unittest.TestCase):
         self.assertFalse(target.exists())
         self.assertEqual(list(target.parent.glob("*")), [])
 
+    def test_store_relocation_reports_an_unreadable_source(self) -> None:
+        legacy = self.tmpdir / "locked"
+        legacy.mkdir()
+        source = legacy / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.close()
+        legacy.chmod(0o000)
+        self.addCleanup(legacy.chmod, 0o700)
+        target = self.tmpdir / "current" / "inbox.sqlite"
+
+        with self.assertRaises(SetupError) as caught:
+            _store_module.relocate_store(source, target)
+
+        self.assertIn(str(source), str(caught.exception))
+        self.assertFalse(target.exists())
+
+    def test_store_relocation_refuses_a_source_without_a_cards_table(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(b"")
+        target = self.tmpdir / "current" / "inbox.sqlite"
+
+        with self.assertRaises(SetupError) as caught:
+            _store_module.relocate_store(source, target)
+
+        self.assertIn(str(source), str(caught.exception))
+        self.assertEqual(source.read_bytes(), b"")
+        self.assertFalse(target.exists())
+        self.assertEqual(list(target.parent.glob("*")), [])
+
+    def test_store_relocate_command_reports_an_unreadable_source(self) -> None:
+        legacy = self.tmpdir / "locked"
+        legacy.mkdir()
+        source = legacy / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.close()
+        legacy.chmod(0o000)
+        self.addCleanup(legacy.chmod, 0o700)
+        target = self.tmpdir / "current" / "inbox.sqlite"
+        _store_module.LEGACY_STORE_PATH = source
+
+        with mock.patch.object(_store_module, "default_store_path", return_value=target):
+            with contextlib.redirect_stdout(io.StringIO()):
+                with contextlib.redirect_stderr(io.StringIO()) as errors:
+                    code = _entry.main(["store", "relocate"])
+
+        self.assertEqual(code, 2)
+        self.assertIn(str(source), errors.getvalue())
+
     def test_store_relocate_command_copies_the_legacy_store(self) -> None:
         source = self.tmpdir / "legacy" / "inbox.sqlite"
         source_store = _store_module.Store(source)
