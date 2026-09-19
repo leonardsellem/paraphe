@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -42,6 +43,137 @@ def _setup_error(message: str) -> Exception:
     from .config import SetupError
 
     return SetupError(message)
+
+
+def relocate_store(
+    source: Path | str,
+    target: Path | str,
+    *,
+    move: bool = False,
+) -> Path:
+    """Copy a SQLite store safely, optionally removing the source afterward."""
+    source_path = Path(source)
+    target_path = Path(target)
+
+    # 1. Refuse before changing the filesystem if the source is missing, the
+    # target is occupied, or both names resolve to the same location. A probe
+    # that cannot read the path — a service-owned legacy directory, say — must
+    # answer with a message naming it rather than raise out of the command.
+    try:
+        source_found = source_path.is_file()
+    except OSError as exc:
+        raise _setup_error(f"source store cannot be read: {source_path}") from exc
+    try:
+        target_found = target_path.exists()
+    except OSError as exc:
+        raise _setup_error(f"target store cannot be read: {target_path}") from exc
+    if not source_found:
+        raise _setup_error(f"source store does not exist: {source_path}")
+    if target_found:
+        raise _setup_error(f"target store already exists: {target_path}")
+    if source_path.resolve() == target_path.resolve():
+        raise _setup_error("source and target store are the same")
+
+    # 2. Prepare the destination directory with owner-only permissions. Do not
+    # create the final database path yet: startup must never see a partial copy.
+    parent = target_path.parent
+    try:
+        parent.mkdir(parents=True, exist_ok=True, mode=DATA_DIR_MODE)
+        os.chmod(parent, DATA_DIR_MODE)
+    except OSError as exc:
+        raise _setup_error(f"data directory is not usable: {parent}") from exc
+
+    # 3. Build the copy under a temporary name in the destination directory.
+    # Keeping both files on one filesystem lets the final installation be atomic.
+    temporary_path: Path | None = None
+    try:
+        descriptor, temporary_name = tempfile.mkstemp(
+            prefix=f".{target_path.name}.",
+            suffix=".tmp",
+            dir=parent,
+        )
+        os.close(descriptor)
+        temporary_path = Path(temporary_name)
+
+        # 4. Let SQLite produce a consistent snapshot instead of copying the
+        # database bytes while a transaction or journal may be active.
+        source_connection = sqlite3.connect(
+            source_path.resolve().as_uri() + "?mode=ro",
+            uri=True,
+        )
+        try:
+            target_connection = sqlite3.connect(temporary_path)
+            try:
+                source_connection.backup(target_connection)
+            finally:
+                target_connection.close()
+        finally:
+            source_connection.close()
+
+        # 5. Verify the completed snapshot before exposing it as the real store.
+        # The integrity check alone passes an empty or foreign database, which
+        # would install a store that is not the owner's data — so the snapshot
+        # must also carry the table every store has carried.
+        verification = sqlite3.connect(temporary_path)
+        try:
+            result = verification.execute("PRAGMA integrity_check").fetchone()
+            tables = {
+                row[0]
+                for row in verification.execute(
+                    "SELECT name FROM sqlite_master WHERE type = 'table'"
+                )
+            }
+        finally:
+            verification.close()
+        if result != ("ok",):
+            raise _setup_error("copied store failed its integrity check")
+        if "cards" not in tables:
+            raise _setup_error(f"source store is not a Paraphe store: {source_path}")
+
+        # 6. Secure the file, then link it into place. os.link refuses if the
+        # target appeared meanwhile, so a concurrent file is never overwritten.
+        temporary_path.chmod(STORE_MODE)
+        target_linked = False
+        try:
+            os.link(temporary_path, target_path)
+            target_linked = True
+            target_path.chmod(STORE_MODE)
+            temporary_path.unlink()
+        except FileExistsError as exc:
+            raise _setup_error(f"target store already exists: {target_path}") from exc
+        except OSError:
+            if target_linked:
+                try:
+                    target_path.unlink()
+                except OSError:
+                    pass
+            raise
+        temporary_path = None
+
+        # 7. Copying is the safe default. In move mode, remove the source only
+        # after the verified target exists; roll the target back if removal fails.
+        if move:
+            try:
+                source_path.unlink()
+            except OSError as exc:
+                try:
+                    target_path.unlink()
+                except OSError:
+                    pass
+                raise _setup_error(f"could not remove source store: {source_path}") from exc
+    except sqlite3.Error as exc:
+        raise _setup_error(f"store could not be copied: {source_path}") from exc
+    except OSError as exc:
+        raise _setup_error(f"store could not be relocated: {source_path}") from exc
+    finally:
+        # 8. Any failure before installation removes the unfinished snapshot.
+        if temporary_path is not None:
+            try:
+                temporary_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+    return target_path
 
 
 class Store:

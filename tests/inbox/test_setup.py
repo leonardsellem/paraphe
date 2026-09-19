@@ -268,6 +268,173 @@ class TestSetup(unittest.TestCase):
         self.assertEqual(Path(prepared).stat().st_mode & 0o777, 0o600)
         self.assertEqual(target.parent.stat().st_mode & 0o777, 0o700)
 
+    def test_store_relocation_copies_cards_with_owner_only_permissions(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.save_card({"request_id": "before-move", "question": "Still here?"})
+        source_store.close()
+        target = self.tmpdir / "current" / "inbox.sqlite"
+
+        relocated = _store_module.relocate_store(source, target)
+
+        self.assertEqual(relocated, target)
+        self.assertTrue(source.is_file())
+        self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(target.parent.stat().st_mode & 0o777, 0o700)
+        target_store = _store_module.Store(target)
+        target_store.open()
+        self.addCleanup(target_store.close)
+        self.assertEqual(
+            target_store.load_cards(),
+            [{"request_id": "before-move", "question": "Still here?"}],
+        )
+
+    def test_store_relocation_moves_only_when_requested(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.close()
+        target = self.tmpdir / "current" / "inbox.sqlite"
+
+        _store_module.relocate_store(source, target, move=True)
+
+        self.assertFalse(source.exists())
+        self.assertTrue(target.is_file())
+
+    def test_store_relocation_refuses_to_overwrite_the_target(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(b"source stays here")
+        target = self.tmpdir / "current" / "inbox.sqlite"
+        target.parent.mkdir(parents=True)
+        target.write_bytes(b"target stays here")
+
+        with self.assertRaises(SetupError):
+            _store_module.relocate_store(source, target)
+
+        self.assertEqual(source.read_bytes(), b"source stays here")
+        self.assertEqual(target.read_bytes(), b"target stays here")
+
+    def test_failed_store_relocation_leaves_no_partial_target(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(b"not a sqlite database")
+        target = self.tmpdir / "current" / "inbox.sqlite"
+
+        with self.assertRaises(SetupError):
+            _store_module.relocate_store(source, target)
+
+        self.assertEqual(source.read_bytes(), b"not a sqlite database")
+        self.assertFalse(target.exists())
+        self.assertEqual(list(target.parent.glob("*")), [])
+
+    def test_store_relocation_reports_an_unreadable_source(self) -> None:
+        legacy = self.tmpdir / "locked"
+        legacy.mkdir()
+        source = legacy / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.close()
+        legacy.chmod(0o000)
+        self.addCleanup(legacy.chmod, 0o700)
+        target = self.tmpdir / "current" / "inbox.sqlite"
+
+        with self.assertRaises(SetupError) as caught:
+            _store_module.relocate_store(source, target)
+
+        self.assertIn(str(source), str(caught.exception))
+        self.assertFalse(target.exists())
+
+    def test_store_relocation_refuses_a_source_without_a_cards_table(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source.parent.mkdir(parents=True)
+        source.write_bytes(b"")
+        target = self.tmpdir / "current" / "inbox.sqlite"
+
+        with self.assertRaises(SetupError) as caught:
+            _store_module.relocate_store(source, target)
+
+        self.assertIn(str(source), str(caught.exception))
+        self.assertEqual(source.read_bytes(), b"")
+        self.assertFalse(target.exists())
+        self.assertEqual(list(target.parent.glob("*")), [])
+
+    def test_store_relocate_command_reports_an_unreadable_source(self) -> None:
+        legacy = self.tmpdir / "locked"
+        legacy.mkdir()
+        source = legacy / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.close()
+        legacy.chmod(0o000)
+        self.addCleanup(legacy.chmod, 0o700)
+        target = self.tmpdir / "current" / "inbox.sqlite"
+        _store_module.LEGACY_STORE_PATH = source
+
+        with mock.patch.object(_store_module, "default_store_path", return_value=target):
+            with contextlib.redirect_stdout(io.StringIO()):
+                with contextlib.redirect_stderr(io.StringIO()) as errors:
+                    code = _entry.main(["store", "relocate"])
+
+        self.assertEqual(code, 2)
+        self.assertIn(str(source), errors.getvalue())
+
+    def test_store_relocate_command_copies_the_legacy_store(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.save_card({"request_id": "cli-copy", "question": "Copied?"})
+        source_store.close()
+        target = self.tmpdir / "current" / "inbox.sqlite"
+        _store_module.LEGACY_STORE_PATH = source
+
+        with mock.patch.object(_store_module, "default_store_path", return_value=target):
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                code = _entry.main(["store", "relocate"])
+
+        self.assertEqual(code, 0)
+        self.assertIn("Copied store", output.getvalue())
+        self.assertTrue(source.is_file())
+        copied_store = _store_module.Store(target)
+        copied_store.open()
+        self.addCleanup(copied_store.close)
+        self.assertEqual(
+            copied_store.load_cards(),
+            [{"request_id": "cli-copy", "question": "Copied?"}],
+        )
+
+    def test_store_relocate_command_moves_only_with_the_flag(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.close()
+        target = self.tmpdir / "current" / "inbox.sqlite"
+        _store_module.LEGACY_STORE_PATH = source
+
+        with mock.patch.object(_store_module, "default_store_path", return_value=target):
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                code = _entry.main(["store", "relocate", "--move"])
+
+        self.assertEqual(code, 0)
+        self.assertIn("Moved store", output.getvalue())
+        self.assertFalse(source.exists())
+        self.assertTrue(target.is_file())
+
+    def test_startup_accepts_the_relocated_default_store(self) -> None:
+        source = self.tmpdir / "legacy" / "inbox.sqlite"
+        source_store = _store_module.Store(source)
+        source_store.open()
+        source_store.close()
+        target = self.tmpdir / "current" / "inbox.sqlite"
+        _store_module.LEGACY_STORE_PATH = source
+
+        with mock.patch.object(_store_module, "default_store_path", return_value=target):
+            _store_module.relocate_store(source, target)
+            inbox = self._start(self._write_config(**self._credentials))
+
+        self.assertEqual(Path(inbox.store_path), target)
+
     def test_a_card_survives_a_restart_against_the_same_location(self) -> None:
         store_path = self.tmpdir / "persist" / "inbox.sqlite"
         env = {"PARAPHE_STORE_PATH": str(store_path)}
