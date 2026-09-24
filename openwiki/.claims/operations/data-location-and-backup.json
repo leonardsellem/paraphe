@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:cbf39e5ef99b03b40732b978797e15ea8c2b0cafd3a12ab9a93991323e0890dd",
+  "pageVersion": "sha256:ac69a5d670acc54423a3c15f3695bb795697775ea43db681685465ba5e9e5bde",
   "claims": [
     {
       "id": "claim_06a28ebbed1447c2b098a1875ff541ae",
@@ -105,10 +105,158 @@
           "version": "repo-file-v1:sha256:34befe861f0a92a2926f9b45c1faf51e78e5c3ae814d12f8c1d6a4f21d54b793"
         }
       ]
+    },
+    {
+      "id": "claim_c230ee8ebc5f4f4b8db1972fc144758b",
+      "statement": "`paraphe store relocate` is the documented upgrade route: it copies the store retained at the legacy location to the current per-user default, leaving the source in place as a backup unless `--move` is given, and configuring `store_path` to the retained path remains the alternative.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L153-L171",
+          "version": "repo-lines-v1:sha256:6d6c0b23c237d6b33612c2a3b72f936442b3c92677eebc170337a24c83046fc0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4ZjVhOTRhOTBhNGI4Y2MyMmFiNmNmY2NhOWJhZWY3NTllNzM1NTM1YWIxY2JmMDg5ZTdmNGUzMzE5Y2ZkMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjYTkxNmY4MDcxZmEzMTI3NmViNzA2OTY3N2M3ZTgwMWM5MDFjMjg3ZmRmNTkwYmZiNGFkYjA3NjY4ZjUzY2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1MTYxY2U5MzcyMGM2NmU5NWRjYTQzM2E5YTllODg2NTVkMzMxZTA5MzJlMmZhZTZiYmIwYmQxNzQ4MzhhYzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiZWFlMmE5N2YyODBmMmZiNDVhYmRjZTNjZjAwOWJhMjM2MWI1MzhhYjhiM2E4Zjk3MjlhMTlkMzVlOWE1MzUifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L12-L19",
+          "version": "repo-lines-v1:sha256:344410f71ab8352c241b64ece7b5623e60d84c01be1e77ac41426e80f0182474:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFmYTcwNDJhYTFmZGE5NTllMjI1NjY0YjNjYzY4MTkwMTUzOTQ4NjIxZGEzYmIyOWIxNzdmN2I0YTA0YmU0ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWMzNWIzNmJiYmRmYTBiZTc5MmQ2NGM3N2E5YmZlOTRhYWNlZDQ2YzY0NjNjNDBkODgzNzhlMTgxODhkODRhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmM2NWQ5ZGQ3OTQyOTk0MjY0N2QxYzYwMWQ3MzA5OWRlMDc3MjZhMjM5M2VhYzc2NzE1MGJjNGVhNDFlNGIwZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGZhZmQ3Y2JhZmQzYzU0MGRjOGU4MWVjNWQyYTI0ZDExZmMwOTUwYmIzNmIyODQwMWE2OTg5NmU4YmExYjhhYiJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L18-L36",
+          "version": "repo-lines-v1:sha256:1daf2a04db9fd2adf431bd19f2804a60f26cf07d6d97747f22aa7abb72977cf1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExNThkMzM2MjNkNTk1YmVlMDEyOTA0OTBhNDg0MTdjZTVlMWUxNjIxZmFlZmU5Y2YyZGVmZWY3YmI0ZTBkNjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwNGQ3OTgyYWMyNDc1MzI3YTUzNDc1NDgzZmViMmEwNDg0ZDM5NTlkOTI1MTQ1YTc2NGY3NjUzNmY2NjE0MjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4YWU2MGEwOWE3ODRiNDdlYTA4NTMxNmJmZjkyYzY4MDExZGQ2NzBkODlmMjhkYWY1ZGE5YmI2YWU0MWJjNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f273b38d67e843cfb8cdc7f5db1ffad3",
+      "statement": "The relocate command resolves its own pair of locations — `LEGACY_STORE_PATH` as the source and `default_store_path()` as the target — and accepts no path arguments, so it upgrades from the retained legacy location rather than moving a store to an arbitrary path.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L16-L31",
+          "version": "repo-lines-v1:sha256:be77bb3b4968a42159fe2d2a7170edf47e4104ad2971feaf56e77718718e5e0d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1ZTJkMDNmY2M4NmY0OWMzZjZiY2RlZGUyNzNiMmJiZGVlMTM4NjRjZDNiMjVhZDU1ZjFhY2YyNGRlZjY5ZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMmY0NzZiZWVkNmQ0YzA2MDhlMGUyN2JkNTUyNWQ3ZjZlYTFkYTEyZDNiZGEzMGRmMTc4NDI5OGQyZWYyNGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVjNGIwZmU3MjNmMzZiNjRjZjYzNDZmMzM1MWMwMzRmMGQ5N2VjOWY1MWE5ODZlOTQ2Yjk1NWVkZGEyOGMyNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzMTZmMTY2ZDhkNmMxMDY4MDkwOWZkMjQxYWFjYTU0MDgwMjYwZmI1NzhlMmExZTU0ZjI4NGU1ZmZhODA2ZjQifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L26-L30",
+          "version": "repo-lines-v1:sha256:17afab2f72de65623f55d1049356992adc1ffd61e5a9fba2071f637a4c387bfe:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQyY2RhZjNhMTQyNWRkZGFmMjAyMTAzOTI5MWE1Njk5MmIxYTNkZWZhMjgzOGVmNTcyNzRjNzA4MDY2NGJlYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTcxMDU3MGIyOWJmMWE3ODY4MDkwMjliNmJlY2NhNmY0ZmQ3YTdmYmQxNzQ2NTI1MDA2N2ZjOTI2Yjg5Mzk0MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmY5ZWY2NjliMmE3YjQ0NzY3Mjg3ZjQzMWZmMzdkNTk0NTY5Y2MyNTQ4MTExODUyYTkwOGM2NGFlODdmMmE4NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGMwOTdjOTU5MGRjOTYzYWE1ZDE3MDE5ZDk0ZWRhZjhkMTVkMjMwMjFhZmJiYTRjNGI5MjFhMzQ5MzM4M2I5OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9a18f753ed254734943d3595f249673b",
+      "statement": "Relocation leaves the startup refusal guard untouched: the guard still fires only when the resolved default holds no store while the retained legacy location does, and once the verified copy lands at the default startup finds a store there and proceeds.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/config.py#L110-L127",
+          "version": "repo-lines-v1:sha256:2de812415bd677379a04012596d9df37d388be45826c537d212e53d0ba52e44f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOTkwMjU1NDQwM2M3MmE1YzIwZDMyN2Y1OGI0Y2I4OTM4YjU2ZTQ5ZTI3NjFlNjNiYmZlM2Q4MTRlMGZjNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjOTVjMTkyMTZlZTA0MDIzYzhjYmQwY2NjNGE2YzBhZGVjNzA1OTM1YzFlMzQ2YWM2ZjVjYWQzZGNhMjZjYzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5ZWUxOTMyODRlODJmYjc2YWY0ZjRmNTgzZTQzZjA1MDdiNWYxMzJiMTY0ZTZkMzUyM2JhZmI5NGMwYzdiMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyYmU3YzIyZjVjNmY2OWM3YTlkNjQ1MDRmYjUxOGYxZDgxMWZkNjA3Y2NhMTcxYjRmNmFjYzFkMTYwMGQ5NGYifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L424-L436",
+          "version": "repo-lines-v1:sha256:f5155eabbc8d8c6c22533924c6345073661b43f1f8ce10cd9ff7b8677e192b40:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyZDQ0NDI5Nzc5ODM2NThlNjk4OWU3OGRkMWY2MzBhN2UwYTVlNDNhYzUzNGM5Yzc0ZDZiMjk2MzNkYzcyYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlODY4MTg1MGRmNGIwNWZlMGZhMWE5MGZmODYxNTA4YmQ5N2U2ODk5ZDg1MGQ3M2U4ODllZWJlNWVmMTM5OGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5NDg1NDQ2NjM4N2M5N2I5ZGNmZmYxYTU4YWRiYjU4NDA3NTIxNWFiM2YwMzZhYWRjNWI5MmY2OGZhZjc4ZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyODVjZjE3NmEyZDg5ZDQ0MDIwNWM3ZGM4NTU0ZDg5OTM4OWNhZjVlNjI3ZTRlMjU1ZmQ5MDRhOTFmOTI4MGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d2483062a6a64b61b43dbb6232daa51c",
+      "statement": "`docs/roadmap.md` still lists an upgrade path that moves an existing store as an unshipped Next item, although `src/paraphe/store_cli.py`, the README upgrade note and `tests/inbox/test_setup.py` ship it.",
+      "evidence": [
+        {
+          "resource": "repo://docs/roadmap.md#L20-L22",
+          "version": "repo-lines-v1:sha256:6fba9a096f0c0020237c44a6403b07b4a27289a503b867a26d0fa728a2428c40:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODNkMTg3NDBiMTNkMGI3ZDI3NTEwMTI3NmJiMTEwOWJhOGYzM2Y5YzljODA5ZmE4MTkzOWU0NTA5MGI5YTRhYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOTU1MTYwZDIyZmI2YTY3MDUxMDE2ZjU0M2FiZDc0ODc5OTFmNjg5ZGMyOGZiOTc1MTE5ZDdjZGM3MTUzMDY0NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmY3ZjRhNmZjMmJhMTNkMDM4OTg5MGUzYjlkMmI3OTU2YzYxNTllMzcxMDAxNTNhZGViNGMyODdiMzkzMjQ3YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDQzMWMyZWY3YWFjZmE2MTljOWNhZDBlZGVlODFjNWZkZWRjMTlmNDM0YTMxZTZhZWQ4MDEyOGU1ZmFmZWNiNCJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L10-L36",
+          "version": "repo-lines-v1:sha256:2d4fe719de064b327007c17401f5d6332773cd11851bf388b19b93229126828b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljYjMwMTYzMDgzNTczMjA3NDZiOWY2MzM4YjdkZWFlNDZmNTAwZDU1ZjZlMDBiNGU5NTgyODA2ZjAwOWQ1ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwNGQ3OTgyYWMyNDc1MzI3YTUzNDc1NDgzZmViMmEwNDg0ZDM5NTlkOTI1MTQ1YTc2NGY3NjUzNmY2NjE0MjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMwY2ZiMTdjZjcyM2Q0ZWJmYWFlNTM0ZDJkZDIzMDQ2ODE1MzlhNjNjNWFkODYxNzBhNjAwMzA1Y2VhOGE3ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L383-L422",
+          "version": "repo-lines-v1:sha256:f5d64682ec5f62a13d939a322c39204ac6664cf2bc37f2f26b22196857dc51fc:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhNWEwMGQ3M2FhMGNlY2JmYjhlZDc5NzllYjJmMWU2OTA5YmU5YWU3YjA0Y2YwYmMyM2UzNWYyNTBiMWQwNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZDNjODEzNGM3OGI2ZjliZGYwOGYxM2FjOWNkMTA1MjlmZjJiNDY0ZmU5OGZiM2M2MGExZmFjZDVmNTk3OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxMTJiNWI3NjlkOGY5NmE2ZDg0MjE0OThhNTRkMjM2MWIxYjRhMDlkZDc2Mjg3Y2MwMDJiMWEzYjdhZDI4ZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiNjc1NGY3NWFiMTUwODBjZThiYjI4M2E4Y2ViZmYwNTNhZDU2YTQ2MWM0NjMxNzhmYWQ4NWM1ZTdhNGRhYzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d98f024ba0a74c72ade3d4c562c25b8b",
+      "statement": "`durable_state` persists the Telegram long-poll offset under the key `telegram_next_offset`: the runtime restores it at startup, seeds it from the newest update id when it is absent, writes the advanced offset after each handled update, and refuses a stored offset that is not a non-negative integer.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/runtime.py#L221-L243",
+          "version": "repo-lines-v1:sha256:4566abe9e59920b2536704279090881a33a4345052d55ecfdf5911fc63857a61:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliYjI5MTRkMDMzOTA2ZmQ4MGM0YjQ3OTUxNTJmN2IwNzNiNTc3MjFjNjczM2I0OTZiZmExYjdkMjA4OTllN2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjODAxYmYwNzUxZTQyMjkxOGE4MTczMTcyYWFkMDYyMDFjN2IzMTBhMGVjYjJiOTI5MTY2MzUzODcyOGE4NDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY2MjVlMDYwNGIyNjQyNzY2ZmRlOTZhNjRjNTA4MzQ3YWVmNTczMjhlODljNWFkZTFmOWYwZjc0NGI0ZmRhZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljYWVjYTQ3ZmFmZjE1NDgyNzAxYjgwZWM0ZjkyYmY3MWE5NjFmNzczMWI1ZDYxZTRmM2M5YzU0OTQ2M2Q3ZDcifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L266-L292",
+          "version": "repo-lines-v1:sha256:57efd7a1baabc198b78a3083674b8aa39a175829dd06577e4fe246348e89a6d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlZTc4ODg0MjA0YTA0OWNmNjdhNDQ4MjExZWRhYzhhZTU0MGY5OTBhNjQ5NDk1N2M3N2Y4YWVmOTE1ZmQ0ZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1YWU4NTc2NTE5YTlhZDNmZDc1YjM4NjNlYjQ4MGRhOWUwMGY5YWNmMmEwYWQ4M2ExOGM2YjQ2MzRkNTFkMDYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMxOGEwNTIyNGZlNDc4MzVhNTA0NGFmNjU1NGE1NjNhZDllODNmZGE1MWIwZTllYmY2YzA2MTQxOTMyMmM0YjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9327034fb98647b480155ceea95fbe5d",
+      "statement": "Cards are the only durable state and the store reads and writes nothing outside the resolved location — the data directory that holds `inbox.sqlite` and the store file itself.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L146-L151",
+          "version": "repo-lines-v1:sha256:882ba386c015e3b1a43e4947a60ea4a8bd8da25e0ca77096cfa1da307a4dd27e:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmU3MzhiYTgxYzNhZjEyMjY1NDA1MDY3MGY0MTJhNDM1NTFmMmYxZGJjYTM2MmE0NWNkMTYxZDIxMDY4MDA5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmJlODljY2EwY2E5MDFiODRlN2U4Y2M1ZWI3ZmVlYmYzZWZjYjUxMGRkYTZkNTA3NzY3NzM1M2M4MjZmZjBhNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjg2ODAxYzczODVjNjhkMDU5NTNiYzU5MmI2NzY1NmI2MTZhMzM5YTI4NzAyNzU0YTgxYWQxZTI0M2NkMzVmNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjU0ZTg0ZjBmYzQ1OTM2ZDFkZDRlNzIzYmRhZGQ4ZmU2ODRkODBiZDY3MzQ4NzYzNmI2NWUwYTMwZTU0YjZjNiJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L184-L199",
+          "version": "repo-lines-v1:sha256:4152821b7b78a3181b0089ace38f66ffd0a91ea182170eff4443f0ba1a6fbae4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzOTEyYmVhODgwZmJhMTQzZTZjZWUwYTU2NmI5MjBiY2IwYzdlZTBmMWEyNDY2NWZjNDEwMzgwZmVkYmRmNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA1YjRkMDRjYmZkMzE2NGJjMzJmZTk0Yjg4N2Q1MDlmN2VmOWUzYjBhYzEzMzQ2ZTMwNTY1OTE3MDBjNDhlNmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2NjViZmRmNmRkNDRkOGE0NGYwMGM4MTA5OGFmNDEyYTFjNWRkNDA1YjMyZDUzODRlYWY5NWQzNGVjODhhOTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_39ed44d8b153441a9d6035a4922a7e9f",
+      "statement": "`relocate_store` is the repository's own implementation of the decision record's consistent-snapshot contract: a SQLite online backup taken from a read-only source, verified by `PRAGMA integrity_check` and by the presence of the `cards` table, while the scheduled snapshot helper and the backup include list stay host configuration.",
+      "evidence": [
+        {
+          "resource": "repo://docs/adr/0005-sqlite-restic.md#L21-L27",
+          "version": "repo-lines-v1:sha256:c29b95771886cc969fcd497366101f11b44ec2ad5399f6c5aa234621ae48eb2d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzEyYzY3Mzg3NmY0NzExNTJlNGJjODQzNmYxNjY4OTg1M2ZkMWNlZWZkYjJiNzc0NjUyMmZhODRhMTZkMTY1ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjM0MmU0YzVmNDI2NjE5OTkxYTZlNjY4NmE3NGU0NDkzNTc3NDM2NDRkNmM1M2RiOTIyM2MxMjVlNTFhNTVmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTljMDIzYmUzNGE5N2ViOTdlYjQwZTllMTNmZGJkNjAxOGQwY2YzMWI0ZjQ1NjM1MTQ4NDQ2MjVmODFhMmUwMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjk2ZmJlMjEyZDcyZjBhMDRkMGQyMWYxMTE5OGZlYTQ1Y2YyZThiZjcyNTA2MjZlZWM3YzU0NjU2NWFmOTM3NCJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L98-L131",
+          "version": "repo-lines-v1:sha256:c1d74af91141011e1267ff0163c6983af5a0d7f992cac864a1ccaca469c13122:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjMjIxMmI5NDFlOGEyMjIxMjg2Nzk1YTM4ZjhlNDA2MzUxMjJjZDMwMTk2NTJmNmYwZTYzYTM3OGFlODRjMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMGM5ZDU0ZTQwM2Q5ZGU0OGQ3NDU0ZWMzNTdmODk0Yjg1ZGNmZjIwMTZiZDYwMjJkNWIzY2IxNzdmOWZmYTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUxZjE2ZTUzOGYzN2NiMjY5YjgzYTQxNDI5MzBjNjFkMDU1YWU1NDUwNTRjYmNkYWM1MTRjYzc3ZTA3Njk3YzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3MmU2MzQ3ZjJlMGE2YjM2YWEyYThhZmI0YjZhMGY3YjZhYTM3YzE2ZTBlMmNjZjhmOWUxMDI4OGQ3NzY3MTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_553fd6223597429d9e806e1a37e955fb",
+      "statement": "The inbox loads every card into memory on first use and fails closed on any error: `_ensure_store` builds the card map, the external-id index and the notified-id set, and closes the store before re-raising.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/__init__.py#L1186-L1207",
+          "version": "repo-lines-v1:sha256:679c45c8ca8ead8a7492f437455d9d995bba325d52c355fbc996763efce7cdf1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljMTRlMWQ5OTYyMmM1YWI1YmRiMTA0ZjdiMGZhMTFmMWYwNTBmZDVhNjhhNTBlOTllMDM0ODZkM2Q1ZWVmM2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwYmNkMjA1YTE0NTg4YzFlNWQ4ZTNjNWQyN2M4MWJjNDk3NTA1ZWZiMTk0YTE4ZmE4ZTE1MDgyMjY0MDNiMmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAyMTI1ZDk4MTVhNGQyMmZjMzRlYThmZGMxZTMwNTg1YTYwYTUzYjQ5YmM2MTc0NzUwNmJkOGVjYmRiZWIwODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2MzUzNDA3MzUxNzIyM2MyNTMzYmI0YjdjNjJlODQyZjY0MjVhMTc2Y2VlMDljZTU5YjY3ZTI0ZjdmNTY5MTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d6bd146c1564111ba312586dab18226",
+      "statement": "Because the store location resolves per user, the backup include list must name whichever location resolves — `/var/lib/paraphe` for the deployment ADR 0005 describes, otherwise the per-user directory or the configured `store_path` — and that line is an operator prerequisite the product does not add.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L146-L151",
+          "version": "repo-lines-v1:sha256:882ba386c015e3b1a43e4947a60ea4a8bd8da25e0ca77096cfa1da307a4dd27e:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmU3MzhiYTgxYzNhZjEyMjY1NDA1MDY3MGY0MTJhNDM1NTFmMmYxZGJjYTM2MmE0NWNkMTYxZDIxMDY4MDA5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmJlODljY2EwY2E5MDFiODRlN2U4Y2M1ZWI3ZmVlYmYzZWZjYjUxMGRkYTZkNTA3NzY3NzM1M2M4MjZmZjBhNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjg2ODAxYzczODVjNjhkMDU5NTNiYzU5MmI2NzY1NmI2MTZhMzM5YTI4NzAyNzU0YTgxYWQxZTI0M2NkMzVmNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjU0ZTg0ZjBmYzQ1OTM2ZDFkZDRlNzIzYmRhZGQ4ZmU2ODRkODBiZDY3MzQ4NzYzNmI2NWUwYTMwZTU0YjZjNiJ9"
+        },
+        {
+          "resource": "repo://docs/adr/0005-sqlite-restic.md#L21-L27",
+          "version": "repo-lines-v1:sha256:c29b95771886cc969fcd497366101f11b44ec2ad5399f6c5aa234621ae48eb2d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzEyYzY3Mzg3NmY0NzExNTJlNGJjODQzNmYxNjY4OTg1M2ZkMWNlZWZkYjJiNzc0NjUyMmZhODRhMTZkMTY1ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjM0MmU0YzVmNDI2NjE5OTkxYTZlNjY4NmE3NGU0NDkzNTc3NDM2NDRkNmM1M2RiOTIyM2MxMjVlNTFhNTVmMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTljMDIzYmUzNGE5N2ViOTdlYjQwZTllMTNmZGJkNjAxOGQwY2YzMWI0ZjQ1NjM1MTQ4NDQ2MjVmODFhMmUwMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjk2ZmJlMjEyZDcyZjBhMDRkMGQyMWYxMTE5OGZlYTQ1Y2YyZThiZjcyNTA2MjZlZWM3YzU0NjU2NWFmOTM3NCJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L21-L31",
+          "version": "repo-lines-v1:sha256:b54f26076e0a555bfd2327d9e710aa8af58c254f7a51ad33883780a9f2026016:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMmY0NzZiZWVkNmQ0YzA2MDhlMGUyN2JkNTUyNWQ3ZjZlYTFkYTEyZDNiZGEzMGRmMTc4NDI5OGQyZWYyNGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0ZThiNjc3YWNiOWMwYTg1ZjJjMTIwOTdjMDFlMGFmMzgyZmQxMWUyMTZhOGZiYWNlYzIwOWY0NDBkNzM1YjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzMTZmMTY2ZDhkNmMxMDY4MDkwOWZkMjQxYWFjYTU0MDgwMjYwZmI1NzhlMmExZTU0ZjI4NGU1ZmZhODA2ZjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_46585e237b064ea99fffaf8a7a45ac22",
+      "statement": "A configured location is used after `~` expansion, and an empty or whitespace-only environment value counts as unset so it falls back to the config-file value rather than clearing it.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/config.py#L110-L119",
+          "version": "repo-lines-v1:sha256:e94f2cb5d0d58f2acc5bfff3e978545e0341c9d95f41919b1019f4844c40e2ab:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOTkwMjU1NDQwM2M3MmE1YzIwZDMyN2Y1OGI0Y2I4OTM4YjU2ZTQ5ZTI3NjFlNjNiYmZlM2Q4MTRlMGZjNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI2NjJlMTNkMzVlMTM2YjBjNTQwOWVlYWU0YWM1YTYzMzg2ZmMzOGFjZGRlYzFhZWUzYjA1ZGQxMzFjYzc4YTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5ZWUxOTMyODRlODJmYjc2YWY0ZjRmNTgzZTQzZjA1MDdiNWYxMzJiMTY0ZTZkMzUyM2JhZmI5NGMwYzdiMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk4MDJiNzI2Mjg5YzMyZTI3ZjU0M2Q0NWNmZTFkMDhlZGI5ZjEwNTc5MTNhMWE0ZmU2YjhiNTNiZmIwNTQxMjEifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/config.py#L49-L68",
+          "version": "repo-lines-v1:sha256:e1246137a8cb2f8deedce98aa23f97af49998c263383d58a418ff5344922e70d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyNjVkZjJlMWFhNjYzMWY0ZDFlYWNjY2ZmNjA5ZDU0ZmYwNTg2N2M1MjRmZDhkZjkyNTc4OGMzZTRkNmEzZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlNmRkYWI3ODAwNzk2NmU5ZDVmM2Y3ZTJmMzc5OWNiNDM3NDVkYjQ2YjYyMzMzM2YxYjhlYTM5ZjQyYTRmMzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg3ODJhOWEzZWNhMGI3OTVkMGE0ODZiNzhjMjhkNTM4M2JkZTY2M2VjM2IzOTQ3N2ZkY2Q0YjBlOTViYTU3ZDEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-09-10T10:36:31.915Z"
+    "at": "2026-09-24T17:26:41.197Z"
   }
 }

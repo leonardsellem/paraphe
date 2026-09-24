@@ -1,24 +1,32 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:30e669faeed3eee9843c121d2fc627f87b6c63e5f5f1f802f11b4175fa3cfbab",
+  "pageVersion": "sha256:4d72af11662e593b50a95915e7b688b9defbf3ca5d5d1612db8e19f400ff5d94",
   "claims": [
     {
       "id": "claim_2e0bf9f232744a149a20aae9be2189f3",
       "statement": "`paraphe.__main__.main` prints usage and exits 0 when `-h`, `--help` or `help` is the first argument or when nothing is configured, and converts a `SetupError` from the runtime into a single `paraphe: <message>` line on stderr with exit code 2 instead of a traceback.",
       "evidence": [
         {
-          "resource": "repo://src/paraphe/__main__.py#L45-L71",
-          "version": "repo-lines-v1:sha256:226f783cd5dd500132cd09c47f19c918c4892cad87e213e8bec1fbde338149b8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NDBhYmY0ZDM3NmViNGUzYWUxZjNiZDU3Y2FhYjlhMTg1OGJlMjBjNTdlNzRmN2YwNGExOGQ1NTI4ZGZmMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmOGY4ZmQ4Yjg2M2JkOGJhNDJlZTgwNGUxOTE5MDg3Njc4NzIxY2EyNzVkMGVjMTQ2NTkyNGNlMDA1MDIxZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljYTM0NTM1MDRiODc0NGY5N2Q1NDQ1YmY2ZWNiYjE1ZDI2YTRkNzNhZTJkY2QwOGRiNjA3NGRjZmRiYmQ0YTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+          "resource": "repo://src/paraphe/__main__.py#L51-L53",
+          "version": "repo-lines-v1:sha256:23ca7deb9c5e3676200edbc0e0026e82e220e53413a52b032e53a6c9dbc29d7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjM2MWZiZDk5M2NiOTg4MWFjMzRkZmQwNmY2Nzg4MDk2Mjc4NDM2YjgyNzI5NjBjMWViYjY1ZGE5MWJkOGYyMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWExNjgwOWMwNzVkYjMwOWUwOWJiYzlhYjdlZmVlNjllZmI1ZjQxOWJkNGQ4OTMwZDAzODA2NjAyZGQwMmZkNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2YzMDk5NDg0Y2IwYzY5ZGEzN2UwYzc2ZTE4MmE2OTgzZTYwNDhjZmFlODEyM2UxYzM4ZTJkN2JiOGNmOGNlZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWIzOGJmNzg4Njk0Y2VkOTYxMTdkNWIzYThjZDU1ODYwNmIwNmVlMjIyZGUxNjVmMzQ5YzA3ZmVlNWMxOGYwMiJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/__main__.py#L75-L86",
+          "version": "repo-lines-v1:sha256:73bd322ed8f6e70a24803c11a6492bc40745116885f4948fd8d0b84414fea792:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3OTNlMGJkMmZkNGIyYjVmYWM2ZDVmNjQ3NjgxY2E0MTY3MTMwMmQ5ODI0MTMxNmM4YjBiMDNhYjViZmQzNTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmOGY4ZmQ4Yjg2M2JkOGJhNDJlZTgwNGUxOTE5MDg3Njc4NzIxY2EyNzVkMGVjMTQ2NTkyNGNlMDA1MDIxZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU4MWE2NTBmNzA5MWE1YTlhZTUwYjMxNjcxZDlkYmUzNThiNWY1YzI0ZjIwZDlkNGUwZjM5MTY1ZmYxOTBiYjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
         }
       ]
     },
     {
       "id": "claim_6bb8b31512a4469a875c6a575ddeeb08",
-      "statement": "`--config PATH` sets `PARAPHE_CONFIG_PATH` before the configured test (and `--config` with no path prints one `paraphe: --config needs a path` line and exits 2), and a `PARAPHE_` environment variable or a `paraphe.toml` in the working directory also counts as configured.",
+      "statement": "`--config PATH` is consumed at the top of the argument list, sets `PARAPHE_CONFIG_PATH` before the configured test and is repeatable with the last pair winning, while `--config` with no path prints one `paraphe: --config needs a path` line and exits 2; the configured test is true when any environment variable whose name starts with `PARAPHE_` is present, even a blank one, or when `paraphe.toml` exists in the working directory.",
       "evidence": [
         {
-          "resource": "repo://src/paraphe/__main__.py#L39-L62",
-          "version": "repo-lines-v1:sha256:9049017ad9a4b324607a78abb51f667d405c45d5bd4b62bb20f2fff975258d7b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiODgwZTQwZjg4YmQ0NjljZDY2MmY2MzViOWU4ZWRiZTRkYTAzZjIxMTU4NmI1ODZhODM3OGRlNTYxZDU1NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhMTY4MDljMDc1ZGIzMDllMDliYmM5YWI3ZWZlZTY5ZWZiNWY0MTliZDRkODkzMGQwMzgwNjYwMmRkMDJmZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4YWU2MGEwOWE3ODRiNDdlYTA4NTMxNmJmZjkyYzY4MDExZGQ2NzBkODlmMjhkYWY1ZGE5YmI2YWU0MWJjNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxYzA5YjY1NWUxMDhjM2ExYzgwMTBkMDc0NGM5ZWU1YzFiMTgyMDM1N2E5ZTVhMDEwOTJhYTA3MDUxZDA4NTAifQ"
+          "resource": "repo://src/paraphe/__main__.py#L43-L46",
+          "version": "repo-lines-v1:sha256:7784f3c1a32ad18a6370c633c7a0753bb86d9b47862e020b14e9d5f95a75c439:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGI4ODBlNDBmODhiZDQ2OWNkNjYyZjYzNWI5ZThlZGJlNGRhMDNmMjExNTg2YjU4NmE4Mzc4ZGU1NjFkNTU2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzQwYzdiZGU0NTYxYTYwNzJjNmQ0YzNkZTZlYWFlZTlhMWE5ZjlmOWZjNzhmMjJiZTRmM2Y4MjUyODE1OGE4NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzhhZTYwYTA5YTc4NGI0N2VhMDg1MzE2YmZmOTJjNjgwMTFkZDY3MGQ4OWYyOGRhZjVkYTliYjZhZTQxYmM0MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzQxNTc3NmE5OWYxNDE1NjU5ZGUyNmViNGRiMjYxODYzZmExMjE5NjY2MGM5NTc4NTNhNjMxMzE5YmZkOWI4NiJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/__main__.py#L69-L77",
+          "version": "repo-lines-v1:sha256:71f3f7931a7cd461f89158b7ab43b5379f1c79de2fca5466c51d7a1e6158f575:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTBiNTQwZGExZWY5ZjNjZGVhMDUwMzI2NzUxZDYxYjEyMmZiY2JhNzExMjdlMjFjOWVmNGI0NmRkODMxNjBhYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWExNjgwOWMwNzVkYjMwOWUwOWJiYzlhYjdlZmVlNjllZmI1ZjQxOWJkNGQ4OTMwZDAzODA2NjAyZGQwMmZkNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGY3YTlkMTMwMzNkZWU4MTYzZGQzMTk2Zjg0NWU2Yzk3OTdlNWJiNmNmOTM1ZDg5NjA1Nzg5ZTYzMWJjN2IzYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTFjMDliNjU1ZTEwOGMzYTFjODAxMGQwNzQ0YzllZTVjMWIxODIwMzU3YTllNWEwMTA5MmFhMDcwNTFkMDg1MCJ9"
         }
       ]
     },
@@ -144,15 +152,19 @@
     },
     {
       "id": "claim_f53376a1dafe4836b6e441a0e7947445",
-      "statement": "One installed `paraphe` command serves both halves: `__main__.main` dispatches a first argument of `ask` or `wait` to `paraphe.cli.main` with those arguments (the subcommand included, the import deferred), while a bare invocation starts the server.",
+      "statement": "One installed `paraphe` command serves both halves, and `python3 -m paraphe` reaches the same `main`: `__main__.main` dispatches a first argument of `ask` or `wait` to `paraphe.cli.main` with those arguments (the subcommand included, the import deferred), while an invocation with no subcommand starts the server through `paraphe.inbox.runtime.main`.",
       "evidence": [
         {
           "resource": "repo://pyproject.toml#L28-L29",
           "version": "repo-lines-v1:sha256:c03c777d61c1b4a2681bd60304ec747414d66b330cdb9cb7aeb1182bb2dbe48e:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGVhYjRlYzYzZGU1MTdkYTRjZDhlNWM4MzA3ZmIyYzc3MzdkMzkxOTBhYjY5ZjMyYTVlOWVmODFlYTQ0MTZkZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFhYzNhZGUzMjZlNDA0OTU3MTlmNDdmOWFiMGFhMzFlNDkyOWQ4YmIxZDJjYjk3NGEzZWE2Y2UzNjhlYmQ3ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTI3YThjOTJlYzg4YmZmNTM3Zjk1M2NjY2FmODc4YTVmMzQ3NmNmOGFkMjc4NjIyN2FkZTQ2YmY3ZDVhOWZlYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzJhZGZkYzUzMThjNzgxY2E1MTA5MzhkY2FjOTQzM2E3ZmZlMTQ0ZDE0ZTg0MGEzZDIwNGU3NTVjNmVmNjEyMyJ9"
         },
         {
-          "resource": "repo://src/paraphe/__main__.py#L45-L59",
-          "version": "repo-lines-v1:sha256:d4669fb3b77b9c34c83ac65c380c710b5988d9b22baa8d560267fbe0a19d7a21:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NDBhYmY0ZDM3NmViNGUzYWUxZjNiZDU3Y2FhYjlhMTg1OGJlMjBjNTdlNzRmN2YwNGExOGQ1NTI4ZGZmMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5MGE5M2RmNzg5ZDA4NDJhYTY0MTk5NzIwM2JiNzQ1NGNlMmE1NmE2NTgxZTQxMGEwOGUxZDIwMzZhYmIzMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljYTM0NTM1MDRiODc0NGY5N2Q1NDQ1YmY2ZWNiYjE1ZDI2YTRkNzNhZTJkY2QwOGRiNjA3NGRjZmRiYmQ0YTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0ZGJlMTRlMTc5ZWU0ODAzZTRkYmViOGYzMWM1MDg4YThhMjI3ODQ2YzAxYjllNTY2YmYwNzI0NmVmMTY0ZWMifQ"
+          "resource": "repo://src/paraphe/__main__.py#L65-L68",
+          "version": "repo-lines-v1:sha256:fc4c5789d45ef8173d7c9453df0d364216c9e8d689bac32438813424c21e91de:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWE2ZTk0MjNiY2NkMjViMGUxOTFmZTU4OWNjYzhiZDk2ZWJhNGViMmQwN2Y0MzIwOTBjZjllNmRmYWUwMmJhNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjdjNzQzMzJhZjU1OWE5NThlNGRhOGI3M2NkOTg4NzRmODAxY2M0YzBjZDdjMGM5MWVkYWY3ZjJkNjYzMDE2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmY0NmI5Y2I0NDc5MWMwNDBkMjk0YzFhNjc3Mjg4MTFjN2JkZDFjYmZiZDkzZGFmMGJiM2QxMDRjMzY1OTQwZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmUwOWQzN2EwMGVmNTFkYzYxOGU2YjcxODlhMjJlZjg0MDdjMzE3ZTkzNDkyNzQ5MTVhMjFmM2UxMjJiYWRmMCJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/__main__.py#L89-L90",
+          "version": "repo-lines-v1:sha256:34336821e270180f917411b77fe541ae43e60a9670634b7c9655bc9a07ce6531:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjQ4NmZmNWNmOTM2M2I0NDI5MzM2ODAzYjJjOTYwZTczZGE4YzQ3ZmEwYzZmNjc2NThkMTRiMzIzY2QyMmQzNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmI2NGU5MjAwMGExOWNhMzg1OTNhNGU2YTBiYWM3NzA5NmQxZTk4Njk0OWEzYjYyODI2YjdjZWE0ZjczZDllOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGRkNWRmNTVmZjA3MGMyMDhjZjMwNWY5MTUwN2IzODdmYmU3NjIxNTBiMmNiNWYzZDA0NGYwODNiNGI2NTkyNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
         },
         {
           "resource": "repo://src/paraphe/cli.py#L252-L291",
@@ -165,12 +177,12 @@
       "statement": "The `ask`/`wait` dispatch is checked before the `--config` loop, so the client path never consumes `--config`, resolves its create bearer from `PARAPHE_MCP_CREATE_BEARER` or the configured file, and exits with the CLI's own codes: 0 answered, 1 error, 3 expired or not answerable, 4 unknown request id.",
       "evidence": [
         {
-          "resource": "repo://src/paraphe/__main__.py#L47-L59",
-          "version": "repo-lines-v1:sha256:a978134e911ad56cdd45e4b2cb96e197020f6b870e84b181501de3750dc6ed1f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYzNjFmYmQ5OTNjYjk4ODFhYzM0ZGZkMDZmNjc4ODA5NjI3ODQzNmI4MjcyOTYwYzFlYmI2NWRhOTFiZDhmMjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5MGE5M2RmNzg5ZDA4NDJhYTY0MTk5NzIwM2JiNzQ1NGNlMmE1NmE2NTgxZTQxMGEwOGUxZDIwMzZhYmIzMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNmMzA5OTQ4NGNiMGM2OWRhMzdlMGM3NmUxODJhNjk4M2U2MDQ4Y2ZhZTgxMjNlMWMzOGUyZDdiYjhjZjhjZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0ZGJlMTRlMTc5ZWU0ODAzZTRkYmViOGYzMWM1MDg4YThhMjI3ODQ2YzAxYjllNTY2YmYwNzI0NmVmMTY0ZWMifQ"
+          "resource": "repo://src/paraphe/__main__.py#L65-L68",
+          "version": "repo-lines-v1:sha256:fc4c5789d45ef8173d7c9453df0d364216c9e8d689bac32438813424c21e91de:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWE2ZTk0MjNiY2NkMjViMGUxOTFmZTU4OWNjYzhiZDk2ZWJhNGViMmQwN2Y0MzIwOTBjZjllNmRmYWUwMmJhNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjdjNzQzMzJhZjU1OWE5NThlNGRhOGI3M2NkOTg4NzRmODAxY2M0YzBjZDdjMGM5MWVkYWY3ZjJkNjYzMDE2MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmY0NmI5Y2I0NDc5MWMwNDBkMjk0YzFhNjc3Mjg4MTFjN2JkZDFjYmZiZDkzZGFmMGJiM2QxMDRjMzY1OTQwZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmUwOWQzN2EwMGVmNTFkYzYxOGU2YjcxODlhMjJlZjg0MDdjMzE3ZTkzNDkyNzQ5MTVhMjFmM2UxMjJiYWRmMCJ9"
         },
         {
-          "resource": "repo://src/paraphe/cli.py#L230-L249",
-          "version": "repo-lines-v1:sha256:d36059d44762abffee142c58a6d3dfc217e6351f09bcb448e482c5316468be0f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxYzcwMDNkYjI0Yzg4Mzg4NDQ1YzlkMDUyNjFkMTcxYjU1M2YwZTMwN2VlNTViZmQyMTY5ZWUxZjdmZmZhNjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJjNzcxNGUyZDEyYmE4ZWNjZjllMDk1OGEwMGJlOTUxYjMxZTYyNGQ5NDcwMjNlNTZkYWIyMzZjZTJlNDVhMTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhmYjU0YWFkODY5ODBkODc2NWQ4OWFjYjdhODZkNmUwNGFkZDk3Njc3MWY4ZDJlNDZiOGM1ZjRlMjY5MTE3NmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyZGFiYWE5NzA2Y2I2YTMwY2NjZjQxM2NiYTc5OGEzYmQxNWI3YTA2MGFjNTczOGM2ZmQyMWM0Y2FjNmJjODYifQ"
+          "resource": "repo://src/paraphe/cli.py#L252-L291",
+          "version": "repo-lines-v1:sha256:6d530f38aa1766bff4db28aad4160a6c3acfbd88fb86737d1e4be34d6b118887:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExNThkMzM2MjNkNTk1YmVlMDEyOTA0OTBhNDg0MTdjZTVlMWUxNjIxZmFlZmU5Y2YyZGVmZWY3YmI0ZTBkNjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjYTJjYjE2ODE3NzY5NTQxMTdmMjM0YWUwZjAxMTQzZTg4YTY3MmExMjVjZmU2NzY5NWU2M2QyNzk3MzU4YzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliMDU5NWFjMDI5NDQ0ZTg1MjJmOWQxMjYwYTY2NzEwYTYxODNkM2Y1ODc3YzY0NGQ3ZTgyN2IxMDAyZGE3OGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
           "resource": "repo://src/paraphe/cli.py#L29-L34",
@@ -479,8 +491,8 @@
       "statement": "`tests/inbox/test_setup.py` drives the entry point directly: an empty environment prints usage and exits 0, while an environment holding only `PARAPHE_OWNER_TELEGRAM_ID` exits 2 with a `paraphe:` line on stderr.",
       "evidence": [
         {
-          "resource": "repo://tests/inbox/test_setup.py#L322-L334",
-          "version": "repo-lines-v1:sha256:9ffd234a6e2d8f92584216d0e1c8427df26c116a2fe6aabdcd538fbcf493b801:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzOWU3OGZjYzljMDY4NGNmMTk5OTJmNDBhODljMzExNmIzZTBkNDE4MmRmMDI4NzFjMDc4N2NjMWZmZDJmMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzVhOTcyM2NiYTkxNTU3NGQxYjk2ZWM2N2RiMTA3YmRkZDg2MjBkMWY0MGU0MjJkYzZlOWVlNGE3NzYxNTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YWI5YzAyMjFlNWRkOWYwNDIwODJjZTY0NzVkOGZiYmIzMGIyNWRlZjIzN2YxZjUwN2VjZmVhNWE2NGZiYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlNzQxYTk3ODNhZmRlNDEzMDdjMTYwYWY0ZDliMjFjM2U5N2ZlNjkxYmY2NzFmOTY4OTExODM4NzEzODUwZDQifQ"
+          "resource": "repo://tests/inbox/test_setup.py#L491-L515",
+          "version": "repo-lines-v1:sha256:9f3074f6f2523688a37a7f5fbdacde38e874161e507ee90917016141c61834d4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzOWU3OGZjYzljMDY4NGNmMTk5OTJmNDBhODljMzExNmIzZTBkNDE4MmRmMDI4NzFjMDc4N2NjMWZmZDJmMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NzVhOTcyM2NiYTkxNTU3NGQxYjk2ZWM2N2RiMTA3YmRkZDg2MjBkMWY0MGU0MjJkYzZlOWVlNGE3NzYxNTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU1YWI5YzAyMjFlNWRkOWYwNDIwODJjZTY0NzVkOGZiYmIzMGIyNWRlZjIzN2YxZjUwN2VjZmVhNWE2NGZiYWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNlNzQxYTk3ODNhZmRlNDEzMDdjMTYwYWY0ZDliMjFjM2U5N2ZlNjkxYmY2NzFmOTY4OTExODM4NzEzODUwZDQifQ"
         }
       ]
     },
@@ -493,10 +505,66 @@
           "version": "repo-lines-v1:sha256:d4c317e15aad7e029eb0c4f4afd21ddafb409fb91f6283ea6bc752d7fcc22c72:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYzMwOTRlNTQzOTY2N2JjMDIwYjRjYTliNjA4MzU2MDU0ODQ3MjZjYWE3NjZjNjRlMWM4NTBiMGYwYTE0MThmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhY2RmMjIzZjVhYzg5OWFjZTM5YzM4ZDQ0NjM5ZTkwNTc2NDk3NmM4ZDIxMTcyMGFiNGJjZThkMmUzYjIzYTM4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1M2Q0ZmRhYjRiYWJhMTNmZmZlYjJiZWQ2Y2FlN2ZhN2I5NWZkMGIwMjU0OTUxZTc0MmQzYjQwZTE2OGVmYTdlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzZDQxMzQwY2MyMzlhMTU5Y2U5YjYwMjJlOWY2MzIyODMyZTJlYWQ3NmNhZTllNDc1NGQyMTBlYjhmYjZkNWU4In0"
         }
       ]
+    },
+    {
+      "id": "claim_5f763d5b03c644bda2937d1ce2ce5757",
+      "statement": "`paraphe --version` is matched immediately after the help flags and before every subcommand, prints `importlib.metadata.version(\"paraphe\")` and exits 0 with no configuration, so the reported value comes from the installed distribution's metadata rather than a second literal that could drift from `pyproject.toml`.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/__main__.py#L51-L56",
+          "version": "repo-lines-v1:sha256:327be51744a56045001a990e37f7b05845ecd7e7479087208101a6a4d8dcfd03:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjM2MWZiZDk5M2NiOTg4MWFjMzRkZmQwNmY2Nzg4MDk2Mjc4NDM2YjgyNzI5NjBjMWViYjY1ZGE5MWJkOGYyMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWExNjgwOWMwNzVkYjMwOWUwOWJiYzlhYjdlZmVlNjllZmI1ZjQxOWJkNGQ4OTMwZDAzODA2NjAyZGQwMmZkNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2YzMDk5NDg0Y2IwYzY5ZGEzN2UwYzc2ZTE4MmE2OTgzZTYwNDhjZmFlODEyM2UxYzM4ZTJkN2JiOGNmOGNlZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODdiNzRjODNhYmIxN2U4ZDQ5YWU4NDM0OTgyNjIxNmE5YmM2ZTY0NGM0YTZhMjIxYWNiN2ZjYWFhMjQwYTY1NCJ9"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L498-L508",
+          "version": "repo-lines-v1:sha256:0923437b6d69d66f171b668ded7d24fb7ab1906e3c608745b078b26fb00e8cd5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMWJlNjE3YTY2YjMyZTU1MmViMzk5MThjNTliMTc0MDk2MzdhOGZhMmI4YmViMzg5ZDBiMmJlYzNiOWVlMzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4MzQ0ZDhlNDQ5YWFkZDA2NDYzMzllZTU4Y2YyZDFhNTk0YmI4ZWY5ZWZiNGIzNjQ0OTE4Y2RiNjgyM2I0NGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUxMjExOWQ5NGI1N2JjMzYxNjY4MDA1YWYwOGZjZGUwN2YwYjQ0MjM2ZmQyN2JmNzk1Y2M5ZGFjZGM3Y2NmYWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlOTVjZTQ0YjQ4OGEzM2QxNzQ5NTIxN2E4MmE4M2MwZWY2NTg0ZDk5MzNjZDBjODg2ZjVjYTdkYzY2Mzk2M2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fe7f3eee97334d89bd624fa221707859",
+      "statement": "`check` and `store` are matched on the first argument before the `--config` loop and the configured test and are called with the subcommand stripped (`args[1:]`), so `paraphe check telegram` and `paraphe store relocate` run without a configured inbox and never consume `--config`.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/__main__.py#L57-L64",
+          "version": "repo-lines-v1:sha256:b0b9384a7be326ba2b1f1411c00800b26c55e617f9344046393e9e74789bb0ed:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTMwMTkzNjczMzc2ZmJiMzAwYWE3Y2U5YzkyYWQ5N2JkMTBiNDMyNjllMWU0N2U4MmViMDYzODkwMDgxNjQ0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAyNmVkNWNmNDJjNzQzZjgzZjE0ZDI0NzI0NDFhNzc0YjE0NzNhMjdhZmJjZmM5NzllYjg3M2IzZTk4M2MzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWIzOGJmNzg4Njk0Y2VkOTYxMTdkNWIzYThjZDU1ODYwNmIwNmVlMjIyZGUxNjVmMzQ5YzA3ZmVlNWMxOGYwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmZkMjc0MGQzNWI1MjcxOGMxNTVmODA3ZDcxODVkMzk4MWVhOGI1MjU0MTZlODY3YzAxMGY3NmE1ZmQ4OTc5MSJ9"
+        },
+        {
+          "resource": "repo://tests/inbox/test_check.py#L144-L160",
+          "version": "repo-lines-v1:sha256:fa8b99b4a60175a4d98544995029f5f08e5341b49254475787f914ff091cb3da:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE4OWQwYTRjZDkwY2FmMzQwMjJmMjU0ZjE1ZjNmNzEwYjQ5YjY2NzZlMmY2M2YxOGJkN2QxMTkzMjkyMTVlOTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYWU2YWZkNTgwN2ZkMDU0ZWJjOTFkYjFmZTU3ZGI4ZWZhMTNiNDE4YTAwYTEwMGZiZmI1NzNlOWJhMTUxNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYxNDRmNmViY2M4ZjMzMDRiZDBlNWNmZGRhNjEzMTU5ZGZkNjZlNDI2ZjA3Y2M2NjIwYjkxYzIyYTA2MWI1ZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L363-L422",
+          "version": "repo-lines-v1:sha256:d5ddce529e031c11d48efe207b9e5302790fe151d48d8914716e3d228e4a5616:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkYzJkOTFiNWRkYmU3ZTEyZWRkZDI4YzQzNDBhYjRiNzRjY2FmNWJhMDdlYmJhNDE3N2Q1ODRiNDMzNzlkYTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZDNjODEzNGM3OGI2ZjliZGYwOGYxM2FjOWNkMTA1MjlmZjJiNDY0ZmU5OGZiM2M2MGExZmFjZDVmNTk3OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlMjNkYjRjOGZkNGY3ZDhjMjE4NWFjZDU2OTIxZDk4YWI4YjRkMjVjZjFjYTAyNjlkNjAwMTk1NjUwZmNmZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiNjc1NGY3NWFiMTUwODBjZThiYjI4M2E4Y2ViZmYwNTNhZDU2YTQ2MWM0NjMxNzhmYWQ4NWM1ZTdhNGRhYzgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f86cfa4e85d14cf997f038b6d7eb1ec7",
+      "statement": "Because the entry point consumes only leading `--config PATH` pairs and then ignores the remaining argument list, a subcommand placed after `--config` does not run: `paraphe --config paraphe.toml check telegram` starts the server instead.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/__main__.py#L69-L83",
+          "version": "repo-lines-v1:sha256:bd0a612ec089041fd51adbaea3b08cf2887214e8ceec7ca5c30316b412842951:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwYjU0MGRhMWVmOWYzY2RlYTA1MDMyNjc1MWQ2MWIxMjJmYmNiYTcxMTI3ZTIxYzllZjRiNDZkZDgzMTYwYWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzYTM3YWJmMDM2YWFhNTEyYzYyZTQ5MmFmN2JkZmI2MjU4MGFlZTlhZWYyNDc5YzJiMzRlZGE4YmJhYWQxN2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmN2E5ZDEzMDMzZGVlODE2M2RkMzE5NmY4NDVlNmM5Nzk3ZTViYjZjZjkzNWQ4OTYwNTc4OWU2MzFiYzdiM2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzOTQyOWRkYTc1OGNjMTY2MGFkZDk2ZDhiYTZiN2FjMmE3OWQ3NzlmNWNmYTEyMGNkNmI5ZDdlY2U5YzZmNGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_177da74f9c914ee0aed7e634880950b9",
+      "statement": "The package has no third-party runtime dependency (`dependencies = []` in `pyproject.toml`), and the runtime module's imports are the standard library (`json`, `os`, `signal`, `threading`, `urllib.request`, `typing`) plus the package's own adapters and inbox modules.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L13-L13",
+          "version": "repo-lines-v1:sha256:8bfea17e6b2d7883cf14a2a33d25532281b01c08658f2349179dbae7ec9a5b7c:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGJmZWExN2U2YjJkNzg4M2NmMTRhMmEzM2QyNTUzMjI4MWIwMWMwODY1OGYyMzQ5MTc5ZGJhZTdlYzlhNWI3YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGJmZWExN2U2YjJkNzg4M2NmMTRhMmEzM2QyNTUzMjI4MWIwMWMwODY1OGYyMzQ5MTc5ZGJhZTdlYzlhNWI3YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTNiYjAzYTg5N2VhNTNjMzI3YmQ2YzE3YWYzYjIzOGFiY2YyMDc0MjQ5YTk3YWU3MGQwNTUyZWI3NzllZjcyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYmVjODQyYzVjNTU3OTU4NzJlOGVhYjBjNzRiNDk2NjliZjMyZjU4NjA3MjEzMWUwMTUzOWEwNGVlN2RhMWQyMCJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/runtime.py#L3-L19",
+          "version": "repo-lines-v1:sha256:148b93fef58ff4b3c432f260e8d8484af5b9b18e7dc8ae5d600a61b303f7f519:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0N2U4YmQ3MTlmZjcyMDk1ZDBkMWU0YjUzODQ4MDkyYjk2NzE3YjA0OTE3M2MzYjU1YzEwZjdjY2I2YTY5Y2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc2NjQ1YWQyOGJkMjdkN2U0ZmIzYzc0ZWI0ZmIzZDgwYzc0MDU0MzBhNWU0YjRjODVmNTk3YTZjMTUwMTFhMzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkNzJmMjFlNWZjNGY5MTgwMjA2ZDNlZjBkNTU3M2ZlYWExNzFkN2FmNTJjMjQzMjMxYTFjZTgzMWY0NTI3MDAifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-09-11T13:38:17.169Z"
+    "at": "2026-09-24T17:26:41.197Z"
   }
 }

@@ -3,6 +3,9 @@ type: architecture
 title: The wait engine
 description: How a Paraphe tool call parks until the owner answers or its bounded window ends — per-card event registration under a dedicated lock, notification only after the durable write, the re-read that closes the registration race, every wake path (tap, owner reply, cancel, observed expiry), and why a disconnect or a restart leaves no residue.
 tags: [concurrency, tool-calls, waiting, lifecycle]
+verified:
+  - by: openwiki/0.5.0
+    at: 2026-09-24T17:26:41.197Z
 sources:
   - id: openwiki-source-4248812be758ec7360356412
     resource: repo://docs/adr/0011-answer-returns-through-the-ask.md
@@ -14,16 +17,15 @@ sources:
     resource: repo://src/paraphe/inbox/__init__.py
   - id: openwiki-source-a8049e4c38fe5c6127cbfcaf
     resource: repo://src/paraphe/inbox/http.py
+  - id: openwiki-source-ff9e45a3ac72725a5bcca301
+    resource: repo://src/paraphe/inbox/runtime.py
   - id: openwiki-source-d39aa17b1580d696b9e0586e
     resource: repo://src/paraphe/inbox/store.py
   - id: openwiki-source-93ffcac597d6a3fc6e17909e
     resource: repo://tests/inbox/test_reply_intake.py
   - id: openwiki-source-ec516ae95f07d4f7e51ef3b6
     resource: repo://tests/inbox/test_wait_engine.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T15:27:48.076Z" }
-verified:
-  - by: openwiki/0.5.0
-    at: 2026-09-11T15:27:48.076Z
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
 ---
 
 # The wait engine
@@ -254,9 +256,13 @@ The `responded_via` field is how a reader tells the doors apart after the wake:
 `telegram` is a tap, `telegram-reply` is the owner's reply, `answer-path` is the
 local owner answer route (pinned by `tests/inbox/test_setup.py::TestAnswerPath`).
 
-A tap or a reply arrives in the same process — the Telegram long poll calls
-`inbox.claim` or `inbox.claim_reply` on its own thread inside the runtime — which
-is why an in-memory event is enough.
+Every door that wakes a waiter is served by the same process that parked the
+call, though not by the same thread: `serve_inbox` spawns the HTTP server on its
+own thread, `Runtime.run` performs the Telegram long poll on the runtime's main
+thread, and each parked call occupies a connection thread of its own. A tap or a
+reply therefore writes the card and sets the parked call's event from a
+neighbouring thread, which is why a plain in-memory `threading.Event` is enough —
+there is no wake port, no IPC and no cross-process signal to build.
 
 `_refresh_expiry` only fires when something *looks* at the card. The lookers that
 can actually persist an expiry are `_require_card` (hence `get_response`,

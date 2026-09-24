@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:2bafe10ff3d82337ef820e1c762e8f439f0b4ba72d7679aacaa8b3d9a10bd989",
+  "pageVersion": "sha256:d39c18aee8d335ebf3cb09e2b918c22f7a8add6ecfbe0fe401ec245c4bbea15c",
   "claims": [
     {
       "id": "claim_efe0e8d8cf904d459a03b5d4ca4110e1",
@@ -100,19 +100,19 @@
     },
     {
       "id": "claim_dd8fc14c831446db9429ac00a62eac0a",
-      "statement": "The inbox noun is the Inbox object plus the SQLite Store: one file `inbox.sqlite` in $XDG_DATA_HOME/paraphe else ~/.local/share/paraphe, directory mode 0700 and file mode 0600, and resolve_store_path refuses the default when a store exists at the legacy /var/lib/paraphe/inbox.sqlite rather than starting a second, empty inbox.",
+      "statement": "The inbox noun is the Inbox object plus the SQLite Store: one file `inbox.sqlite` in $XDG_DATA_HOME/paraphe else ~/.local/share/paraphe, directory mode 0700 and file mode 0600, with the location earlier releases used retained as the constant LEGACY_STORE_PATH (/var/lib/paraphe/inbox.sqlite); resolve_store_path refuses the default when a store exists only at that retained location rather than starting a second, empty inbox, while an explicit store_path is honoured either way.",
       "evidence": [
         {
           "resource": "repo://src/paraphe/inbox/config.py#L110-L127",
           "version": "repo-lines-v1:sha256:2de812415bd677379a04012596d9df37d388be45826c537d212e53d0ba52e44f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOTkwMjU1NDQwM2M3MmE1YzIwZDMyN2Y1OGI0Y2I4OTM4YjU2ZTQ5ZTI3NjFlNjNiYmZlM2Q4MTRlMGZjNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjOTVjMTkyMTZlZTA0MDIzYzhjYmQwY2NjNGE2YzBhZGVjNzA1OTM1YzFlMzQ2YWM2ZjVjYWQzZGNhMjZjYzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5ZWUxOTMyODRlODJmYjc2YWY0ZjRmNTgzZTQzZjA1MDdiNWYxMzJiMTY0ZTZkMzUyM2JhZmI5NGMwYzdiMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyYmU3YzIyZjVjNmY2OWM3YTlkNjQ1MDRmYjUxOGYxZDgxMWZkNjA3Y2NhMTcxYjRmNmFjYzFkMTYwMGQ5NGYifQ"
         },
         {
-          "resource": "repo://src/paraphe/inbox/store.py#L11-L49",
-          "version": "repo-lines-v1:sha256:e17ca9ac4c57019c422cf09d5496b47a617f3c0a1b701423a1e50ba33f8716d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxZmE3MDQyYWExZmRhOTU5ZTIyNTY2NGIzY2M2ODE5MDE1Mzk0ODYyMWRhM2JiMjliMTc3ZjdiNGEwNGJlNGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkyZTBiNTRkNTM2MTMyZjc3OGEwNWI3MDFjMDdiNWQxOGE5Y2U5NmRmMGQyODE0ZmE4M2ExNDU1OThkNzFhMmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjNjVkOWRkNzk0Mjk5NDI2NDdkMWM2MDFkNzMwOTlkZTA3NzI2YTIzOTNlYWM3NjcxNTBiYzRlYTQxZTRiMGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0NDkzMDM0MDVkYWY1ZWU3MTNhMDI2NWE1ZTBmODM4NzY3NmU5NzgxZmMyMjBlNjM1OGE0NjMyNmYxOTFiOTcifQ"
+          "resource": "repo://src/paraphe/inbox/store.py#L12-L49",
+          "version": "repo-lines-v1:sha256:98da4814367d4380ecbfb0ed7bdaaf5f72435fd81fd55db64a0ef7de9e5ac5ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxZmE3MDQyYWExZmRhOTU5ZTIyNTY2NGIzY2M2ODE5MDE1Mzk0ODYyMWRhM2JiMjliMTc3ZjdiNGEwNGJlNGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0M2QzODRlZDY4ZTE4YjA4NTEyMGIxZjU3ZGVkMjcxYTJjNzZiNTExY2IwZDg3OTA1OWZhYmE4YmU3M2U0NzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjNjVkOWRkNzk0Mjk5NDI2NDdkMWM2MDFkNzMwOTlkZTA3NzI2YTIzOTNlYWM3NjcxNTBiYzRlYTQxZTRiMGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkOWI4ODQwN2VjNDZiYTZjMzNlMGI2NjA3NTE0OGYzOTA3ZmQyODUxMzg4OWM3ZWU1MjFlNzgyMzg1NjdlMjQifQ"
         },
         {
-          "resource": "repo://tests/inbox/test_setup.py#L218-L262",
-          "version": "repo-lines-v1:sha256:4682407bbdae6830475282d4f49caaaa213e8945a93c4f0efcd4d6dc6fe09f63:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4NDlhMTZhODZiNDY4ZmFiZTJjYzU0NzZhYjYzZjVlNzExNmI0Y2ZmOTFmNGVjMThmNWFiNGZjZDRjNjc5NzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0MTZhMDkzNTM5YWExMzE1ODFlMjg4MWEzN2VhOTJmNWViNGRkNmExOWViZDUwOGUxOGZiYjY3MTc3OGRkMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxOGIyZjE3Y2YyM2FhNjYwYjNjYjkyMzNkMWFkMDFkMmQxOWUzNzM2ZmZkODNmOTA1MGVhMjhhMDgyMjliMGMifQ"
+          "resource": "repo://tests/inbox/test_setup.py#L220-L263",
+          "version": "repo-lines-v1:sha256:ffb4ccfe3368f0d0d6ebe0958b182bc3b3c94835fdaccce71a16cba1b3027ab5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM4NDlhMTZhODZiNDY4ZmFiZTJjYzU0NzZhYjYzZjVlNzExNmI0Y2ZmOTFmNGVjMThmNWFiNGZjZDRjNjc5NzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlODY4MTg1MGRmNGIwNWZlMGZhMWE5MGZmODYxNTA4YmQ5N2U2ODk5ZDg1MGQ3M2U4ODllZWJlNWVmMTM5OGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA0MTZhMDkzNTM5YWExMzE1ODFlMjg4MWEzN2VhOTJmNWViNGRkNmExOWViZDUwOGUxOGZiYjY3MTc3OGRkMWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNjU2YWYyZDE1ZTExNTkwMmI3NzI2YWY3NmY5MDExYzk2ZmVkMzY2MzdiYmQ5Mjc0ZWQ4YzNlMmE3ZmFkYTAifQ"
         }
       ]
     },
@@ -238,26 +238,30 @@
     },
     {
       "id": "claim_97dbcc55139941a59042bd02c2b0b30c",
-      "statement": "The return-path protocol is carried to clients by the served text rather than by any per-runtime integration: TOOL_DESCRIPTIONS and how_to_use name request_id, wait_seconds, get_response, list_unprocessed, `paraphe wait` and the drain rule, tests/inbox/test_surface_contract.py asserts those strings, and skills/paraphe-return-path/SKILL.md is the shipped per-runtime companion.",
+      "statement": "The return-path protocol is carried to clients by the served text rather than by any per-runtime integration: TOOL_DESCRIPTIONS and _how_to_use in src/paraphe/inbox/__init__.py name request_id, wait_seconds, get_response, list_unprocessed, `paraphe wait`, the drain rule, the card-writing contract, the provenance fields and the reply rule; tests/inbox/test_surface_contract.py asserts those strings; and skills/paraphe-return-path/SKILL.md is the shipped per-runtime companion, giving the one copy step per runtime, the three ways to hold the return path with the waiter's exit codes 0/3/4, the waiter's environment, the provenance bounds and the shell-side create.",
       "evidence": [
         {
           "resource": "repo://docs/adr/0011-answer-returns-through-the-ask.md#L35-L38",
           "version": "repo-lines-v1:sha256:543e293d9c9caa1af94f584a060eb4b7749eaa9d47cea0f4c1006483745a6fce:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmUxNWMxNjYzMDg2MjU5MTk1ODVhZmQzMDcxOThkMTE2ZmE0ZmJjNTRjOTg3MTA3MjcyNDQ2MTM1MDk5NDM3MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDg1N2U1NDQwMTA2NjMwNjcxZWRmZjBlYmE1ZTIyZGY2OGVjZGZjMDA5ZDIxYTE3MDNjODhlOTkxZDYyZmRjNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiY2I3MGNlZjgzMDAxODMyNDA4NTIwMjQ0NTcxMTlmNjk2NWU3Nzk1YmVjMWFiM2Y5YTViMmM5MjU5YzE4ZjVjMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTY3ZDc4NDljMGE3OGRiYmZkMWQ2ZGIzZmFhZTQwODRlMDEyMDhjODU4Mjc0M2FlMjVmOTU4NGE5MGRkZDYzYiJ9"
         },
         {
-          "resource": "repo://skills/paraphe-return-path/SKILL.md",
-          "version": "repo-file-v1:sha256:0fcbce73312937d7a29e1a8e5c347ecf50e7ecfaa93c3d0219dc7c281db9fa25"
+          "resource": "repo://skills/paraphe-return-path/SKILL.md#L14-L28",
+          "version": "repo-lines-v1:sha256:4ba2e2fd795b41a3d1a8ff43bf4b3256250a6b37dfb682673b904b393e917a3e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVjNmRlOTA4MmI3ODI4NDAyOGVmNTBkZjZmNTk0Yzk1YTkxNjc2ODdmMDc4MmZiNjhhOWYyNTAyNWIyMDdiZTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2MTI5YmY3YTg2NDU3ZDc4YjJjMmM4ZjdjNzE1ZGEzZGQ4OWEzNTc4ZTczYjUxMDE3MDdlODhlYTEzYjlmMDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkMTNkZTM2ODc2Mjg1MzRhOTI1NGQ4ZWY3YWJkNjBiNzZkODRkMjAxODVmNzlhMTYzNjBhOWVhZWU2ZDNkODUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0NjFhNjg1NzNmYjBiMmMxYjUwZGFmNDZhZDI4M2M3ZWI2ZjM2ZjllOWM2NzhlODdiYzZjMjYzNDk0NWFhMDYifQ"
         },
         {
-          "resource": "repo://src/paraphe/inbox/__init__.py#L214-L260",
-          "version": "repo-lines-v1:sha256:22b93395172f24a1259fc030c59e2e079d76dff5952432dd6b2ff2f4b210029a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0MzE2OTJmMGY5ODY2YTk1ZWY1NGYyNmIzZWEyZTdjNDhiOTI2Y2Q2MDc1NDFkMWEyOTRjNjQ4MzEyZTNiMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliY2I0MDUxM2VjOThlYmE0ZjgwMjRiMTBjNDI4ZTE4MDlkZDQ0N2FhMGU2Y2I3NjA2MTdkMGIzM2MzMDZiNTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjMjJkMjExNTZjODk4ZDZiNWViYmQ1MTU3YzYxNjUxOWQ0ZDQ0ZmFhMzM4NjRmYmJmMWM4ZDc3MDVkOTAzM2MifQ"
+          "resource": "repo://skills/paraphe-return-path/SKILL.md#L57-L111",
+          "version": "repo-lines-v1:sha256:60ab14879121e7678c241aec5c6d82703c363d8b983cd492259adb33f30491b7:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjYWEzZTFmZDQxN2NhZWNiMzdlMzc1OTMyZjlmYzE3Zjc4NGFiNTk5MWU3ZDljNGQ0ZDU5MjQ5YzE0NDk3M2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzNTRiZDlkNDNiOTVhYzA4ZDgzYjk5YjBhMTU4ZTEyZGNkNGU1OWEwNmY3NGMxZjVmZDAxMTUyZmMzM2FhMzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhY2NjMTIxOWU2MzU4ZDk1ZDk5YjIxZmMyMGM0YjE1YjQ3ODgxNGE1ZmYxMzk5ZDMwNjQ2NDlmY2E1MTkxODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://src/paraphe/inbox/__init__.py#L742-L787",
-          "version": "repo-lines-v1:sha256:93b7444d9bef7c63b28ce2cda9484ffd7458d568254ac986c1b7acdfa2be9972:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxZmQ4MDdlYTg2NzFlOGI0ZTM3ZjIxM2I2OWIwMGZjNjFhYjY2ZGM5OWI2OGNlMmUxZjQ2NzBmYmE5NWJlZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwZjZiYThmYjczZTg4ZTNlMTg2ZTY1OTZhOWVlODk3MWFhOWZjMzQ2NjM3Nzg1ODdlNGNjYTUyZjljODg2ZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxYzhmZmE4NTc0ODQxYjFiMDFkMjZmZjg3Y2UxNDQ2OTAxNmVlYzA1ZDQ5ZDc5ZjlhZWQ2MjkyNWNlY2ZmZTkifQ"
+          "resource": "repo://src/paraphe/inbox/__init__.py#L211-L268",
+          "version": "repo-lines-v1:sha256:f7bac1fed17618d70fe97ed78aec30ae68560b6494cc44e5510f18911d680fbe:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3YWQ4ZGFiODFjNWQ3YWJkMzU4OGUyOWVjMjNiYTVmMzNiMDJlZGY0NzM0M2Y3NDRkMjkwNTRkMjY4N2Y5YzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRkNzBlMDQyYzUyNjQwYjI1ZjNmNjlkYmE0YTNiYjVmMThjYmYzODZlOGQwZGVkZDUzZDQ4MTM5ZGZkNjZjNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjMjJkMjExNTZjODk4ZDZiNWViYmQ1MTU3YzYxNjUxOWQ0ZDQ0ZmFhMzM4NjRmYmJmMWM4ZDc3MDVkOTAzM2MifQ"
         },
         {
-          "resource": "repo://tests/inbox/test_surface_contract.py#L73-L85",
+          "resource": "repo://src/paraphe/inbox/__init__.py#L750-L804",
+          "version": "repo-lines-v1:sha256:e3cb65f14537f24d9f5ce4af8c4492c7af1c0ab49b5a72b9edda74ec99dbaef3:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxZmQ4MDdlYTg2NzFlOGI0ZTM3ZjIxM2I2OWIwMGZjNjFhYjY2ZGM5OWI2OGNlMmUxZjQ2NzBmYmE5NWJlZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwZjZiYThmYjczZTg4ZTNlMTg2ZTY1OTZhOWVlODk3MWFhOWZjMzQ2NjM3Nzg1ODdlNGNjYTUyZjljODg2ZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxYzhmZmE4NTc0ODQxYjFiMDFkMjZmZjg3Y2UxNDQ2OTAxNmVlYzA1ZDQ5ZDc5ZjlhZWQ2MjkyNWNlY2ZmZTkifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_surface_contract.py#L75-L87",
           "version": "repo-lines-v1:sha256:28ce142a0030ecff83b86e6d9eae2de6d004d64b64463b719ec210731ff17213:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzMzM3NWVkNWE4YzkzNDUxNTQ5OGQ1NDczYjA0N2ZmMDY5MzFmMzRkNTc5OTdlYzFmZTU2YzI3MWFiYzVjZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1ZWI3ODExYzU3ZmY2MjNlZTJmMGI4ZGJhYTcxMzIyNWZlNTY5YTQ1MDkxODBjZTUwMjAwNTJjZTJhNWVlMDUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljY2MwNGYyY2YxZWJjYzQ0ZmMxZGYwOTc5YzgzNWNmNmMwMWQ1ZDRkZWMxNGZlZThhOWRmMWI5NTE3OGI3MzkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjNjAyZTk0YjgzZTJkNGUwZWRlNjQ2NDI2ZGUzMTczY2U2OWRjMjcxYTYxNjNkM2RiMzlkMGJmNjNlNjFhNTYifQ"
         }
       ]
@@ -516,15 +520,19 @@
     },
     {
       "id": "claim_a913fd8f807246f78063d6c6cd5ef7da",
-      "statement": "The product noun Paraphe is the package src/paraphe/ exposed as the console script `paraphe = \"paraphe.__main__:main\"` in pyproject.toml: `paraphe` and `python3 -m paraphe` start the same service through paraphe.__main__, `paraphe ask` and `paraphe wait` dispatch to paraphe.cli, and every setting is spelled with the PARAPHE_ prefix.",
+      "statement": "The product noun Paraphe is the package src/paraphe/ exposed as the console script `paraphe = \"paraphe.__main__:main\"` in pyproject.toml: `paraphe` and `python3 -m paraphe` start the same service through paraphe.__main__, whose first argument dispatches ask/wait to paraphe.cli, check telegram to paraphe.check and store relocate to paraphe.store_cli, and every setting is spelled with the PARAPHE_ prefix.",
       "evidence": [
         {
-          "resource": "repo://pyproject.toml#L28-L32",
-          "version": "repo-lines-v1:sha256:fe0338ea2714f69dc945a68346062b883587a5e3b097805f81ff5c00ec0dfea1:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGVhYjRlYzYzZGU1MTdkYTRjZDhlNWM4MzA3ZmIyYzc3MzdkMzkxOTBhYjY5ZjMyYTVlOWVmODFlYTQ0MTZkZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDJlYTUyOWYxNTc1MTFhZmZjNzExMzExYjI1YzhkZTFkZGQ2MmI1ZTFkNWM0Y2ZhNDQ2MzcyODU5ZDAyMGI1MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTI3YThjOTJlYzg4YmZmNTM3Zjk1M2NjY2FmODc4YTVmMzQ3NmNmOGFkMjc4NjIyN2FkZTQ2YmY3ZDVhOWZlYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWQwM2FkYTJiYTU5ZTcyZmU5YzBjM2I4ZjI4Yjc3MzhkYmFhY2VmNWYxMDA2ZDk2YzcwZmM0NTU4OTlmNDQ4MyJ9"
+          "resource": "repo://pyproject.toml#L28-L29",
+          "version": "repo-lines-v1:sha256:c03c777d61c1b4a2681bd60304ec747414d66b330cdb9cb7aeb1182bb2dbe48e:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGVhYjRlYzYzZGU1MTdkYTRjZDhlNWM4MzA3ZmIyYzc3MzdkMzkxOTBhYjY5ZjMyYTVlOWVmODFlYTQ0MTZkZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWFhYzNhZGUzMjZlNDA0OTU3MTlmNDdmOWFiMGFhMzFlNDkyOWQ4YmIxZDJjYjk3NGEzZWE2Y2UzNjhlYmQ3ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTI3YThjOTJlYzg4YmZmNTM3Zjk1M2NjY2FmODc4YTVmMzQ3NmNmOGFkMjc4NjIyN2FkZTQ2YmY3ZDVhOWZlYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzJhZGZkYzUzMThjNzgxY2E1MTA5MzhkY2FjOTQzM2E3ZmZlMTQ0ZDE0ZTg0MGEzZDIwNGU3NTVjNmVmNjEyMyJ9"
         },
         {
-          "resource": "repo://src/paraphe/__main__.py#L1-L62",
-          "version": "repo-lines-v1:sha256:b16020e1726374d8c39365b19d3a55fa3ef7b0a76d084e5c0643b03058d09c6c:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4YjAwNzMxMWZmY2QzZGY2MDRkYWEwODE1YjM4NTdkOGYxMmM2OGQ3OGE0YzJjZmNkMGRhMjY1MDM3NjE4NTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhMTY4MDljMDc1ZGIzMDllMDliYmM5YWI3ZWZlZTY5ZWZiNWY0MTliZDRkODkzMGQwMzgwNjYwMmRkMDJmZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxYzA5YjY1NWUxMDhjM2ExYzgwMTBkMDc0NGM5ZWU1YzFiMTgyMDM1N2E5ZTVhMDEwOTJhYTA3MDUxZDA4NTAifQ"
+          "resource": "repo://src/paraphe/__main__.py#L49-L86",
+          "version": "repo-lines-v1:sha256:74f002f05f4fcab752c936a06aa34fc118135f91700b019ed19e7cbd31f469aa:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NDBhYmY0ZDM3NmViNGUzYWUxZjNiZDU3Y2FhYjlhMTg1OGJlMjBjNTdlNzRmN2YwNGExOGQ1NTI4ZGZmMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmOGY4ZmQ4Yjg2M2JkOGJhNDJlZTgwNGUxOTE5MDg3Njc4NzIxY2EyNzVkMGVjMTQ2NTkyNGNlMDA1MDIxZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjljYTM0NTM1MDRiODc0NGY5N2Q1NDQ1YmY2ZWNiYjE1ZDI2YTRkNzNhZTJkY2QwOGRiNjA3NGRjZmRiYmQ0YTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/check.py#L72-L76",
+          "version": "repo-lines-v1:sha256:789c889c55ffa52a96ea59f15b445c0e17d3c544e0af8e4462c511f862ff6b6d:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTE1OGQzMzYyM2Q1OTViZWUwMTI5MDQ5MGE0ODQxN2NlNWUxZTE2MjFmYWVmZTljZjJkZWZlZjdiYjRlMGQ2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTM0NzgzMWY4OGM1ZDRmZDhhZTFlNzM0ZTlhMmZmMTZkM2Y0ZjY2MzZmYTQzM2VhNDM0MzZhYmRkYzJkMmI3NyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDU3MjJiOGM0ZjI4MzFhMDhhNmZmMTY4ZDE2NTExNGI2ZmRiYWNmOTg0MjE1MzY2Mjc3NjkzYmRjYjNiZDAyMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
         },
         {
           "resource": "repo://src/paraphe/cli.py#L1-L7",
@@ -533,6 +541,10 @@
         {
           "resource": "repo://src/paraphe/inbox/config.py#L16-L22",
           "version": "repo-lines-v1:sha256:2d0a297870538f44b5958b89cd10088031add8dc4a41fb64016f03baf8489145:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzZkOWRmNzVjNWJjNzlkMDU1OTI2YmNmYTI0NzY5NWI3Y2I0MThhY2NmYzY4YjM2NTAyNGUwNzhlYWY4NjUwOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTBjZDJlMzU3YTI0NDdkZWI4MDI4ODZhZDY2MTk2Y2M1YTc2MDA5ODExNjQyMjZlNTYxYTM0NmRkMDA0ODlkMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTFhZTRiZjVhMDU1NGE3Njk1YmZmNTVkY2ZkOTk4MzRmMjc1ODM3MzFhMDI1ZWE3YmQ3YjU3M2Y1MDllYTRhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTFiZWUxZGUyZjg2ZmJkMjljNjdhZTQzYzdhNjQyY2MyNDBlNzQ4NTM1NmEwY2IxNTJhZDM1ZThkZTFiOWFjMSJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L18-L37",
+          "version": "repo-lines-v1:sha256:b71a8d7c3c08c681b084eb24b4c2d5db6ec9bdfce0e41bcdaec9babdbca4c642:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExNThkMzM2MjNkNTk1YmVlMDEyOTA0OTBhNDg0MTdjZTVlMWUxNjIxZmFlZmU5Y2YyZGVmZWY3YmI0ZTBkNjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM4YWU2MGEwOWE3ODRiNDdlYTA4NTMxNmJmZjkyYzY4MDExZGQ2NzBkODlmMjhkYWY1ZGE5YmI2YWU0MWJjNDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -583,10 +595,50 @@
           "version": "repo-lines-v1:sha256:55d94647f8ec1bf46b058aa7c274815c2a350c4db30ea6bcd17456af0a124cc7:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTNmNDAxMjI2MzlhNjliNzY0NjUzMzQ1MjUwNzQ3MDk2ZWM0Y2JhMWY5MDZjNjdjM2I3MzM1YjJhNWMyOTJiYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNThiOWU2YjUxNWI4ZjU3MTI4YmE0MDgyYmEyYzU2MmUxMmZmNjc3MjE5MzAwMTY5MzI4OTVhMTNlOWIyMTVkOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmY3NTNlNjdiZjNmMjg4NDc5ZjY1M2JjMWY2YTJhNTIwMWZlZmE4MzhjMGY3ZTJiYTViMDk0NDdhYWIzMjljZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWFhMGU3MzU5YThlY2RjYWI3YjQxYjA0NTE4ZGQyOWExYTk1MTA0ZjM3YWJmZTU5YWRiNjExNDU4ZGI1YjMyZSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_c0fb064b65b7465a9b5db5fa7ae404b9",
+      "statement": "relocate_store(source, target, move=False) is the safe move off the retained location: it copies through SQLite's backup API into a temporary file in the target directory, verifies PRAGMA integrity_check and the presence of the cards table, then installs the copy with the owner-only modes, refusing a missing or unreadable source, an occupied target and a source that is not a Paraphe store; `paraphe store relocate` wraps it to move LEGACY_STORE_PATH to the current default location, keeping the source as a backup unless --move is given.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L48-L176",
+          "version": "repo-lines-v1:sha256:c151ac7043b401a36b1c6e3efbb0a3f8e4c2bf79f4d7a2085c9c4fa82940e137:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4ZjgyNGI1ZTNlZDNjYWVlMGEyNGFmMzgxYjYwMzNiOWQwMjRjMzBmNzg2OTdmNTVmMmIwYTFlOTY2YTY2NTc3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1NmNjY2Q1YTM0ZjU1MzllNjIxMWY0YzU1ZmJhODcxMDQwNDI2NzQyOTk2NDlhYzU2M2Y3YWI4MDgxMGU3NjIzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIwN2VjNzEyMzYxMWMwZjg3OWY0OGJlMzRjNzVhNjZlMzJjMWNlMjUyODhkMDRmMWJiMGZkMGIxZWI5Nzk0ZTIyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3NWNiZTQ1MTgyMmQ2YTQzM2NjOWFmZmQwMDJhYTcxN2U5YzZjNTVmYjBmZGIzYmEyOWM5MWIxZTk2YjVlOGJhIn0"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L10-L37",
+          "version": "repo-lines-v1:sha256:70add5e66f94e53a5b09a2050e8c052700a87c375ca39c15c8e445cc944d94fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljYjMwMTYzMDgzNTczMjA3NDZiOWY2MzM4YjdkZWFlNDZmNTAwZDU1ZjZlMDBiNGU5NTgyODA2ZjAwOWQ1ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMwY2ZiMTdjZjcyM2Q0ZWJmYWFlNTM0ZDJkZDIzMDQ2ODE1MzlhNjNjNWFkODYxNzBhNjAwMzA1Y2VhOGE3ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L271-L291",
+          "version": "repo-lines-v1:sha256:cab73602b6482d6803a538e2578e4dcd038c2b94f38aec47f7a7dc63941bb8b7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkYWQ0NjJjZjIyZjU2YzNiYjcxMjgzYzM2YjNhNWVlNzlmZTQ0OTZhYTczNDk5ZTkzMjNlZDYzYTE2NWRhMTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMyMzdmYTVhZGNhZDVlNDE1YzFiOTYwYTJhMTU1M2RkM2RlMmYyNTNkZjFjMDcwMTdmOTdiODIwZTc5MTgwODIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2NmIxZGI3OGZhNzA0MGJiZWY3MmFjYTY1Nzg0OTQzNmEwNGU3OGYwMTlhMWZlNzI2YjA1NzkxYTA3YjA4ZTEifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L305-L317",
+          "version": "repo-lines-v1:sha256:74c4c7b7dafd3fe294e37a135c0eb07b4a2fd5566a1179f4724a5549bd5264c2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZmU3OTQzNThmNzA5ODcyOTMyOTYzMjE1ZGI0NDM4NDI4ZWJmYjMxZGFkZGNiMGU4ZjliYzhhZjk2MWFmNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkOGNmZTkzZjIyMWI0NjVkZGQzZjdhMDZlNjlhMjBkMmI1NTA2NDY3MmQ0ODFkOGM4YzQyZTA1NWUxNmY3ZjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5NDg1NDQ2NjM4N2M5N2I5ZGNmZmYxYTU4YWRiYjU4NDA3NTIxNWFiM2YwMzZhYWRjNWI5MmY2OGZhZjc4ZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmN2Q5MjgyMTFjNWY0NGI1NjQwMGUyYTZlYzZlMTBkNzRjNjZkNmZkMGE1NzNlOWJmOTE3ODlhYTRiZTc4NmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6f56326f600442d4a6f075a27a743f48",
+      "statement": "`paraphe check telegram` (src/paraphe/check.py, reached through paraphe.__main__ before the server path, so it needs no running service) is the setup preflight for the phone half: it loads the same settings, resolves the bot identity through the Bot API, sends one plain setup message to the owner and names both, and exits 2 when no phone destination is configured, when the token is refused or Telegram is unreachable, or when delivery to the owner fails — never printing the token and never creating a decision card.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/check.py#L14-L76",
+          "version": "repo-lines-v1:sha256:c5304d226467447cfa87f1c8266d622800d67887824d85ac3d38878016907db6:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMGJlYmQ5ODYyMDM2ODNmOWUwZmQ1OWUwMGFkODM5NDMwMzRmYjg4Y2Y2ZDIxOWQ0NDQwYjM4MDJlYzZlNmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzNDc4MzFmODhjNWQ0ZmQ4YWUxZTczNGU5YTJmZjE2ZDNmNGY2NjM2ZmE0MzNlYTQzNDM2YWJkZGMyZDJiNzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmODk3Y2ZjN2M0ZjA4NzczZTJkMDQwM2QxZDMyMmFmYWU3ZDJkY2I0ZTg2MzhhNGZkY2NhY2MxZmJlZjcwZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_check.py#L131-L160",
+          "version": "repo-lines-v1:sha256:b4a10bc405e26e61d3f619a9af48b73cf89ea3e88a9b5a8a0b159bdf118cefa8:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1ZTQzYTA1Yzc3YWMzOGVlZjE2MDY1MTZjODQ1NzUzODhlMDg4N2YxYzc0OWEwOTMyNjk0YmQwNjIyMzkyODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYWU2YWZkNTgwN2ZkMDU0ZWJjOTFkYjFmZTU3ZGI4ZWZhMTNiNDE4YTAwYTEwMGZiZmI1NzNlOWJhMTUxNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkMGZiMDMzNTBiYWRlZTI4MWU1NjVhZmNmZTRkYzExNWJhYTZlYjdkNTEwYzY1ZGMwMjRkZTQ0M2QxMDY2NjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_check.py#L70-L82",
+          "version": "repo-lines-v1:sha256:4d22e41bdcf62dda8b87b6aade86c71ec60395c86857110205e39d2ebb75a23d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3Njg4ZGFmOGE2MzcwMmVhNjQyYTM1MjZjZGQzMzNjZmFmODU1ODVkYzNkMDZmMDMzZjZhMDc4MTVkNmYwNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkMGZiMDMzNTBiYWRlZTI4MWU1NjVhZmNmZTRkYzExNWJhYTZlYjdkNTEwYzY1ZGMwMjRkZTQ0M2QxMDY2NjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM0NDA1YzRhMGQ4OGY2NWUyNGMzMDZiMzMyZGQ4M2YwMjhhZGE2OTM1YWZmMmY3MWUxZTIxNzk0Y2M0YzM2OGMifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-09-11T15:38:02.291Z"
+    "at": "2026-09-24T17:26:41.197Z"
   }
 }

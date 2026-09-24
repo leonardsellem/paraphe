@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:18dd160f6544d293c0e9c04dec40c7b57f43cdc28a53e9fdc859913f8faf54cf",
+  "pageVersion": "sha256:3cae34c9af8aa26dd1052e8c0c01683da1668bb996c71ad64f3a384a0ca9c99a",
   "claims": [
     {
       "id": "claim_1c8d20d6b59c47ff998194e968d84034",
@@ -262,11 +262,19 @@
     },
     {
       "id": "claim_dc1dd28fc04a408e8be674005da8b15f",
-      "statement": "tests/inbox/test_wait_engine.py pins the park semantics: a tap inside the window returns the answered envelope and leaves _waiters empty, the window end returns the pending envelope while a later read still answers (and an unobserved expiry is reported expired at the window end), a call without wait_seconds or with 0 does not sleep, a waited read on an already-answered card returns at once, a cancel and an observed expiry wake the park promptly, and the same tap writes identical fields with and without a waiter — so the wait never changes what is stored.",
+      "statement": "tests/inbox/test_wait_engine.py is the engine's witness across three classes: TestWaitEngine pins the park semantics — a tap inside the window returns the answered envelope and leaves _waiters empty, the window end returns the pending envelope while a later read still answers and an unobserved expiry is reported expired at the window end, a call without wait_seconds or with 0 never reaches the blocking primitives, a waited read on an already-answered card returns at once, a cancel and an observed expiry wake the park promptly, and the same tap writes identical fields with and without a waiter, so the wait never changes what is stored; TestWaitHttpSurface pins parking over real HTTP — tools/list answers in well under a second while one call parks, and a client that drops its connection mid-park leaves no waiter, no card change and no stalled traffic; TestWaitCommand pins the CLI — the wait loop over per-call windows until the tap lands, exit 0 with the answered envelope, exit 3 for an expired card, exit 4 for an unknown request id, exit 1 with \"no create bearer\", and config-file bearer resolution.",
       "evidence": [
         {
-          "resource": "repo://tests/inbox/test_wait_engine.py#L99-L199",
-          "version": "repo-lines-v1:sha256:d608bc5095726d50f3c95f68b6567c78276f9266f081c0f8cb293557419bbd52:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwNTJkMmRmOWJkYzE5YmUyNDJmMTM4YTEzNDZmYWE3NjQyNzFhZjI3YWVhMTNhMDc2MWY1MGE2YjM3ZWIwMTU1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MWVlMWRjOTg1YWMzNTVlMTU4MmNmYWNlMWI3MmU2NjhjNWU1OGQwZjY4MjdkYzRjNTg1M2M0OTFiZmI4MDdhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0OTZlMzVkZjA3ODU0MmJhZmE1YTQ1MTMxY2UwMmYwYjQyZTdlOGM0MDNjM2MyYzFiMjIyMWVkNmUzZGI3MzJkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwZDU2NGUwYmU0YjVjZTBmNzc1YWI4MWUwYWRhOGYyYTBjYWE3YzczZjQwMWUzMWFjZmFjODAwNmM2ZTc2NDI2In0"
+          "resource": "repo://tests/inbox/test_wait_engine.py#L101-L205",
+          "version": "repo-lines-v1:sha256:71110cd32f8d996fb695460a5c466477fcff6d6277ce239f6f37e29dcd5653ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwNTJkMmRmOWJkYzE5YmUyNDJmMTM4YTEzNDZmYWE3NjQyNzFhZjI3YWVhMTNhMDc2MWY1MGE2YjM3ZWIwMTU1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MWVlMWRjOTg1YWMzNTVlMTU4MmNmYWNlMWI3MmU2NjhjNWU1OGQwZjY4MjdkYzRjNTg1M2M0OTFiZmI4MDdhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0OTZlMzVkZjA3ODU0MmJhZmE1YTQ1MTMxY2UwMmYwYjQyZTdlOGM0MDNjM2MyYzFiMjIyMWVkNmUzZGI3MzJkIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIwZDU2NGUwYmU0YjVjZTBmNzc1YWI4MWUwYWRhOGYyYTBjYWE3YzczZjQwMWUzMWFjZmFjODAwNmM2ZTc2NDI2In0"
+        },
+        {
+          "resource": "repo://tests/inbox/test_wait_engine.py#L208-L315",
+          "version": "repo-lines-v1:sha256:ee3ed4455a6ec88fff4eec5d45ec4b8bb20a1e9e0d43345369bb5f517909854a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkN2Q4MDA5MWFjN2QyYjcyYjhlYzA1Yjg3YzNjN2IxOTJmNmZmOWVlZjQ4YzEwODZhNmNkYzI5YTkyNDVkNTBkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1MWVlMWRjOTg1YWMzNTVlMTU4MmNmYWNlMWI3MmU2NjhjNWU1OGQwZjY4MjdkYzRjNTg1M2M0OTFiZmI4MDdhIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyNWY3MWIyODI5NzdlYzgzZTA2OTRlZDM0YjQ4ZWFmZDMxZDlmNjM0NGRhOThmZTY3ZmVjOTllZjhmNGY5M2U4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiN2E2ZmQxMWFiYTIzY2RkNGVjMWU0ZjMwNDM4NjI4MDMxZWY0NjkzOTg4YTEwMTFhY2MwZDM0ZGRjOTZkZmQ2In0"
+        },
+        {
+          "resource": "repo://tests/inbox/test_wait_engine.py#L363-L444",
+          "version": "repo-lines-v1:sha256:4e30ca3f027f1adc32c7cac1adba6643a49d30006f0d3977afab12bd95adeb39:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MTIyMDU2OTgxZWRlMGFlNmI5ZmU0M2VhN2ZiMWZhZmZmNTk1MWYyZTdhYzAzNWFhOWQzNWYzMjc1ZDNlMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjZGYyMjNmNWFjODk5YWNlMzljMzhkNDQ2MzllOTA1NzY0OTc2YzhkMjExNzIwYWI0YmNlOGQyZTNiMjNhMzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmOTg0MWMxY2FkOWEzNGE5NzhlZjU1ZDUyYzE5MjU4NTlmNTAzMzBkYzUzZWU1ZDI5OGE4OTg5N2Q4YjgyMmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNkNDEzNDBjYzIzOWExNTljZTliNjAyMmU5ZjYzMjI4MzJlMmVhZDc2Y2FlOWU0NzU0ZDIxMGViOGZiNmQ1ZTgifQ"
         }
       ]
     },
@@ -323,10 +331,28 @@
           "version": "repo-lines-v1:sha256:18e9b5580e07d4d381e53305d96f3779f69df0172510d55bc814a44d791f1956:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNWRhMjMwMDkwMzhlM2ZkNzhmOWMzN2U2ZWNhZTMxYmIzOWJkMjhmZDk5MmYxYWU1MzkxNDlkN2FjZDlhNTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczNWUwNTlhMDAzZTg5ZDk3ZWQ3ODAxYjg0YjllZDU1MjE5Zjc4MjFhODJmNmMxODMwNTJhY2VjNjgxMGM1NjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1YmMyMDBlNThlZTZhYzY5YjY0NGJkMTY2NDU5Mzk4MjgwYmZlMTM3YmZiNTdhOTJiYzI4NmRmODIwMDdkZTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRlYjFiNGIwNDk3NDgxZDBiYmNhOWM5NGM3YzE4ZTdmYjliYmY2YTVkM2IwZjRmNDk4ZTYyMDAyYjFiMjhjMGIifQ"
         }
       ]
+    },
+    {
+      "id": "claim_16ebaca017d84db7a3dafb410a4c288e",
+      "statement": "Every door that wakes a waiter is served by the same process that parked the call, though not by the same thread: serve_inbox runs the HTTP server on a thread it spawns, Runtime.run performs the Telegram long poll on the runtime's main thread, and each parked call occupies its own connection thread — so the answer is written and the event set by a neighbouring thread, and a plain in-process threading.Event suffices with no wake port, IPC or cross-process signal.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/http.py#L91-L97",
+          "version": "repo-lines-v1:sha256:06a27d6183f7d44aad434413e73a399209991d6e596f01d93cec5b6f9f540642:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmI2NTZhOWZkZjU5OWM4M2U3MDY4OGU0ODM2NmIxM2I2Mjk1M2IwY2I1NTM2Y2E3NjVhYTI4ZjE0NTNjMDY3NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGNkNzlhNWQ1MDY0MjU3MTEzZGYzODk3YzAxMTUzMTJhNDI4MTY4NTY1NDkwNzNlNTA1ZDE0Zjk4YjZkOGIxZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTE0ZTBkNTBiYTE0MGMyODlmZTI1ZGFkY2M0Mzk3N2M5MzU5Mzk2NTlkMGUxNjk2NWQ3YmYyYjZlYzI5N2NhNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzVmNWQ5ZjNlZjNlZjA3MDQzOTY4Y2M5MmUwNjIwOGM0MDBhZjllNzBmZmRlN2U1NWUyODMyZDc4NWI0OWZjNiJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/runtime.py#L254-L259",
+          "version": "repo-lines-v1:sha256:e878de94367b0b5786104acc37f562f734562aedacf0d11bddfed86d9efaa1ec:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2UxN2JiNWYyNTY2ZGRkMGVlZGU5N2ZlNjUxNzhhZGRjMTdlYWQ4YzM4YWU4ZGQxOGQ3ZTc1ZWQ4NWNkNTE5NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWU3YmNkMzZlZjUzYjQ0NTIzZTY1ZTk4ZDE5NDQ5OTNlMGZmMTc0NmY1NTM2YzFhNTExNzQ2ZjNlMDFlNzU2ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMThmMWE2YTZmMTRmMTYzNWJiMWQxZDhiMTMwYTI2YjMyNzFhOTQ5MDlmOTY3NGU5ZTZlNWM0Mzg4NjUxYzBkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2FkMDlhNTkyYzUzN2JiNzM5YzY0ZDljMzg2OTE3ZTM0ZTk4N2U3MDA1NDJlZDRhN2M2OWZiMWQ4MTU0MGM1ZSJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/runtime.py#L294-L297",
+          "version": "repo-lines-v1:sha256:e4cc4110262ccda6781329d9886ff6a187dd592f0ec070cff5b8aadccffca6ff:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWRhNWM2NmUxN2IxNDUzOTc4MzRiOGM4NTRkYzQxOTNlMjEyNTE4MGE4OTk2YTE0YzMxODgzMzI2YjJlZmJjZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzg2MGQ0MDAyZDdhODZkZWM5N2RhZWRmZjMxYWU0NDEyNGE2OGQ0MzExMzA2NWJiMzU3MDU2N2EyZWJjMTc2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDI4NWUxNTNkMTA1ZTc1OGIyMzc2N2U3NTRjNzVkYTViMjJmMDI5OWJkN2NlYWIzOWYwMmJjMGFlY2FlNGMyYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTYyMzNiM2ZmZWEzMmEyM2RmNTMwNjUzNDM0OGYyZGVlNzc2YTVhNmY3NGZiNTMzMTc1ZGRjNTM5YThmZTQ2NCJ9"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-09-11T15:27:48.076Z"
+    "at": "2026-09-24T17:26:41.197Z"
   }
 }

@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:476850a6064c110d20ca481f5c1d91e9c20394d479b53f8627cf845e0a2e1cb6",
+  "claims": [
+    {
+      "id": "claim_f3090f086b214e4c9f16551a95075b0c",
+      "statement": "`paraphe check` accepts exactly the single argument list `telegram`; any other argument list is refused with the one line `paraphe: check needs exactly 'telegram'` on stderr and exit code 2, and `check` has no help form of its own.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/__main__.py#L57-L60",
+          "version": "repo-lines-v1:sha256:0e4a6bb96f2a4c3174fba2c99d609911f925f5459ee7dab0e6fe95506b820241:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTMwMTkzNjczMzc2ZmJiMzAwYWE3Y2U5YzkyYWQ5N2JkMTBiNDMyNjllMWU0N2U4MmViMDYzODkwMDgxNjQ0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTEzYjMyNWJiMjg5NjZjZjYxYTU2YmU1MDdkYWExOTQ0NDk1NThkZDA1NTE2ODAyOTkzMDQ3MTk1NjcxOTYyMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMWIzOGJmNzg4Njk0Y2VkOTYxMTdkNWIzYThjZDU1ODYwNmIwNmVlMjIyZGUxNjVmMzQ5YzA3ZmVlNWMxOGYwMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjk1ZDI4YjVhNWU0MjlmMzAzNDQ3Y2VjZWFlNDc1N2RjZjBkMTZjNjVjZGYxODIyNDc2OWQ4Yjk4YTY0ZWIzNyJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/check.py#L72-L75",
+          "version": "repo-lines-v1:sha256:86d0337d75ec5b543e66c07f053009c3b25b1d05672551201a8b53d46c6f00d4:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTE1OGQzMzYyM2Q1OTViZWUwMTI5MDQ5MGE0ODQxN2NlNWUxZTE2MjFmYWVmZTljZjJkZWZlZjdiYjRlMGQ2MiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWY4ZjhmZDhiODYzYmQ4YmE0MmVlODA0ZTE5MTkwODc2Nzg3MjFjYTI3NWQwZWMxNDY1OTI0Y2UwMDUwMjFmOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDU3MjJiOGM0ZjI4MzFhMDhhNmZmMTY4ZDE2NTExNGI2ZmRiYWNmOTg0MjE1MzY2Mjc3NjkzYmRjYjNiZDAyMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjEsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM0NzgzMWY4OGM1ZDRmZDhhZTFlNzM0ZTlhMmZmMTZkM2Y0ZjY2MzZmYTQzM2VhNDM0MzZhYmRkYzJkMmI3NyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_cc853520e56f4d82b2647af4d983a0b6",
+      "statement": "`paraphe store` accepts exactly `relocate` or `relocate --move`; any other argument list prints the store usage on stderr with exit 2, while `-h`, `--help` and `help` print the same usage on stdout with exit 0.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/__main__.py#L61-L64",
+          "version": "repo-lines-v1:sha256:65713445132fd528d12250a1ee44ad143f599b8c5e15ffe0cab801dd5908403f:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGU2ZjM0MmQyOGFlMjE3OTEwYzMxZGYzZjI0NGFiYjFiNjkzNTM5NmYyZDY1MjQ1YmRkOTJkMWNiNDUxM2YzNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAyNmVkNWNmNDJjNzQzZjgzZjE0ZDI0NzI0NDFhNzc0YjE0NzNhMjdhZmJjZmM5NzllYjg3M2IzZTk4M2MzYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTFmMGVjNTBjMWMwNzMzOWZlNWRkOGIwZWZlZDZlOTQyNGYxZDAwYmYzYTdkZGQ0ZjgwMTE0YzQxYWM1MjM0MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZmZkMjc0MGQzNWI1MjcxOGMxNTVmODA3ZDcxODVkMzk4MWVhOGI1MjU0MTZlODY3YzAxMGY3NmE1ZmQ4OTc5MSJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L10-L24",
+          "version": "repo-lines-v1:sha256:407502dc2eb52a8d58225c6e76e0e7807e3f2d4fc3954afb4c7a426ead43ae1b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljYjMwMTYzMDgzNTczMjA3NDZiOWY2MzM4YjdkZWFlNDZmNTAwZDU1ZjZlMDBiNGU5NTgyODA2ZjAwOWQ1ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmOGY4ZmQ4Yjg2M2JkOGJhNDJlZTgwNGUxOTE5MDg3Njc4NzIxY2EyNzVkMGVjMTQ2NTkyNGNlMDA1MDIxZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMwY2ZiMTdjZjcyM2Q0ZWJmYWFlNTM0ZDJkZDIzMDQ2ODE1MzlhNjNjNWFkODYxNzBhNjAwMzA1Y2VhOGE3ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlM2RjOGYyODZkMmQ1OTFmZTc2Zjg4MjljODY3NjhlY2JmN2ZhZjQ3ZGQ0ZTFkYWFiZjhjN2MyNjUxYmE4YzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_50fc2b49ffd241cb92c76d660c6944f6",
+      "statement": "The entry point dispatches `check` and `store` on the first argument, importing `paraphe.check` and `paraphe.store_cli` in their own branches before the `--config` loop, so neither owner-side command consumes a `--config` pair and neither starts the server.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/__main__.py#L57-L68",
+          "version": "repo-lines-v1:sha256:e77518891b51d6ab7637fe8590da81302402dfd56a2f6020427d3893122702ab:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzMDE5MzY3MzM3NmZiYjMwMGFhN2NlOWM5MmFkOTdiZDEwYjQzMjY5ZTFlNDdlODJlYjA2Mzg5MDA4MTY0NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3Yzc0MzMyYWY1NTlhOTU4ZTRkYThiNzNjZDk4ODc0ZjgwMWNjNGMwY2Q3YzBjOTFlZGFmN2YyZDY2MzAxNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFiMzhiZjc4ODY5NGNlZDk2MTE3ZDViM2E4Y2Q1NTg2MDZiMDZlZTIyMmRlMTY1ZjM0OWMwN2ZlZTVjMThmMDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJlMDlkMzdhMDBlZjUxZGM2MThlNmI3MTg5YTIyZWY4NDA3YzMxN2U5MzQ5Mjc0OTE1YTIxZjNlMTIyYmFkZjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c92c75987e6341ff8ce98b20356bc70d",
+      "statement": "`paraphe check telegram` resolves the configuration file itself from `PARAPHE_CONFIG_PATH`, else `paraphe.toml` in the working directory, and feeds it to the same `load_settings` the server uses, so every `SetupError` the loader raises — a missing `mcp_create_bearer`, an invalid owner id or TTL, or the store-location guard — refuses the check with one `paraphe: <message>` line and exit 2 before any Telegram call is made.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/check.py#L28-L42",
+          "version": "repo-lines-v1:sha256:42d37b28621168526937a889b97cbac4fb70cc718d4e357837b4d5bbeaad8f90:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmODFiMWJmMjgxNzI0NWI5ZThjODE5MTc4YjhiODFjMDJkZDM2YmRhNmE2NjQ2ZTRjZmRmOGRkODRiYWQ3ZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmOGY4ZmQ4Yjg2M2JkOGJhNDJlZTgwNGUxOTE5MDg3Njc4NzIxY2EyNzVkMGVjMTQ2NTkyNGNlMDA1MDIxZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxNWQwNzkxMjMyNzQyNTc2M2RmMjM2MjY2NTI3ZDRkMDVhMGMzZjE5ZDZiM2VjMzY2Mzk3ZmViODk0NWExNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmY2IwODFiNTE1Njg1Y2Y3OTk5MTRjYTc1ZmU3ZGJjY2RjOTNkOGQxNDlhMDNmYmI0OTM2NmQ0MmI3ZWI0YjQifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/config.py#L110-L182",
+          "version": "repo-lines-v1:sha256:ea55dc481398e303606d46503512ccc6fed5f1260313660ebae37565d888cd00:eyJzZWxlY3RlZExpbmVDb3VudCI6NzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOTkwMjU1NDQwM2M3MmE1YzIwZDMyN2Y1OGI0Y2I4OTM4YjU2ZTQ5ZTI3NjFlNjNiYmZlM2Q4MTRlMGZjNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5ZWUxOTMyODRlODJmYjc2YWY0ZjRmNTgzZTQzZjA1MDdiNWYxMzJiMTY0ZTZkMzUyM2JhZmI5NGMwYzdiMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9d29f988c5b24215a818e3723dc75106",
+      "statement": "The check refuses with `paraphe: no phone destination is configured` and exit 2 in two distinguishable situations: a configuration file that does not exist together with no non-blank `PARAPHE_BOT_TOKEN` or `PARAPHE_OWNER_TELEGRAM_ID`, decided before settings are loaded, and resolved settings that carry no bot token, decided after; in the first case the Bot API client is never constructed.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/check.py#L28-L42",
+          "version": "repo-lines-v1:sha256:42d37b28621168526937a889b97cbac4fb70cc718d4e357837b4d5bbeaad8f90:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmODFiMWJmMjgxNzI0NWI5ZThjODE5MTc4YjhiODFjMDJkZDM2YmRhNmE2NjQ2ZTRjZmRmOGRkODRiYWQ3ZmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmOGY4ZmQ4Yjg2M2JkOGJhNDJlZTgwNGUxOTE5MDg3Njc4NzIxY2EyNzVkMGVjMTQ2NTkyNGNlMDA1MDIxZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxNWQwNzkxMjMyNzQyNTc2M2RmMjM2MjY2NTI3ZDRkMDVhMGMzZjE5ZDZiM2VjMzY2Mzk3ZmViODk0NWExNzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmY2IwODFiNTE1Njg1Y2Y3OTk5MTRjYTc1ZmU3ZGJjY2RjOTNkOGQxNDlhMDNmYmI0OTM2NmQ0MmI3ZWI0YjQifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_check.py#L131-L142",
+          "version": "repo-lines-v1:sha256:62dc478d1eeb11dbc61826fa51d5084d4529c4babcf8085173842723b7680335:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1ZTQzYTA1Yzc3YWMzOGVlZjE2MDY1MTZjODQ1NzUzODhlMDg4N2YxYzc0OWEwOTMyNjk0YmQwNjIyMzkyODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzN2VmN2M3YmJmZGUzZmRjMjA1NjdkMTY5YmJjMzE3ODUzMzJkMDUyZGQxNmYxOWVlZTlmMDFlOTQ1ZWNlNzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkMGZiMDMzNTBiYWRlZTI4MWU1NjVhZmNmZTRkYzExNWJhYTZlYjdkNTEwYzY1ZGMwMjRkZTQ0M2QxMDY2NjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyMTAwOTgzNjk1Zjc5ZjU1NWU0ZmNlNzkyNDU1MTdmOGEzZWVjNDg4NDczOTA5Mjk3MTM5NGMwNTMxMTU3NTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8b9c8255139e40cd80e7a0ea56f8ee11",
+      "statement": "After settings resolve, the check calls `getMe` and prints the bot identity as `@<username>` when the identity carries a username, else `the configured bot`, then sends the fixed plain `CHECK_MESSAGE` to the configured owner id with `reply_markup` of `None` and no parse mode, and prints `Telegram check passed for owner <id>.` with exit 0 only when both calls succeed.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/check.py#L14-L14",
+          "version": "repo-lines-v1:sha256:4a0bebd986203683f9e0fd59e00ad83943034fb88cf6d219d4440b3802ec6e6b:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGEwYmViZDk4NjIwMzY4M2Y5ZTBmZDU5ZTAwYWQ4Mzk0MzAzNGZiODhjZjZkMjE5ZDQ0NDBiMzgwMmVjNmU2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGEwYmViZDk4NjIwMzY4M2Y5ZTBmZDU5ZTAwYWQ4Mzk0MzAzNGZiODhjZjZkMjE5ZDQ0NDBiMzgwMmVjNmU2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmY4OTdjZmM3YzRmMDg3NzNlMmQwNDAzZDFkMzIyYWZhZTdkMmRjYjRlODYzOGE0ZmRjY2FjYzFmYmVmNzBlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGJiOTQ0ODNiZWI1MDJhZTVjZTc3NjU3ZmE4YTg0OWNjNTlhYTRkMDQ2OWRjMGRhOTJhN2UyZTE1NDgxMWMwNCJ9"
+        },
+        {
+          "resource": "repo://src/paraphe/check.py#L44-L69",
+          "version": "repo-lines-v1:sha256:10f0ca4456b842911fa2804910e4e5775321231e6bc9bb48ccdb6bf2da295c1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmMzhhNjI0NTFmNDE0OTRkMDc4NzNmNDMzNWMzYTQzZjA4ZTIyNzk4ODc5OTc1Yjc3MThjM2E5ZTFhYmYwMjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiYjVlMjhkMTJiMWQxOTgyYjI5YTU5NWZhNjE1OWRlMDA3YTk4MjQ1Y2ZkYjY1ZjcwYmJjMDU0MTkzM2YzMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyZGFiYWE5NzA2Y2I2YTMwY2NjZjQxM2NiYTc5OGEzYmQxNWI3YTA2MGFjNTczOGM2ZmQyMWM0Y2FjNmJjODYifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_check.py#L57-L68",
+          "version": "repo-lines-v1:sha256:b69f6dc1952d75fcbad8fa5958daf36b53b36b163eaa6083788e7f92818028da:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5NTM5MGY1OWE1ZGM5ZmM1MjMyM2U0NDhkNDEyZTE5ZjM4Yzk1YTg4MjkyMDhlMGE4ZTQxMDdlODViYWRlNjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYWU2YWZkNTgwN2ZkMDU0ZWJjOTFkYjFmZTU3ZGI4ZWZhMTNiNDE4YTAwYTEwMGZiZmI1NzNlOWJhMTUxNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzZDMyMzMyYzZjODYxMGNkZjM4MmMxMDgzN2E4NGExMzA2MWJmZWU0MGEyYjYwNzg5MTMzYTAxMDBiMGRjZTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg4Y2E0NDI1NmZlZDUxNGFlYzdiMmM3N2U3Njc0ZTcyYTk1Y2M3MzRjMWE2YjVhMTAwODg0OTNjN2IyZDUxNTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5eca9f4ac87d4c29b4415cd440a6b971",
+      "statement": "The check maps a request Telegram refused (`NotifyRejected`) and a request it could not reach (`TelegramAPIError`) to different messages for both `getMe` and delivery — `Telegram refused the configured bot token` or `Telegram could not deliver to owner <id>; check the id and open a private chat with the bot first` versus `could not reach the Telegram Bot API` — all with exit 2, so a transport failure is never reported as a Telegram refusal and a network failure never blames the owner id.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/check.py#L44-L67",
+          "version": "repo-lines-v1:sha256:50514e8dd8b5ea521bf45cef36798f14b357e693fc0c5043c6dca1da2fe3e0d3:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmMzhhNjI0NTFmNDE0OTRkMDc4NzNmNDMzNWMzYTQzZjA4ZTIyNzk4ODc5OTc1Yjc3MThjM2E5ZTFhYmYwMjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVmOGY4ZmQ4Yjg2M2JkOGJhNDJlZTgwNGUxOTE5MDg3Njc4NzIxY2EyNzVkMGVjMTQ2NTkyNGNlMDA1MDIxZjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiYjVlMjhkMTJiMWQxOTgyYjI5YTU5NWZhNjE1OWRlMDA3YTk4MjQ1Y2ZkYjY1ZjcwYmJjMDU0MTkzM2YzMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBiNzZmZDM2MjY0MmU4MGFkNzBkZTVlNzBmZTliNjI3MThiNWFmMWYxNTgzY2Q0YzUxMjk0ZDI4YWNkNTNjODgifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/runtime.py#L85-L111",
+          "version": "repo-lines-v1:sha256:9e532dfdc90fa7dc6dcaf02198b0b590aa784e2a0167b31d3b948569ef7df5ac:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0YTdhMWM2MWY4Y2E5NzM4NTlmMjdlZGY0YmZhMzI1ZjExMjA5ODQwN2ZiZjMzNDhmNjlkOGYwMTUyYjAxNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhNzFiODcyMWZlMjkzZjIzMzk2MTE1ZGI3NGEyZGJlNTlkZTY0ZmM4OWNmNjhlOTMyNjU1MWI1YTFiZjQ3MDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZlOWI3MDc1ZjBjMTU1N2FjNjM4ZmZiMTllZmM0MTQ2N2RlZjY3NTc0NTFmZWZkYjk2YjlmYThhMWFmNDI2MTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzZDZiMzY2NzU2MTk3YzE0ZmFhYTZkNjNlNTM3ZmI2YzdhZTg2Y2RiY2EwZGI2OTllYzcwNWFkZDUxNzM1ZDEifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_check.py#L83-L129",
+          "version": "repo-lines-v1:sha256:e88035e769eba98a8f5f95d27c75f3f66a1c98802981bcf536d1314b116e7f13:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNGVjOWU4OGJmZTZiMTExY2U3ZGI1MGQ5ZTQ2YzY0M2I0NWE4OWZhNzc2OTg5YWJlNjUzMDlhNDA5ZTJlMTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYWU2YWZkNTgwN2ZkMDU0ZWJjOTFkYjFmZTU3ZGI4ZWZhMTNiNDE4YTAwYTEwMGZiZmI1NzNlOWJhMTUxNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVkMGZiMDMzNTBiYWRlZTI4MWU1NjVhZmNmZTRkYzExNWJhYTZlYjdkNTEwYzY1ZGMwMjRkZTQ0M2QxMDY2NjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjExYWExZDY0Zjk1MjY5MzdiNDc3MTNiNzM2MGUyYzRkYmU3ZTM4MWNkNWU2MWU1ZDVhOGM4MTlmNjZjMjgwNTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3b73ca67a0ab4d1c93bbfaaeada9d4a4",
+      "statement": "The check creates no decision card: it never opens the store, records no notification and no Telegram message id, sends one plain message with no buttons, and prints neither the bot token nor the token-bearing request URL — the suite asserts both absences on the pass path and on each refusal path.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/check.py#L44-L69",
+          "version": "repo-lines-v1:sha256:10f0ca4456b842911fa2804910e4e5775321231e6bc9bb48ccdb6bf2da295c1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmMzhhNjI0NTFmNDE0OTRkMDc4NzNmNDMzNWMzYTQzZjA4ZTIyNzk4ODc5OTc1Yjc3MThjM2E5ZTFhYmYwMjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiYjVlMjhkMTJiMWQxOTgyYjI5YTU5NWZhNjE1OWRlMDA3YTk4MjQ1Y2ZkYjY1ZjcwYmJjMDU0MTkzM2YzMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyZGFiYWE5NzA2Y2I2YTMwY2NjZjQxM2NiYTc5OGEzYmQxNWI3YTA2MGFjNTczOGM2ZmQyMWM0Y2FjNmJjODYifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/inbox/runtime.py#L30-L32",
+          "version": "repo-lines-v1:sha256:d376569b835176d7e39f3ed023b9c385e3d9c621986b5286c56be72bff01efa0:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjE4NDRkYzg5NTg1YmI0Y2QyODliODBiZTVhYTAwOWY5NjY1ODVhYzkwOGQ1OWNlYzhlNzc3NzU5YWI1NWVlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmU4ZDUzN2QwMzk0MGEwZTM3YmU4YTYwYmY0MWVkYjQyMDFjMDU4N2RlYTdiYzMxODNiMjk5OTUzZmVhYjk1NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGRiMDBhOGU0MTNjYjM5ZmEyMTNlMWY3ZTU5YTJmZGU0Njg4NjljNTUyNWNjZTZjYTFmODA0NjBmMmRhMGIxOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2I3MjdjN2M4OWRjOTdmOTU2ZDQ2NTE5MmY3ZmU5OWJlYjExZjgzNGM3OGU4YzkxYTlhMjc3ZWEyN2Q0YzkyMSJ9"
+        },
+        {
+          "resource": "repo://tests/inbox/test_check.py#L57-L95",
+          "version": "repo-lines-v1:sha256:5bc46fb9647cfacdcd082855e0a3454653b621e10e2067c7b191337ba6858653:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5NTM5MGY1OWE1ZGM5ZmM1MjMyM2U0NDhkNDEyZTE5ZjM4Yzk1YTg4MjkyMDhlMGE4ZTQxMDdlODViYWRlNjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkYWU2YWZkNTgwN2ZkMDU0ZWJjOTFkYjFmZTU3ZGI4ZWZhMTNiNDE4YTAwYTEwMGZiZmI1NzNlOWJhMTUxNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzZDMyMzMyYzZjODYxMGNkZjM4MmMxMDgzN2E4NGExMzA2MWJmZWU0MGEyYjYwNzg5MTMzYTAxMDBiMGRjZTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3YTYxODQ4OGMwYmE1MzViN2U1ZmIxNTBmZmU1N2MwNjUxNTgwMmM1MTE4ZGE0N2I5YjAzMzUyNWUyZjlhNmYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4e23c8f20933416396dedc3a5d29a881",
+      "statement": "`paraphe store relocate` computes its own endpoints — `LEGACY_STORE_PATH` (`/var/lib/paraphe/inbox.sqlite`) as the source and `default_store_path()` as the target — and takes no location arguments and no configuration, so it is the upgrade from the retained legacy location rather than a general-purpose move to an arbitrary path.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L12-L31",
+          "version": "repo-lines-v1:sha256:c3bc6ac4744b24f208c254d5f2f4f3a9517a4bd02b059d87dae1e3c47d0c37e1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxZmE3MDQyYWExZmRhOTU5ZTIyNTY2NGIzY2M2ODE5MDE1Mzk0ODYyMWRhM2JiMjliMTc3ZjdiNGEwNGJlNGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMmY0NzZiZWVkNmQ0YzA2MDhlMGUyN2JkNTUyNWQ3ZjZlYTFkYTEyZDNiZGEzMGRmMTc4NDI5OGQyZWYyNGYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJjNjVkOWRkNzk0Mjk5NDI2NDdkMWM2MDFkNzMwOTlkZTA3NzI2YTIzOTNlYWM3NjcxNTBiYzRlYTQxZTRiMGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzMTZmMTY2ZDhkNmMxMDY4MDkwOWZkMjQxYWFjYTU0MDgwMjYwZmI1NzhlMmExZTU0ZjI4NGU1ZmZhODA2ZjQifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L26-L30",
+          "version": "repo-lines-v1:sha256:17afab2f72de65623f55d1049356992adc1ffd61e5a9fba2071f637a4c387bfe:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDQyY2RhZjNhMTQyNWRkZGFmMjAyMTAzOTI5MWE1Njk5MmIxYTNkZWZhMjgzOGVmNTcyNzRjNzA4MDY2NGJlYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTcxMDU3MGIyOWJmMWE3ODY4MDkwMjliNmJlY2NhNmY0ZmQ3YTdmYmQxNzQ2NTI1MDA2N2ZjOTI2Yjg5Mzk0MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmY5ZWY2NjliMmE3YjQ0NzY3Mjg3ZjQzMWZmMzdkNTk0NTY5Y2MyNTQ4MTExODUyYTkwOGM2NGFlODdmMmE4NiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGMwOTdjOTU5MGRjOTYzYWE1ZDE3MDE5ZDk0ZWRhZjhkMTVkMjMwMjFhZmJiYTRjNGI5MjFhMzQ5MzM4M2I5OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_34e05a0418b74b24bf75f25258ba5db6",
+      "statement": "`relocate_store` refuses before changing the filesystem when the source is missing (`source store does not exist: <source>`), the target is occupied (`target store already exists: <target>`), both names resolve to one location (`source and target store are the same`), or either path cannot be read, which is reported as one line naming that path, and a refused run leaves the source and any existing target bytes untouched.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L58-L75",
+          "version": "repo-lines-v1:sha256:1925941ce52e76d9f55b535ac9ad0ce5d3ec52eeaaf58a3fc6e6ea1ddce26e18:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjMjFhNDhkOWRkZDI2YTBjOGIwNjNjMzI2MTk2YjZkYTRjZDcwYmNkOTcyM2Y5NTg2NzBhYzg0MTI4ZTE2ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMjRjOTFkNjZiMDU2OGJhNDY5NDE3YzgxYTg4ZGJkZmUwNGQ4MTRlOTM2ZjliNTE4YmM1NWQwOTA0YWEyOGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExMmI3YmQwNDZiZWRiMTc2ZGI3Mzg2ZmUxZDEzMGE3MTFjYWJjYjU3YWY2YzM5NzIyNzhkOTBlZmFmNjNjY2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFiNzBkNjQ3YmM5YTI3NGEyZGI1M2U3YmFlMjEyOTRmN2Q3OWJiMjE1MjEwNzY5OGEyZDk1MTgzYjUxNTUyNjUifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L305-L317",
+          "version": "repo-lines-v1:sha256:74c4c7b7dafd3fe294e37a135c0eb07b4a2fd5566a1179f4724a5549bd5264c2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjllZmU3OTQzNThmNzA5ODcyOTMyOTYzMjE1ZGI0NDM4NDI4ZWJmYjMxZGFkZGNiMGU4ZjliYzhhZjk2MWFmNWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkOGNmZTkzZjIyMWI0NjVkZGQzZjdhMDZlNjlhMjBkMmI1NTA2NDY3MmQ0ODFkOGM4YzQyZTA1NWUxNmY3ZjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5NDg1NDQ2NjM4N2M5N2I5ZGNmZmYxYTU4YWRiYjU4NDA3NTIxNWFiM2YwMzZhYWRjNWI5MmY2OGZhZjc4ZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJmN2Q5MjgyMTFjNWY0NGI1NjQwMGUyYTZlYzZlMTBkNzRjNjZkNmZkMGE1NzNlOWJmOTE3ODlhYTRiZTc4NmQifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L332-L347",
+          "version": "repo-lines-v1:sha256:7f4f9663c33b93272eb56cc2c367ad7ad7f2ce6ae758afec89f7680e0e5c03c3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmZjE0NWFhY2ViM2EwZDhkYzRkMjk4NzNmMTkyMzI1MDdiZTVkNTRkMzVmYzgyYjA1MTM3MjZhOTVjOThkMzYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5NzA2NjNjYWMxZTEwNzhlNjcwN2UzODI3YjI2MjRlZmZiMGI3MTliMmIzOTIxOTA2MGZkMzhmOTNlOWNlOWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBlMjNkYjRjOGZkNGY3ZDhjMjE4NWFjZDU2OTIxZDk4YWI4YjRkMjVjZjFjYTAyNjlkNjAwMTk1NjUwZmNmZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZkYzE0MGRmZDUyNjJiNDEwZTY0N2Y1NTlkMGRmZWVjNTYwMTg2Y2MxNTY5ZGEwMzlkMDkwYTllNDE3MTJlMTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fbf59226155b4db1b8f98562f14dbefb",
+      "statement": "Relocation creates the destination directory with `mkdir(parents=True, exist_ok=True)` plus an explicit `chmod` to 0700 (failure: `data directory is not usable: <dir>`), builds the copy under a temporary `.tmp` name in that same directory while deliberately not creating the final database path, and takes the snapshot with SQLite's `backup` API from a read-only (`mode=ro`) source connection instead of copying live database bytes.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L77-L111",
+          "version": "repo-lines-v1:sha256:b2396586a7883babe27ae53cf054b1a67e2c9766bfe9ffb0b90ddd37a4fc128e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhYjM3ZmEyY2JkYWNkMWE0MzllM2Q4MjY1NTQ3MDI3MmRiNGE2N2FhN2UxZGYwY2YxZDBlZmYzMmFjZWVkODUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY4ODVmOGZjOTU2YjUzNTg1Y2I3ZTNmZTBhNjY3YTI0NDg0YTBjNjVlNTY5OWUzOWMyYzM0YmQzODgwODU1MWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1MTUwNWIwOGRmMjFkYTlkZjE1ZjZmZTEwNjY0MzI2YmFlMWE3YjJhYzE1ZjBlNDg1NzMwYjlhNGIyMWQ2MmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiNTlhYzMwZTFlNzBjMDkwNTNjNjIzMzJkYzg1OTYzNjViYmUwZDUyODk5YTFlNDU3MWUzY2M2YjEyMTVlOWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5e6179a9c9444200b5f8fa799cf0b2c9",
+      "statement": "The snapshot must pass `PRAGMA integrity_check` with `ok` and must contain the `cards` table before it is installed, because the integrity check alone also passes an empty or foreign database; failures are `copied store failed its integrity check` or `source store is not a Paraphe store: <source>` and leave no target file or leftover temporary file.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L113-L131",
+          "version": "repo-lines-v1:sha256:1a44492adcf494631fcb577c8bc57fabf85ca4db96176afbf97ba9f1c6ff8078:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQzNDRlMDg4MTc0MTc3NzE5YTcxNDBlMWVmYjE4ODExMzcxY2Y3OTU5ODY3NDVhMDhlYTYwN2ExZjA0MTIwOGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMGM5ZDU0ZTQwM2Q5ZGU0OGQ3NDU0ZWMzNTdmODk0Yjg1ZGNmZjIwMTZiZDYwMjJkNWIzY2IxNzdmOWZmYTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI2YzljNmYyYTNiZDk2MzQ5YzA4YjUzOThjZTNkZGQ5YjMyMTkxMDViODRhNjA3MTZmZjkyMzM1ZTNiM2EzYTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3MmU2MzQ3ZjJlMGE2YjM2YWEyYThhZmI0YjZhMGY3YjZhYTM3YzE2ZTBlMmNjZjhmOWUxMDI4OGQ3NzY3MTMifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L319-L361",
+          "version": "repo-lines-v1:sha256:dc09d3ff3f021b0a79a94d945527a2f1bcf8ce3a213192dc8ea5b19cee04c07b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNzQ5ZTAxZDFiMWE4OTg1ODVmNjJjMjcxMDY2NmQzZGFiNTVmMzliNDYwNzg1NTg0ODE4Y2MzYWU0MjZmYmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiMzc3OGVhNjU5OWZmYzc5NjU4MWRlYjM4ZmE5ODNkYzEwZDRhZDI2ZDIxMTNhZTQxODRmYmU3YjA4MzA0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg2MjYzM2NjNGM5NjAxNmVlNTMxMDRhMjJmZDY4MGE2ODE5MjYwNTA0ZmRlYTYzOTAyMDc4NGE2ZDk4NDY1ZTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNiYTc4ZTZjMmFiYzAyOWNhYzgxOTE1NTNkNTNiNmNiOGU2MzFmZjFhZDQ5Yjc3YzAzNGJiMjczYzczMTk1MzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d76f5649fee42929f6e780224b20eb4",
+      "statement": "Installation sets the copy to 0600 and links it to the target with `os.link`, which refuses rather than overwrites a target that appeared meanwhile (reported as `target store already exists: <target>`), then chmods the target to 0600 and removes the temporary name; an `OSError` after the link removes the target again, so a completed relocation is a 0600 file inside a 0700 directory.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L133-L151",
+          "version": "repo-lines-v1:sha256:32de53f0ef9e6b59a999a11df2410f30e4d5c28a464f5cb7d7821a9b38893345:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliYzc1MDg4MzFiNGNkNzYxMmY4Y2I5NjJiZGU2ZWVmMjE3YjIyZTVjOTM2N2EwOWI5MmMwMmJlOGJmYzgxZTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczZDdiNTM1NDJmYzUzMDc5NGZmMjhmZmU4MDNhODIwZWVlMWQ5Yjg4ZWIxMjI1NTFhZGQwYTMwMTA0NjI3OWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiMzA3ZjFjNWE2NTZlOGI0MDZiNDNiZWMwMjA4MTA0YzBiNjFmMzI5ZGExNWM4OGEwNDk0NDRkNmUwYzUyMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhNzg0ZTQwODIxMWFkMmQ3MDBjM2RkY2M1OWU4ZjBlYTNkOTI3ZGQ0YjFjYjU5ZDAwYmJmOTYxMDdjNjJmMzUifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L265-L291",
+          "version": "repo-lines-v1:sha256:e178d7e38a4b355e8d6e0bd1c13241df07d5da610d7f0abb48ff6a82aa8a8b3c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4YmRkNWEwNDA3OTZiYzhiODE0ZTRhMTkxNzY3MWMxZWVkZWNjYTQ5N2VkYzVhYWVkMWMxODRiMTJkZDE0OWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwNmZlZDczN2UxYjk3NmU1ZmU4MTkyYWU0MGE1YzBlY2NhMDM5ZGQ2ZTRmN2IwZjE5NmM5MWFhNDU2ZWEzMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2NmIxZGI3OGZhNzA0MGJiZWY3MmFjYTY1Nzg0OTQzNmEwNGU3OGYwMTlhMWZlNzI2YjA1NzkxYTA3YjA4ZTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5385f7591e63498db8071751cca4c95d",
+      "statement": "With `--move`, the source is removed only after the verified target exists; if that removal fails the target is removed as a rollback and the command refuses with `could not remove source store: <source>`, so a move that cannot complete leaves the store only where it started.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L153-L163",
+          "version": "repo-lines-v1:sha256:c31b89c05be201e1050843ef0a1582682042dae58a9dae57aab3f2dc236824b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjYzQxNjcwODE0MDc2MTAzNWUyYTljZjhlOTc0MjU1MmE2YzliNzY5ODM0ZTYwNGMwYjRjNTE2YjNiYjkyMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE5ZTAyNzdlZGNjNGM0Yjc0ZThmZTJkNGU5NDY3N2RlOTFkZjZlM2QyNDYzNzU2MjhlNDgyOTViOTQ5ZTE2MDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2Mjk1YjNiMTI4ZTUxMGJlMmM5ODc3ZWYyOWM2MDlhM2E0NDg2Y2MxOTFlMWU2MDRlMWZkYjdkMjEzMGZlZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiNDg0ZTMxMmJiZWI4YmIwMzVkZmM5MGM2ZDNkYjQ3MmRiZWNiODRjYjY3NzAyNDM5NzU2MjU3NjhmZTE4YjQifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L293-L303",
+          "version": "repo-lines-v1:sha256:07716b2385b85fdd783f1994af4358e8bd28fc4ecdcf39595fe2bba7106346a0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhYmFkOWYyZWM2YmUxM2FmNmU4YjhjNjkyYzRlNDEzNDlmODhhN2JiNTY3NzA0YWExNGUxNjkxZDIxZTUyYWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZDNjODEzNGM3OGI2ZjliZGYwOGYxM2FjOWNkMTA1MjlmZjJiNDY0ZmU5OGZiM2M2MGExZmFjZDVmNTk3OWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzNmI4MWE4YzdhMTI1ODdkOWEyYTE4ZmM3YWRjOTBlYTAxMTU3NWIwNWRmZGIwNjg5YzRmNWEzOWI1ZGZlNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY4YzgzNWQzMjRmNjlhNGMxMmI4ODg1ZTVkMzlmYWRmNmVlMzQxYzk1ODIyMDBmMWZiOGIyNDYyZDhkYzZkZWYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2c0eb7c0d8cf44d7a68cdefd34608c63",
+      "statement": "Every failure path removes the unfinished snapshot in a `finally`; a `sqlite3.Error` becomes `store could not be copied: <source>` and any other `OSError` becomes `store could not be relocated: <source>`, which `store_cli` prints as one `paraphe: <message>` line on stderr with exit 2, while success prints `Copied store from <source> to <target>.` or `Moved store from <source> to <target>.` on stdout and exits 0.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/store.py#L164-L176",
+          "version": "repo-lines-v1:sha256:d6e19ce56ce9a6b60dfa18ad8b06cb98c5c96080a6b1eb27f1a263e577db2a45:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3ZGQ4OTMxNDExYTYzMmQ4MTRmNGQ0ZGRhNjMyMWRhZDA2YTVmODc3ODkyZmI3NDhhNGUwNjAxOTQzOGFhZjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2Y2NjZDVhMzRmNTUzOWU2MjExZjRjNTVmYmE4NzEwNDA0MjY3NDI5OTY0OWFjNTYzZjdhYjgwODEwZTc2MjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI3YjBkOWI3YmFkZTg3MmRhOWMwM2RlYmI3NDI3NTYwNGZjYzlkYzVhYjI3NzAwNTllMzlmODQyYzJlZmYxNzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc1Y2JlNDUxODIyZDZhNDMzY2M5YWZmZDAwMmFhNzE3ZTljNmM1NWZiMGZkYjNiYTI5YzkxYjFlOTZiNWU4YmEifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L29-L37",
+          "version": "repo-lines-v1:sha256:07cc03313d1ac5be28e112e428e0c42cb9ba3ea3f34af687e98792fd40208903:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWRhNWM2NmUxN2IxNDUzOTc4MzRiOGM4NTRkYzQxOTNlMjEyNTE4MGE4OTk2YTE0YzMxODgzMzI2YjJlZmJjZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTYyMzNiM2ZmZWEzMmEyM2RmNTMwNjUzNDM0OGYyZGVlNzc2YTVhNmY3NGZiNTMzMTc1ZGRjNTM5YThmZTQ2NCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjU0ZjhjOTFmNjRmODdmNDA0NTc0OWJkMDFkNTQ5ZTI1NTQ1ZTZlMjE1ODcyOTgxOGE1NTJhMzFlYWU2Y2M3ZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_47d64b686cde4872ac4d5564b82bbb92",
+      "statement": "Relocation does not replace the startup guard: `resolve_store_path` still refuses when an unconfigured default holds no store while the retained legacy location holds one, an explicit `store_path` is still honoured even then, and once the verified copy lands at the default the guard's condition can no longer be met so startup proceeds against the relocated store.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/inbox/config.py#L110-L127",
+          "version": "repo-lines-v1:sha256:2de812415bd677379a04012596d9df37d388be45826c537d212e53d0ba52e44f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOTkwMjU1NDQwM2M3MmE1YzIwZDMyN2Y1OGI0Y2I4OTM4YjU2ZTQ5ZTI3NjFlNjNiYmZlM2Q4MTRlMGZjNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjOTVjMTkyMTZlZTA0MDIzYzhjYmQwY2NjNGE2YzBhZGVjNzA1OTM1YzFlMzQ2YWM2ZjVjYWQzZGNhMjZjYzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5ZWUxOTMyODRlODJmYjc2YWY0ZjRmNTgzZTQzZjA1MDdiNWYxMzJiMTY0ZTZkMzUyM2JhZmI5NGMwYzdiMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyYmU3YzIyZjVjNmY2OWM3YTlkNjQ1MDRmYjUxOGYxZDgxMWZkNjA3Y2NhMTcxYjRmNmFjYzFkMTYwMGQ5NGYifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L242-L263",
+          "version": "repo-lines-v1:sha256:0f9606c63ed8d292e02c6fae8d2c0c30f0ca3e129cc70f8c68e10fa23b7fa677:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwZTBmNTUwYmVjYWQxYmE3N2ViMDA1Zjg2NTdjZWQzMWJiNTQ0YjMxNjNkZjk0MTMzMzQwNGI5Mjc4YmE1Y2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlODY4MTg1MGRmNGIwNWZlMGZhMWE5MGZmODYxNTA4YmQ5N2U2ODk5ZDg1MGQ3M2U4ODllZWJlNWVmMTM5OGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlMTM5Mzk4OWVkMGI3MmZkYWFjMGFiNTMxYWM5MDI3MDY3YzE5MmUwMGViNTBiYWMxZmM2YWE2NDk3NzcxNzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNjU2YWYyZDE1ZTExNTkwMmI3NzI2YWY3NmY5MDExYzk2ZmVkMzY2MzdiYmQ5Mjc0ZWQ4YzNlMmE3ZmFkYTAifQ"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L424-L436",
+          "version": "repo-lines-v1:sha256:f5155eabbc8d8c6c22533924c6345073661b43f1f8ce10cd9ff7b8677e192b40:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyZDQ0NDI5Nzc5ODM2NThlNjk4OWU3OGRkMWY2MzBhN2UwYTVlNDNhYzUzNGM5Yzc0ZDZiMjk2MzNkYzcyYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlODY4MTg1MGRmNGIwNWZlMGZhMWE5MGZmODYxNTA4YmQ5N2U2ODk5ZDg1MGQ3M2U4ODllZWJlNWVmMTM5OGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5NDg1NDQ2NjM4N2M5N2I5ZGNmZmYxYTU4YWRiYjU4NDA3NTIxNWFiM2YwMzZhYWRjNWI5MmY2OGZhZjc4ZmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyODVjZjE3NmEyZDg5ZDQ0MDIwNWM3ZGM4NTU0ZDg5OTM4OWNhZjVlNjI3ZTRlMjU1ZmQ5MDRhOTFmOTI4MGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ed1838fb661345e886a848f61d5d3208",
+      "statement": "`tests/inbox/test_check.py` witnesses the preflight (exit 0 only after identity and delivery, the two refusal classes, the no-configuration case with the API never constructed, leak-free output, and routing through `paraphe.__main__.main`) and `tests/inbox/test_setup.py` witnesses relocation end to end (data preserved with owner-only modes, move only with the flag, refused and failed copies leaving neither target nor temporary file, and startup accepting the relocated default).",
+      "evidence": [
+        {
+          "resource": "repo://tests/inbox/test_check.py#L35-L161",
+          "version": "repo-lines-v1:sha256:89530e7d2ae1823daad881f3e15d2cca54810fbbaaae1014aff603242cb6f278:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxM2IxMGE1MzgxNTMyNjBkNWZiMmQ0YjI4NGRlOGFhYjZmNGNjYjk0ZmY5YWM1MTNiYTI0MWJkNGQ1YjEwZDFjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1ZWJiMGZkZDk4NDg2MzlhYzZkMWY2YzVhZTkwNDI5OTI1YzdlZWY4NTE5NTQ3MmJhYmIwNTk4NjhlNDBkMzM3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMThlM2YzZTIzZjQ5NDhmNTk2NDA5MDI3MTU2ZDMyYmI0Zjg0MjY4ZDRjNjk1NmU5YjQ0YjE4ZjkyNzcyMWIwIn0"
+        },
+        {
+          "resource": "repo://tests/inbox/test_setup.py#L271-L436",
+          "version": "repo-lines-v1:sha256:003cbc7663a6de1e0b16758b1bd27d7f94e9dbd3ba5bf11cf77da20740bbf16e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2ZGFkNDYyY2YyMmY1NmMzYmI3MTI4M2MzNmIzYTVlZTc5ZmU0NDk2YWE3MzQ5OWU5MzIzZWQ2M2ExNjVkYTE4IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkZTg2ODE4NTBkZjRiMDVmZTBmYTFhOTBmZjg2MTUwOGJkOTdlNjg5OWQ4NTBkNzNlODg5ZWViZTVlZjEzOThkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzMjM3ZmE1YWRjYWQ1ZTQxNWMxYjk2MGEyYTE1NTNkZDNkZTJmMjUzZGYxYzA3MDE3Zjk3YjgyMGU3OTE4MDgyIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmMjg1Y2YxNzZhMmQ4OWQ0NDAyMDVjN2RjODU1NGQ4OTkzODljYWY1ZTYyN2U0ZTI1NWZkOTA0YTkxZjkyODBiIn0"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-24T17:26:41.197Z"
+  }
+}
