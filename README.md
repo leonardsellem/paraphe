@@ -150,7 +150,23 @@ Cards are a SQLite file in your per-user data directory
 `store_path`. The directory is created `0700` and the file `0600`, and Paraphe
 never reads or writes outside that location.
 
-**Upgrading from a release that used `/var/lib/paraphe`:** set `store_path` to
-`/var/lib/paraphe/inbox.sqlite` explicitly. Paraphe refuses to start with the
-default when a store exists at that location, rather than quietly beginning a
-second, empty inbox.
+**Upgrading from a release that used `/var/lib/paraphe`:** stop the running
+Paraphe server, then copy its existing store into the current per-user location:
+
+```console
+paraphe store relocate
+```
+
+The command refuses to overwrite a store at the target, verifies the SQLite
+copy before installing it, and leaves the old store in place as a backup. To
+remove the old store instead of keeping it as a backup, run the same command
+with `--move`:
+
+```console
+paraphe store relocate --move
+```
+
+Paraphe refuses normal startup with the new default while a store exists only
+at `/var/lib/paraphe/inbox.sqlite`; this prevents an upgrade from quietly
+beginning a second, empty inbox. Setting `store_path` to the old location
+remains available when relocation is not wanted.

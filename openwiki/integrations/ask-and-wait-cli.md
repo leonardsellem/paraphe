@@ -24,10 +24,10 @@ sources:
     resource: repo://tests/inbox/test_setup.py
   - id: openwiki-source-ec516ae95f07d4f7e51ef3b6
     resource: repo://tests/inbox/test_wait_engine.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T14:44:51.273Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
 verified:
   - by: openwiki/0.5.0
-    at: 2026-09-11T14:44:51.273Z
+    at: 2026-09-24T17:26:41.197Z
 ---
 
 # The ask and wait commands
@@ -83,12 +83,15 @@ Two limits of the surface follow from the parsing:
   Passing a stable `--external-id` is what makes a repeat return the existing
   card and notify the owner only once.
 
-`paraphe ask` and `paraphe wait` are dispatched by `paraphe.__main__:main`
-*before* the `--config` loop, and the entry point is the `paraphe` console script
-plus `python3 -m paraphe`. The client path never consumes `--config`, never
-reads the file for anything but the bearer, and needs the service already
-running. The exit code `2` of that top-level path (`--config` without a path, a
-`SetupError` from the server) is not one of the client's codes.
+`paraphe.__main__:main` matches `check` and `store` first, and then hands `ask`
+and `wait` to `paraphe.cli.main`; every one of those routes is matched *before*
+the `--config` loop, and the entry point is the `paraphe` console script
+(`paraphe = "paraphe.__main__:main"`) plus `python3 -m paraphe`. The client path
+never consumes `--config`, never reads the file for anything but the bearer, and
+needs the service already running; handing `--config` to `ask` or `wait` is
+`paraphe: unknown option --config` with exit `1`, because neither command
+accepts it. The exit code `2` of the top-level service path (`--config` without
+a path, a `SetupError` from the server) is not one of the client's codes.
 
 ## Where it points
 
@@ -163,6 +166,7 @@ is `result.content[0].text`, parsed as JSON. `_call` classifies everything else:
 | connection refused, DNS failure, timeout, socket error | `CliError` | `the service is unreachable` |
 | a `200` body that is not JSON at all | `CliError` | `the service is unreachable` |
 | a JSON-RPC `error` object, or no dict `result` | `CliError` | the error's `message`, else `the service returned an invalid response` |
+| a `result` with no usable `content[0].text`, or a `text` that is not JSON | `CliError` | `the service returned an invalid response` |
 | `result.isError` | `ToolError` | the server's own refusal text, e.g. `unknown request_id`, `choices is too long`, `question is too long` |
 
 The refusal vocabulary of the surface is message text under HTTP `200`, not a
@@ -171,7 +175,8 @@ status code, which is why the tool error above is what the commands read. A
 `except (URLError, OSError, ValueError)` as a socket failure — the `json.loads`
 runs inside that block — so it is reported as `the service is unreachable`
 rather than as an invalid response, and `wait` counts it against its transport
-budget.
+budget. The other `CliError` classifications are raised inside `_call` as well,
+so `wait` charges every one of them to the same budget instead of failing fast.
 
 ## `ask` — create and print
 
@@ -321,17 +326,22 @@ beside the waited call, which is how the per-runtime idioms in
 ## Tests and extension seams
 
 `TestWaitCommand` in `tests/inbox/test_wait_engine.py` is the focused suite for
-this page: it pins that `ask` prints the request id of the card it created
-(question, context and choices included), that `wait` exits `0` printing the
-answered envelope with empty stderr, exits `3` for an expired card with empty
-stdout, exits `4` for an unknown request id, loops over more than one window until
-a later tap, uses `mcp_create_bearer` from the config file when the environment is
-unset, and refuses with `1` and `no create bearer` when neither source exists.
+this page: it drives the commands in-process against a real server on a loopback
+port and pins that `ask` prints the request id of the card it created (question,
+context and choices included), that `wait` exits `0` printing the answered
+envelope with empty stderr, exits `3` for an expired card with empty stdout,
+exits `4` for an unknown request id, loops over more than one window until a
+later tap (`window=0.1` against a tap 0.15 s in), uses `mcp_create_bearer` from
+the config file when the environment is unset, and refuses with `1` and
+`no create bearer` when neither source exists.
 
 `tests/inbox/test_setup.py` drives the top-level entry point that the client path
-is dispatched ahead of: an empty environment prints the usage text and exits `0`,
-and an environment holding only `PARAPHE_OWNER_TELEGRAM_ID` fails closed with one
-`paraphe:` line and exit `2`.
+is dispatched ahead of: `test_console_command_prints_usage_when_nothing_is_configured`
+runs `_entry.main([])` with an empty environment and expects the usage text and
+exit `0`, and
+`test_console_command_fails_closed_on_incomplete_configuration` sets only
+`PARAPHE_OWNER_TELEGRAM_ID` and expects one `paraphe:` line on stderr and
+exit `2`.
 
 The commands are importable as functions, which is the extension seam:
 `cli.main(argv)` is the dispatch entry, `ask(...)` and `wait_for_answer(...)`

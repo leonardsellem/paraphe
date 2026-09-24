@@ -1,11 +1,11 @@
 ---
 type: architecture
 title: Composition root and runtime
-description: How one paraphe invocation becomes a running inbox — the entry point's dispatch of help, the server and the ask/wait client, settings resolution from file and environment, the destination chosen from configuration, the ordered startup and its rollbacks, and the shutdown order.
+description: How one `paraphe` invocation becomes a running inbox — the entry point's dispatch of help, version, the check and store commands, the ask/wait client and the server, settings resolution from file and environment, the destination chosen from configuration, ordered startup with its rollbacks, the ready line, and the shutdown order.
 tags: [runtime, configuration, composition, operations]
 verified:
   - by: openwiki/0.5.0
-    at: 2026-09-11T13:38:17.169Z
+    at: 2026-09-24T17:26:41.197Z
 sources:
   - id: openwiki-source-7aa209ee4f993345d7092214
     resource: repo://config.example.toml
@@ -27,54 +27,88 @@ sources:
     resource: repo://src/paraphe/inbox/runtime.py
   - id: openwiki-source-d39aa17b1580d696b9e0586e
     resource: repo://src/paraphe/inbox/store.py
+  - id: openwiki-source-24cf54bd1cd4de427157c91b
+    resource: repo://tests/inbox/test_check.py
   - id: openwiki-source-e4396e8098443d1a6d47ca43
     resource: repo://tests/inbox/test_runtime.py
   - id: openwiki-source-17bf8b7b171c9db569415c2e
     resource: repo://tests/inbox/test_setup.py
   - id: openwiki-source-ec516ae95f07d4f7e51ef3b6
     resource: repo://tests/inbox/test_wait_engine.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T13:38:17.169Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
 ---
 
 # Composition root and runtime
 
 One process, one store, one command. The installed `paraphe` script
-(`paraphe = "paraphe.__main__:main"`) starts the inbox, and the same command's
-`ask` and `wait` subcommands run the shell half of the return path against it —
-so the server and the client that talks to it are never two installed things.
-This page follows a single invocation from argument dispatch to a running
-inbox: settings resolution, the destination chosen from configuration, the
-ordered startup with its rollbacks, the two run modes, the ready line, and the
-shutdown order.
+(`paraphe = "paraphe.__main__:main"`) is the whole product's front door: it starts
+the inbox, and the same command carries the shell client that talks to it (`ask`,
+`wait`) and the owner-side commands (`check`, `store`) — so the server, the client
+and the operator's preflight are never separate installs. `python3 -m paraphe`
+reaches the same `main`. This page follows a single invocation from argument
+dispatch to a running inbox: settings resolution, the destination chosen from
+configuration, the ordered startup with its rollbacks, the two run modes, the
+ready line, and the shutdown order.
+
+Two constraints shape every line of it:
+
+- **The standard library is the whole dependency list.** `pyproject.toml` declares
+  `dependencies = []`, and every module here imports only the standard library and
+  the package itself.
+- **The answer path refuses a non-loopback bind**, and the listener itself only
+  accepts loopback or a Tailnet address. Both checks are in the startup path, not
+  in the configuration file.
 
 ## The entry point
 
 `src/paraphe/__main__.py` is both the installed `paraphe` command (via the
-`paraphe.__main__:main` console script) and `python3 -m paraphe`. Its dispatch,
-in order:
+`paraphe.__main__:main` console script) and `python3 -m paraphe`. Its dispatch, in
+order:
 
 | Invocation | Behaviour |
 |---|---|
 | `-h`, `--help`, `help` as the first argument | prints usage, exits `0` |
+| `--version` as the first argument | prints the installed distribution's version, exits `0` |
+| `check ...` | imports `paraphe.check` and runs it with the remaining arguments |
+| `store ...` | imports `paraphe.store_cli` and runs it with the remaining arguments |
 | `ask ...` or `wait ...` | imports `paraphe.cli` and runs it with those arguments (the subcommand included), so the client path handles the command |
-| `--config PATH` (repeatable) | sets `PARAPHE_CONFIG_PATH` and falls through |
+| `--config PATH` (repeatable, leading the argument list) | sets `PARAPHE_CONFIG_PATH` and consumes the pair |
 | nothing configured | prints the same usage, exits `0` |
 | configured | imports and runs `paraphe.inbox.runtime.main` |
 
-"Configured" means any `PARAPHE_*` variable is present in the environment, or
-`PARAPHE_CONFIG_PATH` points at a file, or `paraphe.toml` is present in the
-working directory (that filename is git-ignored). `--config` with no path is its
-own error: one `paraphe: --config needs a path` line on stderr and exit `2`.
+Every row is decided on the **first** argument, and each import happens inside its
+own branch, so a server run never imports the client and a client run never
+imports the server. `--version` prints `importlib.metadata.version("paraphe")`
+rather than a second literal, so the value cannot drift from `pyproject.toml`; a
+checkout whose package was never installed has no distribution metadata to read.
+
+"Configured" means any `PARAPHE_*` variable is present in the environment — the
+test is name-based, so even a blank export counts — or the file it names (the
+default `paraphe.toml` in the working directory, which is git-ignored) exists.
+`--config PATH` is repeatable and the last pair wins;
+`--config` with no path is its own error: one `paraphe: --config needs a path`
+line on stderr and exit `2`. The loop consumes only *leading* pairs and then
+discards whatever is left, so a word after `--config` never runs:
+`paraphe --config paraphe.toml check telegram` starts the server. A subcommand is
+recognized as the first argument or not at all.
 
 A `SetupError` from the runtime is printed as one `paraphe: <message>` line with
-exit `2` — never a traceback, and never a partially started service. The help
-row and the nothing-configured row are the same code path on purpose: a reader
-who runs the command before configuring anything should see what to do, not a
-stack trace.
+exit `2` — never a traceback, and never a partially started service. The help row
+and the nothing-configured row print the same usage on purpose: a reader who runs
+the command before configuring anything should see what to do, not a stack trace.
 
-`paraphe ask` and `paraphe wait` complete the whole ask/answer loop from a shell
-— ask prints the request id, wait exits when the owner taps — and they are
-checked *before* the `--config` loop. That means the client path never consumes
+### The routes it hands off to
+
+`paraphe check telegram` and `paraphe store relocate` are the owner-side commands:
+a paired preflight for the phone destination and the documented way to move a
+store kept by an earlier release to the current location. They are dispatched
+before the `--config` loop, so neither consumes `--config` and neither needs the
+service to be running; what they read, print and verify is
+[The owner-side commands](/openwiki/operations/owner-side-commands.md).
+
+`paraphe ask` and `paraphe wait` complete the whole ask/answer loop from a shell —
+ask prints the request id, wait exits when the owner taps — and they are checked
+*before* the `--config` loop too. That means the client path never consumes
 `--config`; it resolves its create bearer from `PARAPHE_MCP_CREATE_BEARER` or the
 configured file, uses the CLI's own exit codes (`0` answered, `1` error,
 `3` expired or not answerable, `4` unknown request id), and needs the server
@@ -122,7 +156,7 @@ answer credential. That is the same boundary described in
 The defaults come from the code, not from a sample run:
 
 - `runtime.DEFAULT_MCP_HOST` is `127.0.0.1`; `PARAPHE_MCP_HOST` overrides it.
-  The host is not validated here — the bind rule below is what refuses a public
+  The host is not validated here — the bind rules below are what refuse a public
   one.
 - `runtime.DEFAULT_MCP_PORT` is `8787`, overridable by `PARAPHE_MCP_PORT`, which
   must be an integer in `0`–`65535`. `0` means "let the OS choose", and only the
@@ -136,14 +170,20 @@ The defaults come from the code, not from a sample run:
   `cli.DEFAULT_PORT` (`127.0.0.1:8787`) for the endpoint it derives when neither
   `--url` nor `PARAPHE_MCP_URL` is set, and does not range-check the port.
 
+These three are read by `Runtime.start`, not by `load_settings`; `--config` only
+decides *which file* the settings come from.
+
 ## Startup sequence
 
 ```mermaid
 flowchart TD
     A["paraphe invoked"] --> B{"first argument"}
     B -->|"help flag"| C["print usage and exit 0"]
-    B -->|"ask or wait"| D["run paraphe.cli with the remaining arguments"]
-    B -->|"--config PATH"| E["set PARAPHE_CONFIG_PATH"]
+    B -->|"--version"| V["print the installed version and exit 0"]
+    B -->|"check"| CK["run paraphe.check with the remaining arguments"]
+    B -->|"store"| ST["run paraphe.store_cli with the remaining arguments"]
+    B -->|"ask or wait"| D["run paraphe.cli with the arguments, subcommand included"]
+    B -->|"--config PATH"| E["set PARAPHE_CONFIG_PATH and drop the pair"]
     B -->|"anything else"| F{"configured"}
     E --> F
     F -->|"no"| C
@@ -164,12 +204,14 @@ flowchart TD
     R --> S["run loop, then close on exit"]
 ```
 
-How an invocation becomes a running inbox, including the two refusals and the
-order in which the phone-mode work happens.
+How an invocation becomes a running inbox, including the dispatch that never
+reaches the runtime, the two refusals and the order in which the phone-mode work
+happens.
 
 `Runtime.start` is the composition root. It:
 
-1. resolves settings and the store location;
+1. resolves settings — and with them the store location — from the configuration
+   file named by `PARAPHE_CONFIG_PATH`, if any, and the environment;
 2. reads the host, port and poll interval from the environment;
 3. builds the one `Inbox` with the resolved settings;
 4. refuses a non-loopback bind when the answer path is enabled;
@@ -180,11 +222,37 @@ order in which the phone-mode work happens.
 7. in phone mode, restores the Telegram offset **after** the HTTP surface is up;
 8. returns a `Runtime` holding the `ServerHandle`.
 
-Steps 6 and 7 roll back on failure: an exception during reconciliation or
-serving closes the inbox, and an exception restoring the offset closes the
-runtime, so a failed start never leaves an open store or a listening socket
-behind. The HTTP transport itself, its routes and their authentication are
-documented in [The MCP HTTP surface](/openwiki/architecture/mcp-surface.md).
+```mermaid
+sequenceDiagram
+    participant CLI as paraphe entry point
+    participant RT as Runtime
+    participant Inbox as Inbox
+    participant HTTP as HTTP server
+    CLI->>RT: Runtime.start
+    RT->>RT: load settings, resolve the store, read host and port
+    RT->>Inbox: build the one Inbox
+    RT->>RT: refuse a non-loopback bind when the answer path is on
+    RT->>Inbox: reconcile notifications in phone mode
+    RT->>HTTP: serve the MCP surface and the answer path
+    Note over RT: a failure in reconciliation or serving closes the inbox
+    RT->>Inbox: restore the Telegram offset in phone mode
+    Note over RT: a failure restoring the offset closes the runtime
+    RT-->>CLI: the running Runtime
+    CLI->>CLI: install SIGINT and SIGTERM, print the ready line
+    CLI->>RT: run
+    CLI->>RT: close
+    RT->>HTTP: close the server
+    RT->>Inbox: close the store
+```
+
+The same lifecycle as a call sequence: what `Runtime.start` touches in order, and
+where each rollback sits.
+
+Steps 6 and 7 roll back on failure: an exception during reconciliation or serving
+closes the inbox, and an exception restoring the offset closes the runtime, so a
+failed start never leaves an open store or a listening socket behind. The HTTP
+transport itself, its routes and their authentication are documented in
+[The MCP HTTP surface](/openwiki/architecture/mcp-surface.md).
 
 ## The two run modes
 
@@ -233,8 +301,8 @@ answered `ok: false`). Both are swallowed with a one-second, stop-aware backoff
 and the service stays up. `TelegramBotAPI` keeps the token out of every message
 it raises: the token lives in the request URL, and errors never quote it. Any
 other exception escapes `run()` and reaches the `finally` that closes the
-runtime; the tap surface's own behaviour is documented in
-[The Telegram tap surface](/openwiki/integrations/telegram-tap-surface.md).
+runtime. The Bot API client itself and its configuration threading are documented
+in [The Telegram tap surface](/openwiki/integrations/telegram-tap-surface.md).
 
 ## The ready line and where the bind is policed
 
@@ -278,6 +346,8 @@ second timeout and closes the socket; only then does the inbox close the store.
 |---|---|
 | Nothing configured | usage, exit `0` |
 | `--config` with no path | one line on stderr, exit `2` |
+| `--config PATH` followed by a subcommand | the server starts; the trailing words are ignored |
+| `paraphe --version` | the installed version, exit `0`, no configuration needed |
 | Configuration present but invalid | one `paraphe: <message>` line, exit `2`, nothing left running |
 | Answer path enabled on a non-loopback bind | refuses to start (`SetupError`) |
 | Bind host neither loopback nor Tailnet | `BindError` from `serve_inbox`, not the one-line message |
@@ -287,15 +357,21 @@ second timeout and closes the socket; only then does the inbox close the store.
 | A polled update fails during handling | the offset stays on it, so it is retried after a restart |
 | A malformed `update_id` in a batch | the poll raises `TelegramAPIError`; earlier entries in the batch are already persisted |
 | `paraphe ask` / `paraphe wait` | the client path's own codes: `0` answered, `1` error, `3` expired or not answerable, `4` unknown request id |
+| `paraphe check` / `paraphe store` | the owner-side command's own message and exit code (see [The owner-side commands](/openwiki/operations/owner-side-commands.md)) |
 
 ## What the tests pin
 
 - `tests/inbox/test_setup.py` drives the entry point itself: an empty
-  environment prints usage and exits `0`, while an environment holding only
-  `PARAPHE_OWNER_TELEGRAM_ID` exits `2` with a `paraphe:` line on stderr. It also
-  covers every settings refusal, including a non-loopback bind with the answer
-  path enabled for `0.0.0.0`, the Tailnet address `100.64.1.2` and a public
-  address.
+  environment prints usage and exits `0`, an environment holding only
+  `PARAPHE_OWNER_TELEGRAM_ID` exits `2` with a `paraphe:` line on stderr,
+  `--version` prints the version reported by the distribution without any
+  configuration, and `paraphe store relocate` is driven through the same
+  `main` for its copy, move and failure paths. It also covers every settings
+  refusal, including a non-loopback bind with the answer path enabled for
+  `0.0.0.0`, the Tailnet address `100.64.1.2` and a public address.
+- `tests/inbox/test_check.py` routes `check telegram` through
+  `paraphe.__main__.main` and pins that neither the token nor the token-bearing
+  URL appears in what the command prints.
 - `tests/inbox/test_runtime.py` starts the real runtime against a temporary
   store: loopback bind, one notifier, the configured store, `close` stopping the
   listener and closing the store, the bootstrap skipping queued updates and

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:b73bd8355082489a73f07a085ea04273ac97ef470a38753f9d915863d94359bb",
+  "pageVersion": "sha256:0fd6a53fab7b34640785aae37768975628dca10b5c14580a7e786e08b7e02c75",
   "claims": [
     {
       "id": "claim_c68543e0b3d44aa5aa08af1a1a8bcc1b",
@@ -8,11 +8,11 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:a47816be6597a49e1504f72a5e72c9a709acbc56e097a9ab445f23fe6e76c372"
+          "version": "repo-file-v1:sha256:28d1df256b8c2a768f9b9f097bdfd3cbd2edd9fc457ffcdd642e601e6c7e8a27"
         },
         {
           "resource": "repo://pyproject.toml",
-          "version": "repo-file-v1:sha256:c9d26d8cbe2b28daf309dcf26479b058fc896da83493635dbaa5e0ec0b062081"
+          "version": "repo-file-v1:sha256:92fe8a93e27db6e9d23e73b486d2673774b354c5518b1b50d067dec70e4c3191"
         }
       ]
     },
@@ -22,7 +22,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:a47816be6597a49e1504f72a5e72c9a709acbc56e097a9ab445f23fe6e76c372"
+          "version": "repo-file-v1:sha256:28d1df256b8c2a768f9b9f097bdfd3cbd2edd9fc457ffcdd642e601e6c7e8a27"
         },
         {
           "resource": "repo://config.example.toml",
@@ -46,7 +46,7 @@
       "evidence": [
         {
           "resource": "repo://docs/demo/console-loop.md",
-          "version": "repo-file-v1:sha256:b9b2d436717161d3dd2dc000f373733eb61fede823139541cd2beab6cec6244e"
+          "version": "repo-file-v1:sha256:719a26d0f2c50528c46ec002d85a1e106d68c17fb7605e4f3e7700bf9c2e7339"
         }
       ]
     },
@@ -78,7 +78,7 @@
       "evidence": [
         {
           "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:a47816be6597a49e1504f72a5e72c9a709acbc56e097a9ab445f23fe6e76c372"
+          "version": "repo-file-v1:sha256:28d1df256b8c2a768f9b9f097bdfd3cbd2edd9fc457ffcdd642e601e6c7e8a27"
         },
         {
           "resource": "repo://config.example.toml",
@@ -88,11 +88,27 @@
     },
     {
       "id": "claim_e2c40510aafa48c794df7557babe079e",
-      "statement": "The tool surface contract is docs/tools.md and the destination contract is docs/adapters.md.",
+      "statement": "The in-repository contracts remain docs/tools.md for the tool surface and docs/adapters.md for destinations — the recorded demo cites both — even though neither appears in the README's documentation table any more.",
       "evidence": [
         {
-          "resource": "repo://README.md",
-          "version": "repo-file-v1:sha256:a47816be6597a49e1504f72a5e72c9a709acbc56e097a9ab445f23fe6e76c372"
+          "resource": "repo://README.md#L121-L133",
+          "version": "repo-lines-v1:sha256:c3c36b9960d75a34d71a310b8d07b5fa63ded5a14cdfbc18bc213d784587898d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxNDA4MmQyODRiZjZmNDk1NGU2ZjE2ODBjYTcxZTE4ZDI0YjMzMTc3OTM4ZTMwZGM5Y2FlMzA2YTkzN2Q5Y2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ5NDZiNTFiODZhN2U4OGQwNmQ5ZGNmMDgwODlhY2I2YWE4NDQ2MDUwOGUyODg5YjM1N2JmMDQ2NTg3YjExYzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4ZGNhNjBmODc2ZmJiODJhODcyMjQxYTI3YTljMjlkZTUwZWI3MDFiY2ZmNDczODAyM2UwZmUyNmZmZjNmOTkifQ"
+        },
+        {
+          "resource": "repo://docs/adapters.md",
+          "version": "repo-file-v1:sha256:b6fcf4d9f304d6931db4647b8b23903530da79b1c0229d12317dda3be23886c6"
+        },
+        {
+          "resource": "repo://docs/demo/console-loop.md#L50-L52",
+          "version": "repo-lines-v1:sha256:d6037018db9476a1647006700442e38b2ca155e34fe4dd9594c36975759a1544:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTdiMThlNWI1ZmRkMDFjNjgyYjdkZTdiNWRkZDU1ZmRhOThhMjhmMTMzNGYwOTYwMDg3YmNiNGFkYmIxMGFiYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGFhZDU0NzA0N2FjMjQyZTRjNTBiY2FlZTNiOTM0ZGQ4MTcwN2UyYWExN2FmNGEzYThlMjlkOTUzNTRiZjc2ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDEyNTkyNTMyZjc2N2Y1ZTY4ZjczYjdmZGM5MzA2Y2NkZTQzMDE2MjBkYjQ4NzczYmJiOGUyNjc2MmExOTZjMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODM5NGI2NzQ2N2RjMmUyZTA2N2Y5Njg2N2RiNDgwMjllNTM5OWEzY2YwNzk3Y2UyZTNjNWNhOGQ2OTNhY2M4ZCJ9"
+        },
+        {
+          "resource": "repo://docs/demo/console-loop.md#L74-L77",
+          "version": "repo-lines-v1:sha256:19fabbab78592f77f28179f5efddb2da3d8f9246ab2cd201c24c90364447938a:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiN2I0OGIzNTY4M2MyMDcyMWMxY2M3OGVkOWIyZTlkNjZmYTVhNjE5ZTlkOGJiZTQzYWM0NzViYjY4OWM5MDUyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTM2MTdiODRlOWM4ZGIwYTlkZjY1ZjI0ZDkwZDc3MzUxODgxZWM0OGQ4MjgyNjI5Yjk0YjBiM2VhMzgyOWI2OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjI5YmFiNmFkYzlmMzZjNDFlNGExZGU5OTA0NTUxMzgxMWZkMDZjNjFjMzdkZGM4ODViOGIzNzY3MmRmMzA1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        },
+        {
+          "resource": "repo://docs/tools.md",
+          "version": "repo-file-v1:sha256:8f76527fd6b1c77df5e2aa951050752781d844c8a773772d39d3bb3310cb78f5"
         }
       ]
     },
@@ -116,14 +132,10 @@
     },
     {
       "id": "claim_d67f1bd57939485399dba242254231c6",
-      "statement": "The default bind is loopback 127.0.0.1:8787 for both the server (runtime.DEFAULT_MCP_PORT) and the shell client (cli.DEFAULT_PORT), and the ready line reports the port actually bound, so the README's 8792 and the recorded demo's 8899 are runs that set the port rather than the default.",
+      "statement": "The default bind is loopback 127.0.0.1:8787 for both the server (runtime.DEFAULT_MCP_PORT) and the shell client (cli.DEFAULT_PORT), and the ready line is printed from the socket that was actually bound with the port it reports, so a run that sets PARAPHE_MCP_PORT — as the recorded demo did with 8899 — prints that port instead of the default.",
       "evidence": [
         {
-          "resource": "repo://README.md#L31-L31",
-          "version": "repo-lines-v1:sha256:79fb98b7f972af01d88a586f6abd47db23fcff9ac83af041164c80e7ff6df479:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzlmYjk4YjdmOTcyYWYwMWQ4OGE1ODZmNmFiZDQ3ZGIyM2ZjZmY5YWM4M2FmMDQxMTY0YzgwZTdmZjZkZjQ3OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzlmYjk4YjdmOTcyYWYwMWQ4OGE1ODZmNmFiZDQ3ZGIyM2ZjZmY5YWM4M2FmMDQxMTY0YzgwZTdmZjZkZjQ3OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTQ2OTViMWRlYTY4NWQ5YjhhZTk3MTQ1ZDFkYmM2NzVjYzdiN2JiOTU4ZmVlMmRkMDVkYmNmOWJiNTRjYThkOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTkyNmNiYmU4NGJkODBkZjIyM2M5ZDlhZWJkZGNkN2UwMTNhYTNjZmFiZmJjNGUzOTVkMzAxNTAzNmJhMTg2YSJ9"
-        },
-        {
-          "resource": "repo://docs/demo/console-loop.md#L19-L22",
+          "resource": "repo://docs/demo/console-loop.md#L22-L25",
           "version": "repo-lines-v1:sha256:65ab2b426af9ba5da134b742e84d9b605fb167daf00766b4959135db711f2fce:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDdjMDZjNTYxZDVjMzI3MzQzNjg1MjY4YTQ2YjMzOTFmMzk5OGVlZTg5MGQyYmU1MWYwZDIxY2M0YTUzYWU2ZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDdjMDZjNTYxZDVjMzI3MzQzNjg1MjY4YTQ2YjMzOTFmMzk5OGVlZTg5MGQyYmU1MWYwZDIxY2M0YTUzYWU2ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjg5ZDY1ZTkxY2E4YzZlOTc1NzEyODdjN2RhYmVmNmNjYzMxMGViZDhjYzIzMjk1ZjFlYTg3ODFmMDkxOWFlZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWQyOGI4MDZiNDI3ZGU0YzNjMjZjYjgzMThlNDM3YzBiZjI4NTU2YmEzMGNjMDk4ZjBkMTE2ZmE2YmZkNzc1MiJ9"
         },
         {
@@ -135,7 +147,7 @@
           "version": "repo-lines-v1:sha256:cf8357c0e728304a6c4d56f0318b1106436778fe73be0c022396e8f047d8ce12:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTE0MWE1NzJmMzIxMGJhNDhkZDI5ZWU1Zjg1MTVlNTlkYmQyZjU4OTRlMjUxMDdjNTRlM2YwNjg3Zjc5YjU5YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmZhZTQ3MmM5MDcwMTQzYzFhMzUxMmZhN2RlOTU2OWYwNDVkM2JlYWY4NzdiNmFjODQ5MTZiNWM0NmVkZjI0OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzc4MTk4ZDQ5ZTk5MDdmOGI2MWIxODU2NTUxMTk4N2U5NDhjYzljNDNiYmQ0ZTRkNzliZmU2OWQ0YWE0ODdkOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDk5NDdlZWY0YTFkZDQwZDUxNTlmNjIxZjcyNDgxYzAyZDVmNjU1Y2YwODRkYzhlMDMyMDNiMDIwNDFjMzI1NCJ9"
         },
         {
-          "resource": "repo://src/paraphe/inbox/runtime.py#L276-L281",
+          "resource": "repo://src/paraphe/inbox/runtime.py#L288-L293",
           "version": "repo-lines-v1:sha256:d7ba4c7521e1b38484b72f69c233ea14ce0a5bb50b939d535ccaa81b4c846605:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzIyMjk1OTdlNWJiNzA3MjM2OTYyYTQ1MTIzM2VkMzU2ODFjZTY0NjNiMWI3Njg1OGU1MzExZGJkOGMxZWYwNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjRiZjY3ODVhNmRlZWYxOGQ1ZDg1NzBkNTAzY2FjNTI4YWY4MGFmNDhkZmE0ODg5NzFkZWY2NzA4ZmE1ZWVkZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiY2U1ZGFiMTJhYjE0NmNkNjkyODFmNjI5MWY1ZjU5ZDE0NDc1MzNiM2NkOTM4YWQzZTcyNzk0MDUyNzJhYjQ4MCJ9"
         }
       ]
@@ -160,19 +172,19 @@
     },
     {
       "id": "claim_f725ccd3b8ff4bb68110eac6e53a9344",
-      "statement": "An operator upgrading a store kept at the legacy /var/lib/paraphe/inbox.sqlite must set store_path to it, because resolving the default while a store exists at the legacy location raises a setup error instead of starting a second, empty inbox.",
+      "statement": "When no store_path is configured, resolving the default store location while a store exists only at the legacy /var/lib/paraphe/inbox.sqlite raises a setup error naming both paths rather than starting a second, empty inbox.",
       "evidence": [
         {
-          "resource": "repo://README.md#L108-L118",
-          "version": "repo-lines-v1:sha256:fb67ad9814f312ecf5da1a47e4c98cd176445838727d03786614735cdbc68509:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNzM4YmE4MWMzYWYxMjI2NTQwNTA2NzBmNDEyYTQzNTUxZjJmMWRiY2EzNjJhNDVjZDE2MWQyMTA2ODAwOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhODhmZTEwODU2NjdhYjkyM2Y1MmQ5YzRiZDhjNTdhYmZhZDQyYzcwNmFhYmUzZTY3MmYxY2QzNmJkNzAyN2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4NjgwMWM3Mzg1YzY4ZDA1OTUzYmM1OTJiNjc2NTZiNjE2YTMzOWEyODcwMjc1NGE4MWFkMWUyNDNjZDM1ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://README.md#L169-L172",
+          "version": "repo-lines-v1:sha256:c11ad1d2bcf36d6b9bc9e2dc4adf8ff9d837a96e15bb1342eda132c13fb5e8e5:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGFhMmQ4MmZkZTgyNTI3NzE4ZDI0NjUyNGVlMWE5YjE2ZDY1MGJjYTQ0MTMzNGIzN2I1ZGYyM2FiN2UxMGZkZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmJlYWUyYTk3ZjI4MGYyZmI0NWFiZGNlM2NmMDA5YmEyMzYxYjUzOGFiOGIzYThmOTcyOWExOWQzNWU5YTUzNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGEyN2RhMzlmODIyZTk2NDUzOThjOTVjNGY4YmNjMDZhMzhkNmM2NTBkN2JmZGIyNzAzYWM4MjlkN2Y2NjdlNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
         },
         {
           "resource": "repo://src/paraphe/inbox/config.py#L110-L127",
           "version": "repo-lines-v1:sha256:2de812415bd677379a04012596d9df37d388be45826c537d212e53d0ba52e44f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOTkwMjU1NDQwM2M3MmE1YzIwZDMyN2Y1OGI0Y2I4OTM4YjU2ZTQ5ZTI3NjFlNjNiYmZlM2Q4MTRlMGZjNGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjOTVjMTkyMTZlZTA0MDIzYzhjYmQwY2NjNGE2YzBhZGVjNzA1OTM1YzFlMzQ2YWM2ZjVjYWQzZGNhMjZjYzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5ZWUxOTMyODRlODJmYjc2YWY0ZjRmNTgzZTQzZjA1MDdiNWYxMzJiMTY0ZTZkMzUyM2JhZmI5NGMwYzdiMWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMyYmU3YzIyZjVjNmY2OWM3YTlkNjQ1MDRmYjUxOGYxZDgxMWZkNjA3Y2NhMTcxYjRmNmFjYzFkMTYwMGQ5NGYifQ"
         },
         {
-          "resource": "repo://src/paraphe/inbox/store.py#L15-L18",
-          "version": "repo-lines-v1:sha256:740af911636949667a47256a65a72674b2112d4a442bffb35148fd28e2359c16:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzVlMmQwM2ZjYzg2ZjQ5YzNmNmJjZGVkZTI3M2IyYmJkZWUxMzg2NGNkM2IyNWFkNTVmMWFjZjI0ZGVmNjlmYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWMzNWIzNmJiYmRmYTBiZTc5MmQ2NGM3N2E5YmZlOTRhYWNlZDQ2YzY0NjNjNDBkODgzNzhlMTgxODhkODRhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWM0YjBmZTcyM2YzNmI2NGNmNjM0NmYzMzUxYzAzNGYwZDk3ZWM5ZjUxYTk4NmU5NDZiOTU1ZWRkYTI4YzI1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGZhZmQ3Y2JhZmQzYzU0MGRjOGU4MWVjNWQyYTI0ZDExZmMwOTUwYmIzNmIyODQwMWE2OTg5NmU4YmExYjhhYiJ9"
+          "resource": "repo://src/paraphe/inbox/store.py#L12-L19",
+          "version": "repo-lines-v1:sha256:344410f71ab8352c241b64ece7b5623e60d84c01be1e77ac41426e80f0182474:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFmYTcwNDJhYTFmZGE5NTllMjI1NjY0YjNjYzY4MTkwMTUzOTQ4NjIxZGEzYmIyOWIxNzdmN2I0YTA0YmU0ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYWMzNWIzNmJiYmRmYTBiZTc5MmQ2NGM3N2E5YmZlOTRhYWNlZDQ2YzY0NjNjNDBkODgzNzhlMTgxODhkODRhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYmM2NWQ5ZGQ3OTQyOTk0MjY0N2QxYzYwMWQ3MzA5OWRlMDc3MjZhMjM5M2VhYzc2NzE1MGJjNGVhNDFlNGIwZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGZhZmQ3Y2JhZmQzYzU0MGRjOGU4MWVjNWQyYTI0ZDExZmMwOTUwYmIzNmIyODQwMWE2OTg5NmU4YmExYjhhYiJ9"
         }
       ]
     },
@@ -419,10 +431,58 @@
           "version": "repo-lines-v1:sha256:d27b3d95e1718c706489f2dd2ae7d8a243a72fd49d3713e9efe895d815549d49:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMGE1ZTQ5ZTgzNjFjYTFjMjlkZGU1ZTkwZjM5ZmY3MDIxMDI3ODU1NmRjNzBjMTM0OTRjYmI3MmIyZGEzNmQ4NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNmRmZTU4OTY5MTk5OTdjYTI1ZGQzOWJiZGQ4M2IyNzQ3ODRhNDhmOGQwMzVkNzk1Y2MzMmE4MDYxNjk1NTNkMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjIsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmZlYWRlZDRlMjhlYTg2ZTAwMWE2NzUxYjRlM2Q5NjBlOGI3YzMxYjk2MTZmZjk5MzZiNzkyOTcwODZlODA5YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
         }
       ]
+    },
+    {
+      "id": "claim_f87954a1089a4722a904488e77dae233",
+      "statement": "The README's documentation table now points at the generated wiki — openwiki/index.md, openwiki/quickstart.md and openwiki/architecture/ — so docs/tools.md and docs/adapters.md were dropped from it while the other in-repo documents (CONTEXT.md, docs/adr/, docs/specs/paraphe-v1.md, docs/roadmap.md, skills/paraphe-return-path/SKILL.md) remain listed.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L119-L133",
+          "version": "repo-lines-v1:sha256:8cd10eaefedc2ec6111d8cf87465d1c310c69476a5c2e69d94bf6df616e7afe5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2MmFhMzI0NDcxOWE3MTE2ZDIwMDE3ZWRiNWI5OWM4YmNkMTMzOTdhM2Y5MWFiMDljYzVhMWQyMmI1NTM3ZDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzMzM1MzZjYzUxNjRkZjg4ZjEwMTkwZGJiNGNiMGZlYjljZmQ4YTdjYTRkOTc3YmZlYzRiNmJmNzUyMTZiNWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4ZGNhNjBmODc2ZmJiODJhODcyMjQxYTI3YTljMjlkZTUwZWI3MDFiY2ZmNDczODAyM2UwZmUyNmZmZjNmOTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e9bb69ad7f0c462190d5254cfcbd95a1",
+      "statement": "The phone route starts by proving the configured destination with `paraphe check telegram` before starting the server: the check names the bot and sends one plain setup message to the owner, prints no token, and creates no decision card.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L50-L68",
+          "version": "repo-lines-v1:sha256:585c7fbbb7b11a79ad492edd4e7d7309cddd6972419b48c5ecb39be0ee4c724c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY0YjA2NGJlOTE2NTBmYjY3MDg3M2Q5ZjJlNDlkNTk0ZDIxNzZjZDRlMWJjZDg1N2ZlODM2ZjcxMDMxYjMzYjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhMDhlMDgyYWM3ZjJkMjBmMmZkOTU1N2FiNWU0YjkyMzAyYmVkMmRhOTYxYjU4ZTM0MDlmYzc4ODY4YjYwOTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzMzNjMDk4ZjRhNjY4Njk2YzBjMDdiMmU3ODVlNmIyMWM1N2Y0MTg0ODkwOGU0MTNhNzEzNjE0N2YwYWUwMTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5YmQ1YjQ0MzQ5MzYzZTE4MjgyNzAwNDJhYTUxNmY4YmNiNThlNWZjODNjYmM2NjRiOWMxNTc4NDc2ZDQ4NzIifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/check.py#L14-L69",
+          "version": "repo-lines-v1:sha256:853ae3715551d6a55956874c714ef370fe83aa6437d683666a97f28f50c0276d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMGJlYmQ5ODYyMDM2ODNmOWUwZmQ1OWUwMGFkODM5NDMwMzRmYjg4Y2Y2ZDIxOWQ0NDQwYjM4MDJlYzZlNmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmODk3Y2ZjN2M0ZjA4NzczZTJkMDQwM2QxZDMyMmFmYWU3ZDJkY2I0ZTg2MzhhNGZkY2NhY2MxZmJlZjcwZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyZGFiYWE5NzA2Y2I2YTMwY2NjZjQxM2NiYTc5OGEzYmQxNWI3YTA2MGFjNTczOGM2ZmQyMWM0Y2FjNmJjODYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f6ab0f8963c14743b891025f6b5fb7c8",
+      "statement": "The documented upgrade path for a store left at the legacy /var/lib/paraphe/inbox.sqlite is `paraphe store relocate`, which copies it to the current per-user default, verifies the SQLite copy before installing it and keeps the old store as a backup; `paraphe store relocate --move` removes the source instead, and setting store_path to the old location remains available when relocation is not wanted.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L146-L172",
+          "version": "repo-lines-v1:sha256:27d4ef9d6419ef280b2115b7ff496e3821fc787baa1760ec25e0289142c59371:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJlNzM4YmE4MWMzYWYxMjI2NTQwNTA2NzBmNDEyYTQzNTUxZjJmMWRiY2EzNjJhNDVjZDE2MWQyMTA2ODAwOTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiZWFlMmE5N2YyODBmMmZiNDVhYmRjZTNjZjAwOWJhMjM2MWI1MzhhYjhiM2E4Zjk3MjlhMTlkMzVlOWE1MzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI4NjgwMWM3Mzg1YzY4ZDA1OTUzYmM1OTJiNjc2NTZiNjE2YTMzOWEyODcwMjc1NGE4MWFkMWUyNDNjZDM1ZjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/paraphe/store_cli.py#L10-L37",
+          "version": "repo-lines-v1:sha256:70add5e66f94e53a5b09a2050e8c052700a87c375ca39c15c8e445cc944d94fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljYjMwMTYzMDgzNTczMjA3NDZiOWY2MzM4YjdkZWFlNDZmNTAwZDU1ZjZlMDBiNGU5NTgyODA2ZjAwOWQ1ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2MjMzYjNmZmVhMzJhMjNkZjUzMDY1MzQzNDhmMmRlZTc3NmE1YTZmNzRmYjUzMzE3NWRkYzUzOWE4ZmU0NjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMwY2ZiMTdjZjcyM2Q0ZWJmYWFlNTM0ZDJkZDIzMDQ2ODE1MzlhNjNjNWFkODYxNzBhNjAwMzA1Y2VhOGE3ZmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ad4ff14f2e974917919c720ecda1776c",
+      "statement": "The installed `paraphe` command's working forms are the server start with an optional `--config PATH`, `ask QUESTION`, `wait REQUEST_ID`, `check telegram`, `store relocate [--move]`, and `--version`/`--help`, which is what the entry point's usage text documents.",
+      "evidence": [
+        {
+          "resource": "repo://src/paraphe/__main__.py#L12-L40",
+          "version": "repo-lines-v1:sha256:4bfe4441f4e4634fa8528fffed176164bca44680749a2afc3ffa39da25f2a9a2:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljYjMwMTYzMDgzNTczMjA3NDZiOWY2MzM4YjdkZWFlNDZmNTAwZDU1ZjZlMDBiNGU5NTgyODA2ZjAwOWQ1ZDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI2MzJiODQ0OWNiNWE5OTU3YTBiMGQzYzUwMWY2ZDlmMjllMGYxOGU2NzNhNmM4MjcyMTY3YzgyOGRiMWNkY2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxOWEzNDk4ZmFhODI0NzNjNGMwYzE1ZGI5MWQxYjVhOGNmNGVhYzViNzY1YzYzNDMyMDhmZGM1MjhlMTk1ZGEifQ"
+        }
+      ]
     }
   ],
   "verification": {
     "by": "openwiki/0.5.0",
-    "at": "2026-09-11T15:38:02.291Z"
+    "at": "2026-09-24T17:26:41.197Z"
   }
 }

@@ -1,10 +1,9 @@
 ---
 type: "Reference"
 title: "Domain vocabulary and superseded decisions"
+description: "The product glossary mapped to code: card, tap, claim, revision, owner, return path, provenance, destination and inbox — where each word is realized, how the store location and the owner-side commands spell it, and which decision records the current shape replaces."
+tags: [concepts, glossary, domain-model, decision-records]
 openwiki_generated: true
-verified:
-  - by: openwiki/0.5.0
-    at: 2026-09-11T15:38:02.291Z
 sources:
   - id: openwiki-source-8037e2358a2c4f9b2c722a11
     resource: repo://AGENTS.md
@@ -46,6 +45,8 @@ sources:
     resource: repo://src/paraphe/adapters/console.py
   - id: openwiki-source-bc0ad19ae022e944fc077703
     resource: repo://src/paraphe/adapters/telegram.py
+  - id: openwiki-source-323578bac7c22161d0113db8
+    resource: repo://src/paraphe/check.py
   - id: openwiki-source-83b4724c0939d8570eedb33f
     resource: repo://src/paraphe/cli.py
   - id: openwiki-source-3f834a992df5ac81007614a4
@@ -60,8 +61,12 @@ sources:
     resource: repo://src/paraphe/inbox/runtime.py
   - id: openwiki-source-d39aa17b1580d696b9e0586e
     resource: repo://src/paraphe/inbox/store.py
+  - id: openwiki-source-f8eb69b469a332aa25c109f6
+    resource: repo://src/paraphe/store_cli.py
   - id: openwiki-source-5e490cfc296228f878983b93
     resource: repo://tests/inbox/test_card_renderer.py
+  - id: openwiki-source-24cf54bd1cd4de427157c91b
+    resource: repo://tests/inbox/test_check.py
   - id: openwiki-source-93ffcac597d6a3fc6e17909e
     resource: repo://tests/inbox/test_reply_intake.py
   - id: openwiki-source-17bf8b7b171c9db569415c2e
@@ -74,7 +79,10 @@ sources:
     resource: repo://tests/inbox/test_telegram_port.py
   - id: openwiki-source-ec516ae95f07d4f7e51ef3b6
     resource: repo://tests/inbox/test_wait_engine.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T15:38:02.291Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
+verified:
+  - by: openwiki/0.5.0
+    at: 2026-09-24T17:26:41.197Z
 ---
 
 
@@ -111,19 +119,19 @@ Three reading rules follow from that split:
 
 | Noun (`CONTEXT.md`) | Field, function or file that implements it |
 |---|---|
-| **Paraphe** | The package `src/paraphe/` and the console script `paraphe = "paraphe.__main__:main"` in `pyproject.toml`, so `paraphe` and `python3 -m paraphe` start the same service and `paraphe ask` / `paraphe wait` are the shell half of the return path (`src/paraphe/__main__.py` dispatches both to `paraphe.cli`); every setting is spelled with the `PARAPHE_` prefix. |
+| **Paraphe** | The package `src/paraphe/` and the console script `paraphe = "paraphe.__main__:main"` in `pyproject.toml`, so `paraphe` and `python3 -m paraphe` start the same service; every setting is spelled with the `PARAPHE_` prefix. `src/paraphe/__main__.py` dispatches each subcommand: `ask` / `wait` to `paraphe.cli` (the shell half of the return path), `check telegram` to `paraphe.check` and `store relocate` to `paraphe.store_cli` (the owner-side commands). |
 | **Card** | The `Card` dataclass (`src/paraphe/inbox/card.py`), built by `Inbox._create_card` and addressed by the twelve names in `TOOL_NAMES`. `Card.state` is one of `open`, `tapped`, `cancelled`, `expired`; life is `expires_at` / `expires_in_seconds` with `DEFAULT_TTL_SECONDS = 14400`, `FLOOR_TTL_SECONDS = 900` and `MAX_TTL_SECONDS = 2592000` in `src/paraphe/inbox/config.py`. |
 | **Revision** | `Card.version`, carried on the Telegram button and checked in the claim ladder; for an owner reply the binding is the card's recorded message identity instead — see [revision](#revision-the-version-on-the-button-and-the-message-a-reply-binds-to). |
 | **Tap** | `Inbox.claim` and the one ladder `Inbox._claim_locked`; `ClaimRefused` and the null and fake tap ports live in `src/paraphe/inbox/claim.py`. A tap is one of three owner-side answer channels. |
 | **Tap surface** | `TelegramAdapter` (`src/paraphe/adapters/telegram.py`); `ConsoleDestination` (`src/paraphe/adapters/console.py`) implements the same two-method contract when there is no phone. |
 | **Owner reply** (card work) | `Inbox.claim_reply`, reached from `TelegramAdapter._on_reply` in `handle_update`. |
-| **Inbox** | The `Inbox` object plus the SQLite `Store` in the per-user data directory (`src/paraphe/inbox/store.py`). |
+| **Inbox** | The `Inbox` object plus the SQLite `Store` in the per-user data directory, with the retained legacy location `LEGACY_STORE_PATH` and the relocation that moves off it (`src/paraphe/inbox/store.py`) — see [inbox](#inbox-the-object-the-per-user-store-and-the-retained-legacy-location). |
 | **Owner** | `Inbox.owner_telegram_id` for taps and replies, plus the owner answer credential for the local answer path. |
 | **Provenance / the identity line** (card work) | `PROVENANCE` — `runtime`, `repo`, `worktree`, `ticket` — accepted by the asking tools and `update_request`; `_identity_line` renders it. |
 | **The rendered card** (card work) | `render_card` with `MESSAGE_BUDGET`, `PLATFORM_LIMIT` and `TRIM_MARKER` in `src/paraphe/adapters/telegram.py`. |
 | **`responded_via` values** (card work) | `Card.responded_via`, surfaced in the read envelope: `telegram`, `telegram-reply`, `answer-path`. |
 | **Return path** | `WAIT_TOOLS` and `_park` (the waited call), `paraphe wait` (`src/paraphe/cli.py`), and the `get_response` / `list_unprocessed` read. |
-| **Setup** | `load_settings` (`src/paraphe/inbox/config.py`); an owner-only `/config` message is recognised but is not a settings editor. |
+| **Setup** | `load_settings` (`src/paraphe/inbox/config.py`); `paraphe check telegram` (`src/paraphe/check.py`) is the preflight for the phone half; an owner-only `/config` message is recognised but is not a settings editor. |
 | **Cutover** | Plan only — ADR 0004, ADR 0009 and `docs/specs/paraphe-v1.md`. No code path is named for it. |
 
 _Avoid_, as `CONTEXT.md` states it: a clone of another inbox as the product name, a second app or a
@@ -251,23 +259,43 @@ Rendering is total: the text is measured in UTF-16 code units as Telegram counts
 section with the visible `TRIM_MARKER` (`… [trimmed]`). The mechanics and the keyboard lifecycle are
 on [the rendered card in Telegram](/openwiki/integrations/telegram-card-rendering.md).
 
-## Inbox: the object plus the store in the per-user data directory
+## Inbox: the object, the per-user store and the retained legacy location
 
 `Inbox` holds the in-memory card map and the MCP surface; the durable half is `Store`
 (`src/paraphe/inbox/store.py`), one SQLite file named `inbox.sqlite` with `cards`, `notifications`
 and `durable_state` tables. The default location is `$XDG_DATA_HOME/paraphe` when `XDG_DATA_HOME` is
-set, else `~/.local/share/paraphe` (`default_data_dir`), created `0700` with the file at `0600`.
-`resolve_store_path` refuses the default when a store exists at `LEGACY_STORE_PATH`
-(`/var/lib/paraphe/inbox.sqlite`, the location earlier releases used and the path ADR 0005 still
-records for the deployment) instead of quietly starting a second, empty inbox; an explicit
-`store_path` is honoured either way. `tests/inbox/test_setup.py` covers both
-(`test_default_store_path_is_per_user`, `test_relocation_away_from_the_previous_location_refuses`).
+set, else `~/.local/share/paraphe` (`default_data_dir` → `default_store_path`), created `0700` with
+the file at `0600` (`DATA_DIR_MODE`, `STORE_MODE`, `Store.prepare`).
+
+The location earlier releases used survives as a **named constant**, `LEGACY_STORE_PATH`
+(`/var/lib/paraphe/inbox.sqlite`) — the path ADR 0005 still records for the deployment. Two
+behaviours hang off it, and together they are the vocabulary of "the store moved":
+
+- **Resolution refuses rather than splitting the inbox.** `resolve_store_path` honours an explicit
+  `store_path` (config file or `PARAPHE_STORE_PATH`) always; when nothing is configured and the
+  default holds no store while the legacy location does, startup fails with one line naming both
+  paths instead of quietly beginning a second, empty inbox.
+- **Relocation is a first-class command, not a file copy.** `relocate_store(source, target, move=False)`
+  copies through SQLite's own backup API, verifies `PRAGMA integrity_check` *and* the presence of the
+  `cards` table, then installs the copy atomically with the owner-only modes — refusing a missing or
+  unreadable source, an occupied target and a source that is not a Paraphe store. `paraphe store
+  relocate` (`src/paraphe/store_cli.py`) is the wrapper that moves the retained legacy store to the
+  current default location; the source is kept as a backup unless `--move` is given, and the move
+  removes it only after the verified target exists.
+
+`tests/inbox/test_setup.py` covers the whole set
+(`test_default_store_path_is_per_user`, `test_relocation_away_from_the_previous_location_refuses`,
+`test_store_relocation_copies_cards_with_owner_only_permissions`,
+`test_store_relocation_refuses_to_overwrite_the_target`,
+`test_store_relocate_command_copies_the_legacy_store`). The mechanics — the resolver table, the
+modes, the snapshot and the container mount — are owned by
+[data location and backup](/openwiki/operations/data-location-and-backup.md) and
+[the owner-side commands](/openwiki/operations/owner-side-commands.md).
 
 The store, never a destination, is the source of the answer: `_require_card` loads through it, and
 the destination contract is only `notify` and `edit_and_strip`. See
 [composition root and runtime](/openwiki/architecture/composition-root-and-runtime.md) for how one
-invocation picks the destination and opens the store, and
-[data location and backup](/openwiki/operations/data-location-and-backup.md) for the file itself.
+invocation picks the destination and opens the store.
 
 ## Return path: the waited call, the waiter command, the read
 
@@ -295,13 +323,21 @@ Two vocabulary consequences are worth stating plainly, because they are easy to 
   [the wait engine](/openwiki/architecture/wait-engine.md) and the end-to-end loop in
   [ask, answer, resume](/openwiki/workflows/ask-answer-resume.md).
 
-## Setup: a file and the environment, then one command that is not an editor
+## Setup: a file, the environment, a phone preflight and a command that is not an editor
 
 The **setup** noun is `load_settings` (`src/paraphe/inbox/config.py`): a TOML config file plus
 environment variables, with the environment winning for the same key, and `config.example.toml` as
 the documented surface. The create bearer is required; a run needs either a bot token with an owner
 Telegram id (the phone destination) or an owner answer token (the local answer path); an answer
 credential equal to the create bearer is refused; missing required values fail closed at start.
+
+The phone half of setup has its own preflight: `paraphe check telegram` (`src/paraphe/check.py`,
+dispatched before the server path, so it needs no running service) loads the same settings, asks the
+Bot API which bot the token belongs to, sends one plain setup message to the owner and names both.
+It exits `2` when no phone destination is configured, when the token is refused or unreachable, or
+when delivery to the owner fails, and it neither prints the token nor creates a decision card. The
+command's output and exit codes are owned by
+[the owner-side commands](/openwiki/operations/owner-side-commands.md).
 
 The owner-only Telegram `/config` command is **recognised, not implemented**:
 `TelegramAdapter.handle_update` answers the fixed string `ttl and owner knobs only`, `Runtime.poll_once`
@@ -348,9 +384,15 @@ is recorded in the v1 spec revision and the plan named above rather than in a ne
 ADR 0011 also records what is deliberately *not* built: decision 2 states that no per-runtime
 integration exists anywhere, the served tool text carries the protocol to clients that read nothing
 else, and one shipped skill documents the per-runtime idioms. That is the vocabulary a client
-actually sees — `TOOL_DESCRIPTIONS` and `how_to_use` name `request_id`, `wait_seconds`,
-`get_response`, `list_unprocessed`, `paraphe wait`, the drain rule, the provenance fields and the
-reply rule — and `skills/paraphe-return-path/SKILL.md` is the per-runtime companion.
+actually sees — `TOOL_DESCRIPTIONS` and `_how_to_use` in `src/paraphe/inbox/__init__.py` name
+`request_id`, `wait_seconds`, `get_response`, `list_unprocessed`, `paraphe wait`, the drain rule,
+the card-writing contract (purpose first, origin stated, tap semantics plain), the provenance
+fields and the reply rule — and `skills/paraphe-return-path/SKILL.md` is the per-runtime companion:
+one copy step per runtime (Hermes, Claude Code, Codex, or the served text alone), the three ways to
+hold the return path with the waiter's exit codes `0` / `3` / `4`, the environment the waiter needs
+(`PARAPHE_MCP_CREATE_BEARER` plus `PARAPHE_MCP_URL` or host/port), the provenance bounds (`runtime`
+≤40, `repo` ≤120, `worktree` ≤120, `ticket` ≤200), the reply rule, and the shell-side create
+`paraphe ask "<question>" --external-id <id>`.
 `tests/inbox/test_surface_contract.py` asserts those strings are in the served text. The full tool
 and envelope contract is on [the served MCP surface](/openwiki/architecture/mcp-surface.md).
 
@@ -398,4 +440,5 @@ and envelope contract is on [the served MCP surface](/openwiki/architecture/mcp-
 | the served text carries the return protocol | `tests/inbox/test_surface_contract.py::test_the_served_text_carries_the_async_protocol` |
 | owner answers, create bearer cannot | `tests/inbox/test_setup.py` (`test_the_create_credential_cannot_answer`, `test_the_owner_credential_answers_and_records_how_it_arrived`) |
 | owner-only `/config`, no token echoed | `tests/inbox/test_telegram_port.py` (`test_non_owner_config_is_ignored_and_token_absent`, `test_config_requires_private_owner_chat`) |
-| store location and modes | `tests/inbox/test_setup.py` (`test_default_store_path_is_per_user`, `test_relocation_away_from_the_previous_location_refuses`, `test_created_data_directory_is_owner_only`) |
+| store location, modes and relocation | `tests/inbox/test_setup.py` (`test_default_store_path_is_per_user`, `test_relocation_away_from_the_previous_location_refuses`, `test_created_data_directory_is_owner_only`, `test_store_relocation_copies_cards_with_owner_only_permissions`, `test_store_relocation_refuses_to_overwrite_the_target`, `test_store_relocate_command_copies_the_legacy_store`) |
+| the phone preflight names the pair and never leaks or claims | `tests/inbox/test_check.py` (`test_the_pair_passes_only_after_identity_and_delivery`, `test_a_refused_token_is_named_without_leaking_it`, `test_no_phone_configuration_is_named`, `test_entry_point_routes_the_telegram_check`) |

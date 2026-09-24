@@ -1,16 +1,18 @@
 ---
 type: testing
 title: Suite and integration
-description: How Paraphe's suite is invoked and why that invocation is pinned, what AGENTS.md and CONTRIBUTING.md require of a change, the CodeGraph and OpenWiki notes AGENTS.md carries beside them, how the harness drives the real Inbox, adapters and Runtime with doubles only at the seams, what each of the nine tests/inbox modules witnesses, the four CI jobs that gate every push, and the private-term gate that refuses to pass without a term list.
+description: The one pinned suite invocation and why a bare unittest run is a false green, the harness conventions that drive the shipped Inbox, adapters and Runtime with doubles only at the seams, one row per tests/inbox module, the six ci.yml jobs that gate every push, and the private-term gate whose term list lives outside the repository.
 tags: [testing, ci, quality-gates, operations]
 verified:
   - by: openwiki/0.5.0
-    at: 2026-09-11T15:38:02.291Z
+    at: 2026-09-24T17:26:41.197Z
 sources:
   - id: openwiki-source-164e2da859b5277df81c7d94
     resource: repo://.github/workflows/ci.yml
   - id: openwiki-source-6d4b4e707b8d60b6ccfa3425
     resource: repo://.github/workflows/openwiki-update.yml
+  - id: openwiki-source-f2608d0d515da097485b6ec5
+    resource: repo://.github/workflows/publish.yml
   - id: openwiki-source-ea70eb6c045047448e446296
     resource: repo://.gitignore
   - id: openwiki-source-8037e2358a2c4f9b2c722a11
@@ -27,14 +29,22 @@ sources:
     resource: repo://docs/agents/domain.md
   - id: openwiki-source-13dd5d4bbac0d2d6ce41730f
     resource: repo://docs/agents/issue-tracker.md
+  - id: openwiki-source-6b371bdc437fa2ac2e332f59
+    resource: repo://docs/launch/rulesets/README.md
   - id: openwiki-source-feb39f453d3737dd60880505
     resource: repo://docs/specs/paraphe-v1.md
   - id: openwiki-source-05ccef8d4cf1698187f20464
     resource: repo://pyproject.toml
+  - id: openwiki-source-88c5dcf0e67cc0304ebe833c
+    resource: repo://src/paraphe/__main__.py
+  - id: openwiki-source-323578bac7c22161d0113db8
+    resource: repo://src/paraphe/check.py
   - id: openwiki-source-6794a71e750fa9ef5e56d1da
     resource: repo://tests/inbox/__init__.py
   - id: openwiki-source-5e490cfc296228f878983b93
     resource: repo://tests/inbox/test_card_renderer.py
+  - id: openwiki-source-24cf54bd1cd4de427157c91b
+    resource: repo://tests/inbox/test_check.py
   - id: openwiki-source-72bdc2134cc6aed6125ac0b0
     resource: repo://tests/inbox/test_mcp_lifecycle.py
   - id: openwiki-source-93ffcac597d6a3fc6e17909e
@@ -51,20 +61,25 @@ sources:
     resource: repo://tests/inbox/test_telegram_port.py
   - id: openwiki-source-ec516ae95f07d4f7e51ef3b6
     resource: repo://tests/inbox/test_wait_engine.py
+  - id: openwiki-source-1ded447f951fe1ab44cf092d
+    resource: repo://tests/tools/__init__.py
+  - id: openwiki-source-488e634fa4082d1885999d5f
+    resource: repo://tests/tools/test_scan_private_terms.py
   - id: openwiki-source-ea84cdd5ee0104fef260389e
     resource: repo://tools/scan_private_terms.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T15:38:02.291Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
 ---
 
 # Suite and integration
 
-`tests/inbox/` is the whole suite: nine `unittest` modules, no third-party
-runner, no fixture layer and no install step. This page records the one valid
-invocation, what the repository's instruction files commit a change to, the
-tooling notes `AGENTS.md` carries beside them, how the tests are written, what
-each module witnesses, and the four jobs in `.github/workflows/ci.yml` that gate
-every push. The behaviours themselves live on the pages the inventory links to;
-this page is about the harness that proves them.
+`tests/inbox/` holds ten `unittest` modules and `tests/tools/` holds the witness for
+the repository's own private-term scan: eleven modules, no third-party runner, no
+fixture layer and no install step. This page records the one valid invocation, what
+the repository's instruction files commit a change to, how the tests are written,
+what each module witnesses, the six jobs in `.github/workflows/ci.yml` that gate
+every push, and the private-term gate that refuses to pass without a term list. The
+behaviours themselves live on the pages the inventory links to; this page is about
+the harness that proves them.
 
 ## The invocation is part of the contract
 
@@ -82,25 +97,27 @@ Three things depend on that being written down:
   pass.
 
 Both `CONTRIBUTING.md` and `AGENTS.md` state the command and the trap, because a
-contributor who runs the wrong one gets a success message with no tests behind
-it. `AGENTS.md` is the canonical instruction file — `CLAUDE.md` is a one-line
-pointer to it, and neither level repeats the other — and its "Run the suite"
-section adds the habit that closes the trap: always pass `-s tests -p
-'test_*.py'`, and read the count. The CI suite job runs the identical command,
-so a local run and the gate discover the same modules instead of two different
-sets.
+contributor who runs the wrong one gets a success message with no tests behind it.
+`AGENTS.md` is the canonical instruction file — `CLAUDE.md` is a one-line pointer
+to it, and neither level repeats the other — and its "Run the suite" section adds
+the habit that closes the trap: always pass `-s tests -p 'test_*.py'`, and read
+the count. The CI suite job runs the identical command, so a local run and the gate
+discover the same modules instead of two different sets.
+
+Both `tests/inbox/` and `tests/tools/` are packages, so discovery from `-s tests`
+imports them as `inbox.test_*` and `tools.test_*`. `CONTRIBUTING.md` names both
+directories, and the pinned command discovers both from one invocation.
 
 ### What the instruction files commit a change to
 
-`AGENTS.md`'s Rules section and `CONTRIBUTING.md`'s "What a mergeable change
-looks like" are the merge gate in prose:
+`AGENTS.md`'s Rules section and `CONTRIBUTING.md`'s "What a mergeable change looks
+like" are the merge gate in prose:
 
 - **Nothing outside the standard library at runtime.** A dependency needs a
   reason that survives the question "what does this buy a self-hoster who
   installs once and reads the source?"
-- **The suite is the witness.** It stays green in every commit, and the
-  behaviour a change adds or fixes is covered by a test that fails without the
-  change.
+- **The suite is the witness.** It stays green in every commit, and the behaviour
+  a change adds or fixes is covered by a test that fails without the change.
 - **A change to the create/answer credential boundary needs a test that proves
   the boundary holds** — the create credential is refused on the answer path, no
   claim is recorded and the card is unchanged.
@@ -113,8 +130,26 @@ looks like" are the merge gate in prose:
 - **No private reference in a tracked file**: no personal name, no host or
   machine name, no absolute path from anyone's machine, no private tracker key —
   enforced by the scan below, whose term list lives outside the repository.
-- **Small and focused**: one failure mode per change, and a new test next to the
-  behaviour it covers.
+- **Small and focused**: one failure mode per change, a rename that also
+  refactors is two reviews in one diff, and a new test goes next to the behaviour
+  it covers.
+
+### Branches, and the scan before a push
+
+`dev` is the integration branch: every change lands through a pull request whose
+base is `dev`, and `main` moves only by a pull request from `dev` — the
+`main-source` check below refuses anything else. Both branches refuse direct
+pushes, force-pushes and deletion, and the required checks are listed in
+`docs/launch/rulesets/README.md`. Commit messages are scanned like the tracked
+tree, because public history is as permanent as the tree:
+
+```bash
+python3 tools/scan_private_terms.py --commits origin/dev..HEAD
+```
+
+`CONTRIBUTING.md` gives that pre-push form; `AGENTS.md` gives the tree form,
+`python3 tools/scan_private_terms.py`, to run before every push. The `messages`
+job runs the commit-message form in CI.
 
 ### What AGENTS.md carries besides the rules
 
@@ -130,6 +165,8 @@ touching the suite:
   seam that never gives the create credential a way to answer.
 - **Layout** — the directory map: the inbox package, the adapters, the suite,
   `docs/`, `tools/` and the example configuration.
+- **Branches** — the integration branch, the `main-source` rule and the refusal
+  of direct pushes, force-pushes and deletion.
 - **Tracker** — this repository's own issue tracker and its triage labels, in
   `docs/agents/`.
 - **Domain docs** — a single context: root `CONTEXT.md` plus `docs/adr/`,
@@ -168,10 +205,10 @@ test module for one exists — the return path is witnessed by the wait-engine a
 reply-intake modules listed below.
 
 Nothing needs installing first. `pyproject.toml` declares no runtime
-dependency, the runtime is standard library only by rule, and each test file
-puts `src` on `sys.path` before importing the package — so the suite runs from a
-bare checkout, which is the property a contributor relies on and the CI suite
-job proves by installing nothing.
+dependency, the runtime is standard library only by rule, and every module that
+imports the product puts `src` on `sys.path` itself before importing it — so the
+suite runs from a bare checkout, which is the property a contributor relies on
+and the CI suite job proves by installing nothing.
 
 ## How the suite is written
 
@@ -182,14 +219,17 @@ rather than mocks:
   repository root from `__file__`, inserts `src` on `sys.path` and then imports
   `paraphe` (or `paraphe.inbox.runtime`, `paraphe.adapters.telegram`) by name,
   so the code under test is the shipped package rather than a file loaded by
-  path under an invented name.
+  path under an invented name. The one exception is
+  `tests/tools/test_scan_private_terms.py`, which runs
+  `tools/scan_private_terms.py` as a subprocess with `sys.executable` because
+  the tool is a command, not a library.
 - **Doubles sit at the seams, nowhere else.** A `FakeClock` is a callable
   returning a fixed epoch, a `FakeBotAPI` records `send_message`,
   `edit_message_reply_markup` and `answer_callback_query`, and a notifier
   recorder collects the payloads an `Inbox` would send. `unittest.mock` is used
   to patch the seams the runtime would otherwise open — `TelegramBotAPI` in
-  `paraphe.inbox.runtime`, or the legacy store path — never to replace the
-  object under assertion.
+  `paraphe.inbox.runtime` (and in `paraphe.check`), or the legacy store path —
+  never to replace the object under assertion.
 - **Drive the real thing.** Every test builds a real `Inbox` on a
   `tempfile.TemporaryDirectory` store, and the wait, lifecycle, tap and reply
   modules run the real `Inbox`, the real `TelegramAdapter`, and for the HTTP
@@ -199,7 +239,9 @@ rather than mocks:
 - **No fixtures and no host assumptions.** A test builds the object it needs and
   asserts on the result; state that belongs to the host is patched away —
   `tests/inbox/test_setup.py` points the legacy store path at an absent file so
-  the run is host-independent. A new test goes next to the behaviour it covers,
+  the run is host-independent. The scan-tool module brings its own synthetic term
+  list and a throwaway `git init` repository, because the real list must never
+  appear in the repository. A new test goes next to the behaviour it covers,
   which is what `CONTRIBUTING.md` asks of a change.
 
 ```mermaid
@@ -210,21 +252,21 @@ flowchart LR
     M --> C["mock.patch the seam: runtime TelegramBotAPI, legacy store path"]
     S --> H["real serve on 127.0.0.1 port 0"]
     M --> R["real Runtime in test_runtime"]
+    T["tests/tools/test_scan_private_terms.py"] --> U["runs the tool by path against a throwaway git repo and a synthetic term list outside it"]
 ```
 
 One module's object graph: the shipped package is what gets asserted, and every
 double replaces a boundary the process would otherwise own.
 
-`tests/inbox/` is a package, so discovery from `-s tests` imports the modules as
-`inbox.test_*`.
-
 ## What the tests witness
 
-One row per module, all nine counted from the directory:
+One row per module, all ten counted from `tests/inbox/` plus the scan tool's own
+module in `tests/tools/`:
 
 | Module | Behaviour it witnesses |
 |---|---|
-| `tests/inbox/test_setup.py` | fail-closed setup and the answer path: settings resolution from file and environment (the environment wins, an empty environment value does not erase a file value), the TTL default `14400` and floor `900` with a below-floor value refused, the per-user default and configured store locations, store file mode `0600` and directory mode `0700`, the refusal to relocate away from a location an earlier release used, the refusal of a non-loopback bind whenever the answer path exists, both entry-point paths, and the create/answer credential boundary over real HTTP |
+| `tests/inbox/test_setup.py` | fail-closed setup and the answer path: settings resolution from file and environment (the environment wins, an empty environment value does not erase a file value), the TTL default `14400` and floor `900` with a below-floor value refused, the per-user default and configured store locations, store file mode `0600` and directory mode `0700`, the refusal to relocate away from a location an earlier release used, the store relocation copy and `paraphe store relocate` command, the refusal of a non-loopback bind whenever the answer path exists, the console command's paths, and the create/answer credential boundary over real HTTP |
+| `tests/inbox/test_check.py` | the owner-side `paraphe check telegram` preflight, so it cannot pass without reaching the owner |
 | `tests/inbox/test_surface_contract.py` | the published contracts: `docs/tools.md` against the served tool names, the served text, the stored `source_thread`, the rendered identity line, the console destination |
 | `tests/inbox/test_mcp_lifecycle.py` | the twelve-tool card lifecycle over the `Inbox` seam and over the served HTTP/SSE endpoint — idempotent creates, revisions, closeout, notify durability across restarts, fail-closed store handling |
 | `tests/inbox/test_wait_engine.py` | the wait engine: parking and waking at the `Inbox` seam, a parked call over the real HTTP surface, and the `paraphe wait` CLI exit codes |
@@ -233,6 +275,7 @@ One row per module, all nine counted from the directory:
 | `tests/inbox/test_reply_intake.py` | owner reply intake: a private-chat reply to a card message becomes the card's text answer with the same lifecycle writes a tap makes, wakes a parked waiter, and survives a restart |
 | `tests/inbox/test_card_renderer.py` | the Telegram card renderer: the pinned full-card fixture, identity-line ordering, HTML escaping, the message budget with its trim marker, and the status-message layout |
 | `tests/inbox/test_runtime.py` | startup, long polling and offset durability against a temporary store and a Telegram API double, shutdown, and the Telegram API error mapping |
+| `tests/tools/test_scan_private_terms.py` | the private-term gate's own witness: a clean tree and a clean message range pass, a seeded finding reports the category but never the matched value, a filename match is masked, a message finding names the commit, the range limits the scan, and the three cannot-run paths exit `2` |
 
 What each row is traceable to:
 
@@ -240,10 +283,27 @@ What each row is traceable to:
   wrong token are `401` and leave the card pending, a superseded version is
   `409 stale_version`, a second answer is `409 already_tapped`, and the owner
   token records the answer as `responded_via` `answer-path`. The same module
-  checks with `git check-ignore` that `paraphe.toml` is git-ignored, that both
-  entry points behave (usage and exit `0` when nothing is configured, exit `2`
-  and a `paraphe:` line when configuration is incomplete), and that neither
-  credential appears in the inbox's `repr`.
+  checks with `git check-ignore` that `paraphe.toml` is git-ignored; that
+  relocation away from a location an earlier release used is refused by a
+  message naming **both** locations; that a created data directory is `0700`
+  with the store `0600`, that a relocated store keeps those modes and its cards,
+  and that a card survives a restart against the same location; that the console
+  command prints usage and exits `0` when nothing is configured, prints the
+  installed version for `--version`, and exits `2` with a `paraphe:` line when
+  configuration is incomplete; and that neither credential appears in the
+  inbox's `repr`.
+- **check** drives `paraphe.check.telegram` with the environment, stdout and
+  stderr injected and a `FakeTelegramAPI` patched into the module's
+  `TelegramBotAPI` seam, and it keeps refusal and unreachability apart: a token
+  Telegram refused is reported as refused with the token itself never printed, a
+  refused delivery names the owner and the next step ("check the id", "open a
+  private chat"), while a transport failure says only that the Telegram Bot API
+  could not be reached and never blames the owner id. The pass case requires identity **and**
+  delivery — the fake records the check message sent to the owner's id — and the
+  no-configuration case exits `2` with the API never constructed. Every
+  assertion on output also asserts the token and the token-bearing API URL are
+  absent, and the last test routes `check telegram` through
+  `paraphe.__main__.main`.
 - **mcp lifecycle** holds the default `TWELVE_TOOLS` list, duplicate
   `external_id` behaviour (including two concurrent creates resolving to one
   card and one notify), field mixing and length/TTL validation, provenance
@@ -285,15 +345,24 @@ What each row is traceable to:
   and closing the store twice safely; and `TelegramBotAPI` mapping `ok: false` to
   `NotifyRejected`, a timeout or invalid JSON to an ambiguous
   `TelegramAPIError`, and `ok: true` to its result.
+- **the scan tool** builds the repository the tool inspects instead of inspecting
+  this one: a temporary `git init`, a term list written outside it, and synthetic
+  terms only, since the real list must never appear in the repository. It pins
+  the exit discipline — `0` clean over the tree or over a message range, `1` for
+  findings, `2` when the tool cannot run (no list, a list inside the repository,
+  a range git cannot read) — and that a range argument really limits the scan.
 
-The nine modules line up with the related pages: the lifecycle and surface rows
-with [the MCP surface](/openwiki/architecture/mcp-surface.md), the runtime row
-with [the composition root](/openwiki/architecture/composition-root-and-runtime.md),
+The ten inbox modules line up with the related pages: the lifecycle and surface
+rows with [the MCP surface](/openwiki/architecture/mcp-surface.md), the runtime
+row with [the composition root](/openwiki/architecture/composition-root-and-runtime.md),
 the reply and renderer rows with
 [owner reply intake](/openwiki/integrations/owner-reply-intake.md) and
 [Telegram card rendering](/openwiki/integrations/telegram-card-rendering.md),
 the tap row with [the Telegram tap surface](/openwiki/integrations/telegram-tap-surface.md),
-and the wait row with [ask, answer and resume](/openwiki/workflows/ask-answer-resume.md).
+the wait row with [ask, answer and resume](/openwiki/workflows/ask-answer-resume.md),
+and the check and setup rows with
+[owner-side commands](/openwiki/operations/owner-side-commands.md) and
+[data location and backup](/openwiki/operations/data-location-and-backup.md).
 
 There is no `tests/inbox/test_wake_port.py`, because there is no wake port.
 ADR 0011 withdrew the `WakePort` seam: the answer returns through the ask itself
@@ -318,8 +387,9 @@ text and the tool descriptions carry the async protocol — record the
 `request_id`, `wait_seconds`, `get_response`, `list_unprocessed`,
 `paraphe wait`, `drain` — while no served tool name answers or claims a card. It
 further asserts that the served text teaches provenance (`runtime`, `repo`,
-`worktree`, `ticket`) and the reply rule (`telegram-reply`, re-ask), and that a
-created card renders its identity line from the payload it was given.
+`worktree`, `ticket`), the card-writing contract (origin, purpose, authorise,
+prohibitions) and the reply rule (`telegram-reply`, re-ask), and that a created
+card renders its identity line from the payload it was given.
 
 Two of the assertions are deliberately more than regression cover:
 
@@ -334,15 +404,17 @@ Two of the assertions are deliberately more than regression cover:
 
 ## Integration
 
-`.github/workflows/ci.yml` is the gate: four jobs, on every push to any branch
+`.github/workflows/ci.yml` is the gate: six jobs, on every push to any branch
 and every pull request.
 
 | Job | What it proves |
 |---|---|
-| `suite` | the tests pass on Ubuntu **and macOS**, across three Python versions — the non-Linux leg is real, not decorative |
+| `suite` | the pinned discovery command passes on Ubuntu **and macOS** across three Python versions — the non-Linux leg is real, not decorative |
 | `distribution` | a clean environment installs the built distribution, the console command runs, and exactly one top-level package is installed |
 | `container` | the image builds, runs with a mounted data location, and fails the job if the ready line never appears |
 | `private-terms` | the tracked tree carries no private reference |
+| `messages` | the commit messages in the pushed range carry no private reference |
+| `main-source` | a pull request targeting `main` comes from this repository's `dev` branch |
 
 - **`suite`** — display name
   `suite (python ${{ matrix.python }} on ${{ matrix.os }})` — runs
@@ -366,14 +438,39 @@ and every pull request.
   what the image expects: the data location is a volume at `/data` and the store
   path points inside it, and the process runs as an unprivileged user built on
   the Python 3.11 floor.
+- **`private-terms`** — `the tracked tree carries no private term` — writes the
+  `PRIVATE_TERMS` secret to a path outside the workspace and runs the tree scan.
+- **`messages`** — `the pushed commit messages carry no private term` — checks
+  out with `fetch-depth: 0`, resolves the range the push actually added, and runs
+  the scan in `--commits` mode over it. For a pull request the range is the
+  base-to-head pair GitHub reports; for a new branch it is the merge base with
+  `origin/main` up to the pushed head; for a force-push whose previous tip is no
+  longer in the checkout it fetches that tip, and failing that falls back to the
+  fork point with `main`, then to the pushed head's reachable history; a deleted
+  branch has no range to scan. If no range can be resolved the job exits `2`
+  rather than scanning nothing, and the scan itself exits `2` when git cannot
+  read the range.
+- **`main-source`** — `main only accepts pull requests from dev` — only runs on a
+  pull request whose base is `main`, and fails unless the head repository is this
+  repository and the head ref is `dev`. That job is what makes the branch rule in
+  `AGENTS.md` and `CONTRIBUTING.md` enforceable, since GitHub cannot restrict a
+  pull request's source branch.
 
-The `private-terms` job — `the tracked tree carries no private term` — is the
-fourth, and it has its own section because of what it does when it cannot run.
+These jobs are what the branch rulesets require: `docs/launch/rulesets/README.md`
+lists the required checks by their exact check names — eleven on `main`, ten on
+`dev` — and the names are the job `name:` strings verbatim. A rename on either
+side silently unhooks a required check, so `ci.yml` and the ruleset definitions
+have to change in the same commit. `private-terms` and `messages` fail closed
+when the secret is missing, which is also why a fork pull request needs a
+maintainer to re-run them from the repository.
 
-`ci.yml` is the only workflow a push runs. The repository's other workflow file,
-`.github/workflows/openwiki-update.yml`, gates nothing: it is manual-dispatch
-only and opens a documentation pull request, as described in the `AGENTS.md`
-notes above.
+`ci.yml` is the only workflow a push runs. The repository's other two workflow
+files gate nothing on a push: `.github/workflows/openwiki-update.yml` is
+manual-dispatch only and opens a documentation pull request, as described above,
+and `.github/workflows/publish.yml` runs on a published release — it builds the
+wheel and the sdist, asserts the dist holds exactly one of each, and publishes to
+PyPI through OIDC trusted publishing (no stored token) with `skip-existing`, so a
+re-cut release of a version PyPI already serves skips rather than fails.
 
 ## The private-term gate
 
@@ -382,19 +479,24 @@ notes above.
 
 - locally it reads `~/.config/paraphe/private-terms.txt`, or a path given by
   `--terms` or `PARAPHE_PRIVATE_TERMS`;
-- the list is `category:regex` lines — `content` and `filename` are the
-  categories the scan reports — with blank and `#` lines skipped and an empty
-  list refused as an error rather than a pass;
-- in integration the job writes the `PRIVATE_TERMS` secret to
-  `${{ github.workspace }}/../private-terms.txt`, outside the workspace, and
-  fails with an explicit message when the secret is unset;
-- it walks `git ls-files` and reads each tracked file as UTF-8, skipping what it
-  cannot decode;
-- it reports the **file and the category**, never the matched value, and masks a
-  filename match because for that category the path *is* the matched value;
+- the list is `category:regex` lines — the category is the label the list gives
+  itself, and it is what a finding reports — with blank and `#` lines skipped;
+- in integration both `private-terms` and `messages` write the `PRIVATE_TERMS`
+  secret to `${{ github.workspace }}/../private-terms.txt`, outside the
+  workspace, and fail with an explicit message when the secret is unset;
+- by default it walks `git ls-files` and reads each tracked file as UTF-8,
+  skipping what it cannot decode, and reports a `content` finding as the file and
+  line;
+- with `--commits RANGE` it reads `git log` over the range and reports a
+  `message` finding as the commit (the first 12 characters of its hash) and the
+  category;
+- it reports the **file and line, or the commit, and the category**, never the
+  matched value, and masks a filename match because for that category the path
+  *is* the matched value;
 - it refuses a term list that resolves inside the current working directory —
   which is the repository when the scan is run as documented — and exits `2`
-  with "scan did not run" when it has no list at all.
+  with "scan did not run" when it has no list at all, or when git cannot read
+  the requested range.
 
 ```mermaid
 flowchart TD
@@ -406,18 +508,25 @@ flowchart TD
     E -->|no| F["scan did not run, exit 2"]
     E -->|yes| G{"path inside the repository"}
     G -->|yes| H["refuse the term list, exit 2"]
-    G -->|no| I["scan tracked files and filenames"]
-    I --> J{"any finding"}
-    J -->|no| K["clean over tracked files and filenames, exit 0"]
-    J -->|yes| L["report file and category, mask a filename match, exit 1"]
+    G -->|no| I{"--commits given"}
+    I -->|no| J["scan tracked files and filenames"]
+    I -->|yes| K["scan the messages in the git range"]
+    K -->|range unreadable| L["scan did not run, exit 2"]
+    J --> M{"any finding"}
+    K --> M
+    M -->|no| N["clean over the scanned surface, exit 0"]
+    M -->|yes| O["report the file and line or the commit and category, mask a filename match, exit 1"]
 ```
 
-How the scan decides, including the two paths that exit `2` instead of reporting
-clean. A list that exists but carries nothing usable is also not a pass: a line
-without `category:regex` or a list with no usable lines raises instead of
-returning `0`, so an empty term file cannot be mistaken for a clean tree.
+How the scan decides, including the three paths that exit `2` instead of
+reporting clean. A list that exists but carries nothing usable is also not a
+pass: a line without `category:regex`, or a list with no usable lines, aborts
+with an error message instead of reporting clean, so an empty or malformed term
+file cannot be mistaken for a clean tree.
 
 That fail-closed behaviour is the point of the gate. A scan that passes when it
 cannot run is worse than no scan, because it converts an unknown into a false
-assurance. The integration job fails with an explicit message when the secret is
-missing, for the same reason.
+assurance. Both integration jobs fail with an explicit message when the secret is
+missing, for the same reason, and the gate has its own witness:
+`tests/tools/test_scan_private_terms.py` seeds a finding of each kind and asserts
+what the tool reports — and what it must not print.

@@ -30,10 +30,30 @@ command line.
 ## The protocol
 
 1. **Ask.** `ask_question` or `request_approval`, with a stable `external_id`.
+   Compose the card so the phone alone is enough to decide:
+   - **Purpose first.** `question` / `title` says why the action is needed,
+     in one line, before the action detail; `context` / `details` opens
+     with the why (`Pourquoi : …`), then the exact command or change. The
+     why is the goal the action unblocks — never a restatement of the
+     command, never a guard's flag text.
+   - **Origin stated.** Who is asking and where it runs: `agent_name` and
+     `runtime` / `repo` / `worktree` / `ticket` render as the card's
+     identity line (the `D'où ça vient : …` line when the body carries
+     it). Never guessed — but when the ask runs in a worktree or folder,
+     naming that path is required (plain words: `dossier de travail …`).
+     "Optional" covers what you do not have; it is never a reason to omit
+     a true where.
+   - **Pre-ask flagged work.** A command the guard will flag (protected
+     writes, resets, deploys) is approved through a card you compose —
+     with its purpose and origin — before you run it. The runtime's
+     auto-approval card is a bare fallback (flagged command, no purpose);
+     never plan on it.
+   - **Tap semantics plain.** What the answer authorises and what it does
+     not: `consequence` (what the approval sets in motion) and
+     `prohibitions` (what it does not authorise). On an approval say what
+     Approve does and what Deny does.
    Record the `request_id` the create result returns — it also names the
-   reading path (`read_with: get_response`). Pass `runtime` / `repo` /
-   `worktree` / `ticket` when you have them: the card shows them as its
-   identity line. They are optional and never guessed.
+   reading path (`read_with: get_response`).
 2. **Hold the return path.** Use the first that the runtime can do:
    - **Wait in the call** — `wait_seconds` (0–60) on `ask_question`,
      `request_approval` or `get_response`. The call parks until the owner

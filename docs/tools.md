@@ -88,8 +88,8 @@ Accepted on every create, and on `update_request`.
 | `project` | string ≤120 | which work the card belongs to |
 | `source_thread` | string ≤200 | the session or thread the card came from; descriptive metadata, nothing is woken from it |
 | `recommendation` | string ≤1000 | what the agent advises |
-| `consequence` | string ≤1000 | what happens if the owner does nothing |
-| `prohibitions` | up to 8 strings, each ≤200 | what the answer does not authorise |
+| `consequence` | string ≤1000 | what the approval sets in motion, and what happens if the owner does nothing; renders as *If approved:* |
+| `prohibitions` | up to 8 strings, each ≤200 | what the answer does not authorise; renders as *Limits:* |
 | `links` | up to 8 URIs, each ≤500 | evidence |
 | `agent_name` | string ≤60 | which agent asked |
 | `wait_seconds` | 0–60 | on `ask_question`, `request_approval` and `get_response`, the call parks until the owner answers or the window ends, then returns the answer envelope; elsewhere accepted and not slept on |
@@ -109,6 +109,37 @@ fields omitted.
 | `repo` | string ≤120 | which repository the ask is about |
 | `worktree` | string ≤120 | which checkout; omit for the canonical checkout |
 | `ticket` | string ≤200 | which ticket the ask is about; a URL renders as a tappable link |
+
+## Writing the card
+
+Every card carries its origin and its purpose first, and its tap semantics
+are plain. Three rules — this is the writing contract:
+
+1. **Origin stated.** Who is asking and where it runs: `agent_name` and the
+   provenance fields, which render as the identity line. Never guessed:
+   supply what is true, leave out the rest. A destination that prints body
+   text only gets the same in the first body lines.
+2. **Purpose first.** Why the action is needed comes before the action
+   detail. `question` / `title` is the purpose in one line;
+   `context` / `details` opens with the why, then names the exact command
+   or change.
+3. **Tap semantics plain.** What the approve tap authorises and what it
+   does not: `consequence` (the *If approved:* section) says what the
+   approval sets in motion; `prohibitions` (the *Limits:* section) says
+   what it does not authorise. On an approval, spell out both taps — what
+   Approve does, what Deny does — so the owner never decodes a button.
+
+Body copy in that order — purpose, origin, the exact command, the tap
+semantics:
+
+```
+Pourquoi : the release cannot ship with the store at the old path.
+D'où ça vient : agent Hermes · runtime CLI · repo paraphe · worktree
+store-move · ticket card-3119.
+Command: paraphe store relocate
+Approve authorises that one move and nothing else. Deny leaves the store
+where it is and the release waits.
+```
 
 ## The rendered card
 
