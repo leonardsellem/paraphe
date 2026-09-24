@@ -24,6 +24,14 @@ text is recorded verbatim (`response.text`, `responded_via` `telegram-reply`)
 and the card closes exactly as a tap. The answer authority is unchanged:
 owner-side answers only.
 
+Revision (2026-09-24, the writing contract): every card states its origin
+and leads with its purpose, and its taps are plain — origin stated (which
+agent/session and where it runs), purpose first (why the action is needed
+before the action detail), tap semantics plain (what the answer authorises
+and what it does not). The contract is taught wherever card composition is
+taught — the return-path skill, `docs/tools.md`, the served `how_to_use`
+text — and shown on the demo card.
+
 ## Problem Statement
 
 The owner already decides hard-to-reverse work with a phone tap. The previous inbox does that job today, and the writing contract is good: purpose first, a few short choices, one recommended. What is not good is that the previous inbox is closed-source, he has no guarantee it will stay up or keep his decisions safe, and a tap often does not wake the session that asked. Desktop tools are frequently blocked, so cards go out through a helper with no origin, closeout fails, and he is told to come back to chat. He will not. He wants an inbox he owns, on his box, that he taps in Telegram, without bouncing to another app for the same yes.
@@ -118,7 +126,7 @@ Paraphe is a self-hosted owner decision inbox. Agents create a Card through the 
 
 Create/update identity: `external_id` (≤200, required by contract), `version`, `expected_version` (≥1 on update), `request_id`, `expires_in_seconds` (live the previous inbox 60–2_592_000; Paraphe floor 900, default 14400), create `duplicate` flag on read-back.
 
-Card body: `question`≤200, `context`≤2000, `choices`≤4×≤40, `choice_notes`≤4×≤120 (parallel to `choices`), `allow_freeform` (schema only), `title`≤200, `details`≤2000, `message`≤2000 on notify, `recommendation`≤1000, `consequence`≤1000, `prohibitions`≤8×≤200, `risk` ∈ `low\|medium\|high\|critical` (honest; no bulk-approve meaning), `project`≤120, `source_thread`≤200, `links`≤8 URIs, `priority` ∈ `low\|normal\|high\|urgent` (no Focus chrome), `agent_name`≤60, `wait_seconds` 0–60.
+Card body: `question`≤200, `context`≤2000, `choices`≤4×≤40, `choice_notes`≤4×≤120 (parallel to `choices`), `allow_freeform` (schema only), `title`≤200, `details`≤2000, `message`≤2000 on notify, `recommendation`≤1000, `consequence`≤1000, `prohibitions`≤8×≤200, `risk` ∈ `low\|medium\|high\|critical` (honest; no bulk-approve meaning), `project`≤120, `source_thread`≤200, `links`≤8 URIs, `priority` ∈ `low\|normal\|high\|urgent` (no Focus chrome), `agent_name`≤60, `wait_seconds` 0–60. Written per the 2026-09-24 writing contract above: origin stated, purpose first, tap semantics plain.
 
 Provenance (optional, on the asking tools and `update_request`): `runtime`≤40, `repo`≤120, `worktree`≤120, `ticket`≤200; rendered as the card's identity line, never guessed.
 

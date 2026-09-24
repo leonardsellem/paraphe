@@ -217,13 +217,20 @@ TOOL_DESCRIPTIONS = {
         "async return protocol."
     ),
     "ask_question": (
-        "Ask the owner a question. Record the returned request_id; read the "
-        "answer with get_response, or pass wait_seconds (0-60) to let the "
-        "call park until the answer arrives. Pass runtime/repo/worktree/ticket "
-        "(optional) so the card shows where the ask comes from."
+        "Ask the owner a question. Compose it purpose first — why the ask "
+        "exists before the action detail — with the origin stated and the "
+        "tap semantics plain: what the answer authorises and what it does "
+        "not (consequence, prohibitions). Record the returned request_id; "
+        "read the answer with get_response, or pass wait_seconds (0-60) to "
+        "let the call park until the answer arrives. Pass "
+        "runtime/repo/worktree/ticket (optional) so the card shows where "
+        "the ask comes from."
     ),
     "request_approval": (
-        "Ask the owner to approve. Record the returned request_id; read the "
+        "Ask the owner to approve. Compose it purpose first — why the "
+        "approval is needed before the action detail — and spell the tap "
+        "semantics: what Approve authorises (consequence) and what it does "
+        "not (prohibitions). Record the returned request_id; read the "
         "answer with get_response, or pass wait_seconds (0-60) to let the "
         "call park until the answer arrives. Pass runtime/repo/worktree/ticket "
         "(optional) so the card shows where the ask comes from."
@@ -254,8 +261,9 @@ TOOL_DESCRIPTIONS = {
     "notify_user": "Status to the owner, never a decision card.",
     "request_feedback": (
         "Ask the owner for feedback; a create like the other asking tools. "
-        "Pass runtime/repo/worktree/ticket (optional) so the card shows where "
-        "the ask comes from."
+        "Purpose first — why the feedback is needed before the detail — "
+        "with the tap semantics plain. Pass runtime/repo/worktree/ticket "
+        "(optional) so the card shows where the ask comes from."
     ),
 }
 
@@ -766,6 +774,15 @@ class Inbox:
             "expiry. Pass runtime/repo/worktree/ticket on the asking tools or "
             "update_request (optional, bounded, never guessed); a ticket that "
             "is a URL renders as a link.\n"
+            "Compose every card to carry its origin and its purpose first: "
+            "say who is asking and where it runs (agent_name and "
+            "runtime/repo/worktree/ticket), lead with the purpose — why the "
+            "action is needed — before the action detail (question/title "
+            "carry the purpose; context/details open with the why, then the "
+            "exact command or change), and spell the tap semantics: what "
+            "the answer authorises (consequence) and what it does not "
+            "(prohibitions). On an approval, say what Approve does and what "
+            "Deny does.\n"
             "The owner may answer a card with a reply instead of a tap: the "
             "reply text arrives as response.text with responded_via "
             "telegram-reply, and the card closes exactly as a tap. A reply "

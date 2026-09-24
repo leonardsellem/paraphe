@@ -47,10 +47,22 @@ Paraphe ready: mcp http://127.0.0.1:8899/mcp answer-path on
 
 ## What the owner saw
 
+The example card, composed per the writing contract in
+[`../tools.md`](../tools.md): purpose first, origin, then what each answer
+authorises:
+
 ```
 [paraphe] card 43c1b52f-… (version 1) is waiting for you
   kind: question   risk: low   priority: normal
+  question: Move the card store before the release?
+  context: Pourquoi : the release cannot ship with the store at the old path.
+    D'où ça vient : agent Hermes · runtime CLI · repo paraphe · worktree store-move · ticket card-3119
+    Action: run `paraphe store relocate` on the deployment host.
+    Yes authorises that one move and nothing else. No leaves the store where
+    it is and the release waits.
   choices: Yes, No
+  recommendation: Yes
+  if ignored: the release ships with the store at the old path.
   answer with: curl -s -X POST http://127.0.0.1:8899/answer \
     -H "Authorization: Bearer $PARAPHE_OWNER_ANSWER_TOKEN" \
     --data '{"request_id": "43c1b52f-…", "version": 1, "choice": "<your answer>"}'
