@@ -95,6 +95,23 @@ class TestPublishedContracts(unittest.TestCase):
         for tool in ("ask_question", "request_approval", "request_feedback", "update_request"):
             self.assertIn("runtime/repo/worktree/ticket", descriptors[tool])
 
+    def test_the_served_text_teaches_the_card_writing_contract(self) -> None:
+        # Owner correction 2026-09-24: every card carries its origin and its
+        # purpose first, and plain tap semantics.
+        inbox = self._inbox()
+        how = inbox.call_tool("how_to_use", {}, bearer=CREATE).lower()
+        self.assertIn("origin", how)
+        self.assertIn("purpose", how)
+        self.assertIn("authorise", how)
+        self.assertIn("prohibitions", how)
+        descriptors = {
+            item["name"]: item["description"].lower()
+            for item in inbox.list_tool_descriptors()
+        }
+        for tool in ("ask_question", "request_approval"):
+            self.assertIn("purpose", descriptors[tool])
+            self.assertIn("authorise", descriptors[tool])
+
     def test_a_created_card_renders_its_identity_line_from_the_payload(self) -> None:
         from paraphe.adapters.telegram import render_card
 

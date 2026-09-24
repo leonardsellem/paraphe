@@ -1,18 +1,19 @@
 ---
 type: security
 title: The credential boundary
-description: Paraphe's two credentials plus the owner's Telegram identity — what the create bearer may do and the one thing it may never do, the owner-only route it is refused on and the order that route checks the credential, the tap and reply surfaces as the owner's answer channels, and why the served surface has no answering tool.
+description: Paraphe's two credentials plus the owner's Telegram identity — what the create bearer may do and the one thing it may never do, the owner-only route it is refused on and the order that route checks the credential, the tap and reply surfaces as the owner's answer channels, why the served surface has no answering tool, and the owner-side preflight that proves the phone destination without printing the token.
 tags: [security, credentials, authorization, boundaries]
-verified:
-  - by: openwiki/0.5.0
-    at: 2026-09-11T14:44:51.273Z
 sources:
   - id: openwiki-source-0b9252805a148d15e212370e
     resource: repo://docs/adr/0010-bearer-creates-owner-taps.md
   - id: openwiki-source-0bbd43419c0bf3b818cb5a2d
     resource: repo://docs/tools.md
+  - id: openwiki-source-3f0923f394ad3a64d983d48d
+    resource: repo://src/paraphe/adapters/console.py
   - id: openwiki-source-bc0ad19ae022e944fc077703
     resource: repo://src/paraphe/adapters/telegram.py
+  - id: openwiki-source-323578bac7c22161d0113db8
+    resource: repo://src/paraphe/check.py
   - id: openwiki-source-3f834a992df5ac81007614a4
     resource: repo://src/paraphe/inbox/__init__.py
   - id: openwiki-source-e3dfcb6996c92b71c470fb44
@@ -25,6 +26,8 @@ sources:
     resource: repo://src/paraphe/inbox/http.py
   - id: openwiki-source-ff9e45a3ac72725a5bcca301
     resource: repo://src/paraphe/inbox/runtime.py
+  - id: openwiki-source-24cf54bd1cd4de427157c91b
+    resource: repo://tests/inbox/test_check.py
   - id: openwiki-source-93ffcac597d6a3fc6e17909e
     resource: repo://tests/inbox/test_reply_intake.py
   - id: openwiki-source-17bf8b7b171c9db569415c2e
@@ -35,7 +38,10 @@ sources:
     resource: repo://tests/inbox/test_telegram_port.py
   - id: openwiki-source-ec516ae95f07d4f7e51ef3b6
     resource: repo://tests/inbox/test_wait_engine.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T14:44:51.273Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
+verified:
+  - by: openwiki/0.5.0
+    at: 2026-09-24T17:26:41.197Z
 ---
 
 # The credential boundary
@@ -184,6 +190,32 @@ loopback-only rule for an enabled answer path is enforced one layer up, and
 credential therefore buys little on its own off-host: it is only usable where
 the route is reachable, and the shipped runtime keeps that local.
 
+## The owner-side consequence: prove the destination, never the secret
+
+The boundary has one owner-side surface that is neither the tap nor the answer
+route: `paraphe check telegram` (`src/paraphe/check.py`), the preflight an owner
+runs before trusting a phone deployment. It resolves the settings through the
+same `load_settings` a server start uses, so a configuration the boundary
+refuses — an answer credential equal to the create bearer, or neither a phone
+destination nor an answer credential — stops the check with the same `paraphe:
+<message>` line and exit `2`, before any Bot API call. What it then prints is
+identity, not secrets: the bot the token resolves to
+(`Telegram token identifies @<username>.`) and the owner id the test message
+reached (`Telegram check passed for owner <id>.`). It prints no credential value
+— not the bot token, and not the token-bearing request URL the Bot API client
+builds from it, which is why that client's failures are fixed strings rather
+than interpolated URLs. The suite asserts both absences on the pass path and on
+every refusal path. The command's argument contract, ordered steps and exit
+codes are owned by
+[Owner-side commands](/openwiki/operations/owner-side-commands.md).
+
+The local destination keeps the same discipline in the other direction. The
+console destination prints the card and, with it, the `curl` command that
+answers it, and that command names `PARAPHE_OWNER_ANSWER_TOKEN` — the
+environment variable, never a value. The credential an owner must supply is
+therefore shown as a name to export, and card text that an agent can cause to be
+printed to stdout or a log carries nothing that could answer it.
+
 ## What the wait surface does not add
 
 `ask_question`, `request_approval` and `get_response` accept `wait_seconds`
@@ -278,6 +310,7 @@ what would catch it.
 | Any other failure inside `Inbox.answer` | `409 refused` |
 | No credential at all on the MCP path | `401`, connection closed |
 | A parked call whose card nobody answers | the window ends and it returns the pending envelope; the card is unchanged and a later `get_response` still reads the answer |
+| A credential in preflight output | never printed; only the bot identity and the owner id are |
 
 ## Focused tests
 
@@ -285,7 +318,9 @@ what would catch it.
   create credential gets `401` and leaves the card `pending`; a wrong credential
   gets `401`; the owner credential answers with `responded_via == "answer-path"`;
   a superseded version is `409 stale_version` with `response` still `null`; a
-  second answer is `409 already_tapped`.
+  second answer is `409 already_tapped`. The same class pins the local channel's
+  printed card: it carries the `/answer` command and the credential's environment
+  variable name, never a value.
 - `tests/inbox/test_setup.py::TestSetup` pins the setup rules: the answer
   credential must differ from the create bearer, a start with no phone
   destination and no answer credential refuses, a non-loopback bind
@@ -302,5 +337,8 @@ what would catch it.
 - `tests/inbox/test_wait_engine.py` is the wait-side evidence — a window that
   ends unanswered returns the pending envelope, and the same tap writes the same
   fields with and without a parked waiter.
-he pending envelope, and the same tap writes the same
-  fields with and without a parked waiter.
+- `tests/inbox/test_check.py::TestTelegramCheck` is the owner-side half: the
+  preflight names the bot and the owner id, and neither the bot token nor the
+  token-bearing request URL appears on the pass path, on a refused token, on an
+  unreachable Bot API, on a refused delivery, or through
+  `paraphe check telegram`.

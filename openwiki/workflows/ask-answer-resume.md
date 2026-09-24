@@ -18,6 +18,8 @@ sources:
     resource: repo://docs/tools.md
   - id: openwiki-source-23775c3de52f3ab95a13cb8b
     resource: repo://README.md
+  - id: openwiki-source-4dd912e5ad025b59dcbf1440
+    resource: repo://skills/paraphe-return-path/SKILL.md
   - id: openwiki-source-3f0923f394ad3a64d983d48d
     resource: repo://src/paraphe/adapters/console.py
   - id: openwiki-source-bc0ad19ae022e944fc077703
@@ -28,6 +30,8 @@ sources:
     resource: repo://src/paraphe/inbox/__init__.py
   - id: openwiki-source-a8049e4c38fe5c6127cbfcaf
     resource: repo://src/paraphe/inbox/http.py
+  - id: openwiki-source-ff9e45a3ac72725a5bcca301
+    resource: repo://src/paraphe/inbox/runtime.py
   - id: openwiki-source-72bdc2134cc6aed6125ac0b0
     resource: repo://tests/inbox/test_mcp_lifecycle.py
   - id: openwiki-source-93ffcac597d6a3fc6e17909e
@@ -38,10 +42,10 @@ sources:
     resource: repo://tests/inbox/test_surface_contract.py
   - id: openwiki-source-ec516ae95f07d4f7e51ef3b6
     resource: repo://tests/inbox/test_wait_engine.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T15:38:02.291Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
 verified:
   - by: openwiki/0.5.0
-    at: 2026-09-11T15:38:02.291Z
+    at: 2026-09-24T17:26:41.197Z
 ---
 
 # The ask → answer → resume workflow
@@ -394,9 +398,13 @@ credential rules behind the `401` row are
 
 `docs/demo/console-loop.md` is the loop recorded on a clean checkout — the
 recording the README's loop section points at — with no Telegram bot, no
-third-party account and no external service in the path: a clone, a virtual
-environment, `pip install .`, a configuration file with two reader-supplied
-values, and `.venv/bin/paraphe --config paraphe.toml`.
+third-party account and no external service in the path: recorded on 2026-09-10
+against `docs/repo-grooming`, it is a clone, a virtual environment,
+`pip install .`, a configuration file with two reader-supplied values, and
+`.venv/bin/paraphe --config paraphe.toml`, which prints
+`Paraphe ready: mcp http://127.0.0.1:8899/mcp answer-path on`. The animated
+terminal capture of those five steps is committed as `docs/demo/console-loop.gif`
+and embedded on the README.
 
 ```
 1. asked      : 43c1b52f-… version 1 pending True
@@ -411,20 +419,28 @@ credential was presented to the answer path and refused with no claim recorded
 and the card unchanged — the product's line, observed rather than assumed; the
 owner answered through the owner-only answer path; the run read the answer with
 `get_response` and saw `responded_via: answer-path`; and `mark_processed` closed
-the card.
+the card. The document also records what the owner saw: the console card composed
+purpose first, with its origin line, choices, recommendation and consequence,
+followed by the exact `curl` command that answers it through the owner answer
+path.
 
 Note which leg the recording exercises: step 4 is the **boundary read**, not the
 waited call and not the waiter command, and step 3 is the local answer route, not
 the tap and not the reply. The console run is the poll leg of the loop made
 observable end to end; the waited call, `paraphe wait` and the two phone answer
 entries are pinned by tests rather than by that recording. The console destination
-is what makes the demo possible — it prints the card and the exact `curl` command
-that answers it, using the same two-method contract the Telegram adapter
-implements, with no network call of its own.
+is what makes the demo possible — `docs/adapters.md` calls it the smallest
+complete implementation of the two-method contract: it prints the card and the
+exact `curl` command that answers it, using the same `notify` and
+`edit_and_strip` methods the Telegram tap adapter implements, with no network call
+of its own.
 
 The phone variant is the same loop with the tap adapter as destination, and its
-reply channel is a third way in for the same answer; there is no recorded asset
-of either in the repository.
+reply channel is a third way in for the same answer. The repository ships a still
+of the approval card as it arrives on the phone (`docs/demo/phone-approval.png`,
+shown on the README), but no recorded run of the phone loop itself: the demo
+document states that making one needs a phone, so the tap path stays documented in
+`docs/adapters.md` and pinned by `tests/inbox/test_telegram_port.py`.
 
 ## What the loop teaches its clients
 
@@ -443,9 +459,15 @@ Instead, the protocol travels in two places a client actually reads:
   `response.text` with `responded_via telegram-reply`, and a reply that is a
   question or not a decision is explained and re-asked with a fresh card rather
   than executed;
-- **one shipped skill**, `skills/paraphe-return-path/SKILL.md`, which documents
-  the per-runtime idioms for backgrounding the waiter — the README points at it
-  as "the async return protocol, per runtime".
+- **one shipped skill**, `skills/paraphe-return-path/SKILL.md`, which the README
+  lists as "the async return protocol, per runtime": the same three routes in the
+  order a client should try them, an install table of one copy step per runtime
+  (Hermes, Claude Code, Codex, or the served text alone where a runtime has no
+  skills directory), the two environment values the waiter needs
+  (`PARAPHE_MCP_CREATE_BEARER` and the endpoint), and the rules — the create
+  credential never answers, provenance is never guessed, an answer is bound to
+  the card's `version`, and a reply that is not a decision is explained and
+  re-asked.
 
 That is the whole teaching surface: a client that reads nothing but `tools/list`
 still learns the loop, and a runner that can background any command is returned
@@ -461,6 +483,7 @@ by the answer.
 | `paraphe wait` prints the answer and exits `0`, `3`, `4`, looping over windows | `tests/inbox/test_wait_engine.py` (`TestWaitCommand`) |
 | the create bearer is refused on `POST /answer` with no claim recorded | `tests/inbox/test_setup.py` (`test_the_create_credential_cannot_answer`) |
 | the owner credential answers and records `responded_via: answer-path` | `tests/inbox/test_setup.py` (`test_the_owner_credential_answers_and_records_how_it_arrived`) |
+| the console destination prints the card and the answer command, and implements only the two-method contract | `tests/inbox/test_setup.py` (`test_the_console_destination_prints_the_card_and_the_answer_command`), `tests/inbox/test_surface_contract.py` (`test_the_console_destination_implements_the_two_method_contract`) |
 | a reply records the owner's words verbatim with `choice` null and `responded_via telegram-reply` | `tests/inbox/test_reply_intake.py` (`test_reply_records_the_owners_words_verbatim`) |
 | a reply writes the same lifecycle as a same-moment tap, and wakes a parked waiter with the text | `tests/inbox/test_reply_intake.py` (`test_reply_writes_the_same_lifecycle_as_a_same_moment_tap`, `test_reply_wakes_the_parked_waiter_with_the_text`) |
 | a reply still resolves after a restart, and every refusal records nothing, wakes nothing and raises nothing | `tests/inbox/test_reply_intake.py` (`test_reply_resolves_after_a_restart`, `test_refusals_record_nothing_raise_nothing_and_wake_nothing`) |

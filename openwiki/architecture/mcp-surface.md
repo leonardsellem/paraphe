@@ -22,10 +22,10 @@ sources:
     resource: repo://tests/inbox/test_surface_contract.py
   - id: openwiki-source-ec516ae95f07d4f7e51ef3b6
     resource: repo://tests/inbox/test_wait_engine.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T14:44:51.273Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
 verified:
   - by: openwiki/0.5.0
-    at: 2026-09-11T14:44:51.273Z
+    at: 2026-09-24T17:26:41.197Z
 ---
 
 # The served MCP surface and envelope
@@ -150,7 +150,7 @@ Per tool, the presentable field set and the refusals are:
 |---|---|---|
 | `ask_question` | ask fields + shared create + provenance | `title`, `details` |
 | `request_approval` | `title`, `details` + shared create + provenance | `question`, `context`, `choices`, `choice_notes`, `allow_freeform` |
-| `request_feedback` | `title`, `details` + shared create + provenance | the same ask set (`choice_notes` is outside its set too, so it is `unknown parameter`, not a kind refusal) |
+| `request_feedback` | `title`, `details` + shared create + provenance | `question`, `context`, `choices`, `allow_freeform` (the rest of the ask set — `choice_notes` also lies outside its allowed set, so it is `unknown parameter`, not a kind refusal) |
 | `notify_user` | `title`, `message`, `result` + shared create | the whole ask set including `choice_notes`, plus `details` and all four provenance fields |
 | `update_request` | `UPDATE_FIELDS` only | against the stored card's kind: a `question` card refuses `title`/`details`, an `approval` card refuses the ask set including `choices` |
 
@@ -340,9 +340,10 @@ does not answer in the create shape at all — the caller gets
 `status`/`response`/`pending`, not `duplicate`/`read_with`. A duplicate create
 that also waits therefore reports the current card state rather than the duplicate
 flag. `wait_seconds` of `0` (or absent) returns the handler's own result and does
-not sleep. `request_feedback` accepts `wait_seconds` because it shares the create
-field set, but it is not in `WAIT_TOOLS`, so the value is validated and not slept
-on.
+not sleep. `request_feedback` accepts `wait_seconds` — it is in the shared create
+set, and the handler's allowed set names it a second time — but it is not in
+`WAIT_TOOLS`, so the value is validated and not slept on, exactly as
+`docs/tools.md` documents.
 
 The park runs after the inbox lock is released, so a parked call never blocks the
 store for other requests, and the window is bounded per call. The full mechanism,
@@ -495,26 +496,38 @@ tailnet address builds that URL from `host` and `port` instead.
 
 `TOOL_DESCRIPTIONS` is the short text in each descriptor; `Inbox._how_to_use`
 returns the long guide. Both are written for a client that reads nothing else
-(`docs/adr/0011-answer-returns-through-the-ask.md`), and the suite pins the phrases
-a client depends on:
+(`docs/adr/0011-answer-returns-through-the-ask.md`), and the suite pins the
+phrases a client depends on:
 
-- the asking tools carry "record the returned request_id", name `get_response` and
-  `wait_seconds`, and — with `request_feedback` and `update_request` — say to pass
-  `runtime/repo/worktree/ticket` so the card shows where the ask comes from;
+- how to compose the card is taught, not assumed: `ask_question` and
+  `request_approval` say to compose purpose first — why the ask exists before the
+  action detail — with the origin stated and the tap semantics plain, naming
+  `consequence` and `prohibitions` for what the answer authorises and what it does
+  not; `request_feedback` carries the same purpose-first sentence without naming
+  those two fields;
+- the asking tools say to "Record the returned request_id" and name
+  `get_response` and `wait_seconds`, and the four tools that take provenance —
+  `ask_question`, `request_approval`, `request_feedback`, `update_request` — say
+  to pass the fields spelled `runtime/repo/worktree/ticket` (optional) so the
+  card shows where the ask comes from;
 - `get_response` adds that the answer is nested at `response.choice` and is not
   consumed, and that an owner reply arrives as `response.text` with
-  `responded_via telegram-reply`; `get_response` and `list_unprocessed` carry the
-  drain rule ("drain the answers that are yours when you next run");
-- the guide lists the tool names, the shared-bearer plus stable-`external_id` rule,
-  the question/approval field split ("mixing those names fails"), the request-id
+  `responded_via telegram-reply`; `get_response` and `list_unprocessed` both
+  carry the drain rule ("drain the answers that are yours when you next run");
+- the guide adds the tool list, the shared-bearer plus stable-`external_id` rule,
+  the question/approval field split ("Mixing those names fails"), the request-id
   and `wait_seconds` protocol, where the owner answers, the phone rendering with
-  its identity line, the reply rule ("a reply that is a question or not a decision
-  is not a decision: do not execute it — explain, then re-ask with a fresh card"),
-  the `paraphe wait` command with its exit codes, the credential one-liner ("this
-  credential creates and reads. It cannot answer a decision."), the
-  `update_request` / `report_execution` / `cancel_request` / `mark_processed`
-  reminders, `rule_key is accepted and ignored`, "reads do not consume answers",
-  the strictness rule, and a pointer at `docs/tools.md`.
+  its identity line (agent, runtime, repository, worktree, ticket) and the
+  provenance instruction, the writing contract in full — origin stated, purpose
+  first, tap semantics plain, including what Approve and what Deny each do — the
+  reply channel and the reply rule ("a reply that is a question or not a
+  decision is not a decision: do not execute it — explain, then re-ask with a
+  fresh card"), the `paraphe wait` command with its exit codes, the credential
+  one-liner ("this credential creates and reads. It cannot answer a decision."),
+  the `update_request` / `report_execution` / `cancel_request` /
+  `mark_processed` reminders, `rule_key is accepted and ignored`, "reads do not
+  consume answers", the notify-only rule, the strictness rule, and a pointer at
+  `docs/tools.md`.
 
 ## Invariants and failure modes
 
@@ -540,13 +553,20 @@ a client depends on:
   `test_the_served_tools_are_exactly_the_documented_ones` asserts that set equals
   `TOOL_NAMES` (compared sorted, so the doc table's order is free) and that
   `list_tools()` equals `TOOL_NAMES` in order. The same file pins non-empty
-  descriptions distinct from the tool names, the protocol language in `how_to_use`
-  and in the `ask_question` / `get_response` / `list_unprocessed` descriptions,
-  that the served text teaches provenance (`runtime`, `repo`, `worktree`, `ticket`
-  in the guide and in the four descriptors that take them), that it teaches the
-  reply rule (`telegram-reply`, `re-ask` in the guide, `telegram-reply` in the
-  `get_response` description), and that no served name carries `answer` or `claim`
-  as an underscore-separated segment.
+  descriptions distinct from the tool names; the protocol language in `how_to_use`
+  ("Record the request_id", `wait_seconds`, `get_response`, `list_unprocessed`,
+  `paraphe wait`) and in the `ask_question` descriptor; the drain rule in the
+  `get_response` and `list_unprocessed` descriptors; that the served text teaches
+  provenance (`runtime`, `repo`, `worktree`, `ticket` in the guide and the literal
+  `runtime/repo/worktree/ticket` in the four descriptors that take them); that it
+  teaches the card-writing contract (`origin`, `purpose`, `authorise`,
+  `prohibitions` in the guide, `purpose` and `authorise` in the `ask_question` and
+  `request_approval` descriptors); that it teaches the reply rule (`telegram-reply`,
+  `re-ask` in the guide, `telegram-reply` in the `get_response` description); that
+  a created card's first line is the identity line rendered from the payload
+  (`Hermes · Claude Code · paraphe · feature-better-tg-cards · card-3119` for the
+  provenance a create carried); and that no served name carries `answer` or
+  `claim` as an underscore-separated segment.
 - `tests/inbox/test_mcp_lifecycle.py` covers the surface through the transport:
   twelve names over HTTP `tools/list`, `401` without a bearer, the SSE-framed POST
   plus `405` on `GET`, the `413` on an oversized `Content-Length`, the keep-alive

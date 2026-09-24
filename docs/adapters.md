@@ -22,7 +22,10 @@ class Destination:
         answer (buttons, a prompt) so no stale control stays on screen."""
 ```
 
-That is the whole contract. The payload is structured and the destination
+That is the whole contract. The card's content is composed by the asking
+agent per the writing contract in [`tools.md`](tools.md) — origin stated,
+purpose first, tap semantics plain — and the destination renders what it is
+given. The payload is structured and the destination
 owns its layout: the Telegram adapter renders the card as ordered rich
 sections (identity line, kind, bold title, context, numbered options with
 notes, Recommended, If approved, Limits, links, reply hint, expiry) as

@@ -1,3 +1,4 @@
 # Files
 
-- [Data location, permissions and backup](data-location-and-backup.md) - Where Paraphe keeps its cards, how one function resolves that location, why relocating refuses rather than starting empty, the modes on the directory and the file, the snapshot contract before a backup, and the container mount.
+- [Data location, permissions and backup](data-location-and-backup.md) - How one resolver decides where Paraphe keeps its cards, why the default refuses rather than starting a second empty inbox, how `paraphe store relocate --move` became the upgrade route, the 0700/0600 modes, the store's three tables, the snapshot-before-backup contract, and the container mount.
+- [Owner-side commands: check telegram and store relocate](owner-side-commands.md) - The two commands an owner runs instead of starting the server — `paraphe check telegram`, which proves the configured phone destination before a run, and `paraphe store relocate [--move]`, which installs a verified copy of a legacy store at the current per-user location — with their argument contract, ordered steps, refusals and exit codes.

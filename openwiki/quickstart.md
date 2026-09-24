@@ -1,11 +1,11 @@
 ---
 type: guide
 title: Quickstart
-description: What Paraphe is, the two credentials an operator supplies, the four routes to a running inbox (local console, shell ask/wait, container, phone), the ask → answer → resume loop with the owner's three answer channels, and which wiki page owns each part of the system.
+description: What Paraphe is, the two credentials an operator supplies, every route to a running inbox (local console, shell ask/wait, container, phone), the owner's answer channels, the owner-side `check telegram` and `store relocate` commands, and which wiki page owns each subsystem.
 tags: [quickstart, setup, onboarding, routing]
 verified:
   - by: openwiki/0.5.0
-    at: 2026-09-11T15:38:02.291Z
+    at: 2026-09-24T17:26:41.197Z
 sources:
   - id: openwiki-source-6d4b4e707b8d60b6ccfa3425
     resource: repo://.github/workflows/openwiki-update.yml
@@ -35,6 +35,8 @@ sources:
     resource: repo://src/paraphe/adapters/console.py
   - id: openwiki-source-bc0ad19ae022e944fc077703
     resource: repo://src/paraphe/adapters/telegram.py
+  - id: openwiki-source-323578bac7c22161d0113db8
+    resource: repo://src/paraphe/check.py
   - id: openwiki-source-83b4724c0939d8570eedb33f
     resource: repo://src/paraphe/cli.py
   - id: openwiki-source-3f834a992df5ac81007614a4
@@ -47,11 +49,13 @@ sources:
     resource: repo://src/paraphe/inbox/runtime.py
   - id: openwiki-source-d39aa17b1580d696b9e0586e
     resource: repo://src/paraphe/inbox/store.py
+  - id: openwiki-source-f8eb69b469a332aa25c109f6
+    resource: repo://src/paraphe/store_cli.py
   - id: openwiki-source-72bdc2134cc6aed6125ac0b0
     resource: repo://tests/inbox/test_mcp_lifecycle.py
   - id: openwiki-source-17bf8b7b171c9db569415c2e
     resource: repo://tests/inbox/test_setup.py
-generated: { by: "openwiki/0.5.0", at: "2026-09-11T15:38:02.291Z" }
+generated: { by: "openwiki/0.5.0", at: "2026-09-24T17:26:41.197Z" }
 ---
 
 # Quickstart
@@ -88,6 +92,19 @@ also keeps the local-only run artifacts out of commits —
 `docs/plans/*.companion.md`, `docs/plans/*.goal.txt` and the in-flight
 `openwiki/.run.json` — so a commit from a working checkout carries none of them.
 
+These are the working forms of the `paraphe` command, and each one maps to a
+route or an owner-side step described below. The dispatch order, the usage text
+and the refusal for anything else are owned by
+[composition root and runtime](/openwiki/architecture/composition-root-and-runtime.md).
+
+| Invocation | What it is here |
+|---|---|
+| `paraphe [--config PATH]` | start the server — routes A to D |
+| `paraphe ask QUESTION` / `paraphe wait REQUEST_ID` | the shell half of the loop — route B |
+| `paraphe check telegram` | the phone preflight — route D |
+| `paraphe store relocate [--move]` | the store upgrade — route A |
+| `paraphe --version`, `paraphe --help` | version and usage |
+
 ## Route A — run it locally, answering on the console
 
 ```bash
@@ -109,18 +126,31 @@ With no bot token the destination is the console: the card is printed where you
 are looking, together with the `curl` command that answers it. The default bind
 is loopback `127.0.0.1:8787` — `runtime.DEFAULT_MCP_PORT` and `cli.DEFAULT_PORT`
 are both `8787` — and the ready line is printed from the socket that was
-actually bound, so a run that sets `PARAPHE_MCP_PORT` prints that port instead.
-The README's example line shows `8792` for exactly that reason, and the recorded
-demo ran on `8899`.
+actually bound, so a run that sets `PARAPHE_MCP_PORT` prints that port instead;
+the recorded demo's `8899` is one such run.
+[Composition root and runtime](/openwiki/architecture/composition-root-and-runtime.md)
+owns the bind, the ready line and the startup checks.
 
 The store is a SQLite file in your per-user data directory
 (`$XDG_DATA_HOME/paraphe`, else `~/.local/share/paraphe`) unless `store_path`
 points elsewhere. Upgrading from a release that kept it in `/var/lib/paraphe`?
-Set `store_path` to that file — `store_path = "/var/lib/paraphe/inbox.sqlite"` —
-because Paraphe refuses to start on the default while a store exists there,
-rather than beginning a second, empty inbox.
-[Data location and backup](/openwiki/operations/data-location-and-backup.md)
-covers the modes, the move and backups.
+Stop the running server and run the relocation:
+
+```console
+paraphe store relocate           # copies /var/lib/paraphe/inbox.sqlite to the
+                                 # per-user default, verifying it first and
+                                 # keeping the old file as a backup
+paraphe store relocate --move    # the same copy, then remove the old store
+```
+
+Setting `store_path` to the old location — `store_path =
+"/var/lib/paraphe/inbox.sqlite"` — remains available when relocation is not
+wanted, because Paraphe refuses to start on the default while a store exists
+only there, rather than beginning a second, empty inbox.
+[Owner-side commands](/openwiki/operations/owner-side-commands.md) owns the
+relocation steps, its refusals and its exit codes;
+[data location and backup](/openwiki/operations/data-location-and-backup.md)
+owns the resolver, the modes and backups.
 
 ## Route B — ask from a shell
 
@@ -136,7 +166,9 @@ id on stdout. A backgrounded `paraphe wait <request_id>` holds the card's
 lifetime in repeated bounded windows and ends when the owner answers: exit `0`
 answered, `3` expired or not answerable, `4` unknown request id. Where the
 endpoint and the create bearer come from, and every other option, is on
-[the ask and wait commands](/openwiki/integrations/ask-and-wait-cli.md).
+[the ask and wait commands](/openwiki/integrations/ask-and-wait-cli.md); the
+parking and waking those windows are built on is
+[the wait engine](/openwiki/architecture/wait-engine.md).
 
 ## Route C — run it in a container
 
@@ -170,12 +202,24 @@ why the answer path is loopback-only.
 
 Add a Telegram bot token and your Telegram user id to `paraphe.toml` (or
 `PARAPHE_BOT_TOKEN` / `PARAPHE_OWNER_TELEGRAM_ID`) and decisions arrive as a
-message with buttons instead of on the console. The bot token's presence is what
-selects the destination, and with a phone destination the answer credential
-becomes optional, because the owner answers by tapping. Tapping is not the only
-gesture: the card ends with a reply hint, and a long-press reply to it answers
-that card in the owner's own words — a reply that is a question rather than a
-decision is explained rather than executed.
+message with buttons instead of on the console. The README's three setup steps
+are: create the bot with BotFather and keep the token private, send the bot
+`/start` and find your own numeric Telegram user id, then set both values and
+prove the pair before starting the server:
+
+```bash
+.venv/bin/paraphe check telegram
+.venv/bin/paraphe --config paraphe.toml
+```
+
+The check names the bot and sends one plain setup message to your phone; it
+prints no token and creates no card, and every way it can refuse is on
+[owner-side commands](/openwiki/operations/owner-side-commands.md). The bot
+token's presence is what selects the destination, and with a phone destination
+the answer credential becomes optional, because the owner answers by tapping.
+Tapping is not the only gesture: the card ends with a reply hint, and a
+long-press reply to it answers that card in the owner's own words — a reply that
+is a question rather than a decision is explained rather than executed.
 [The rendered card](/openwiki/integrations/telegram-card-rendering.md) is the
 message the owner reads;
 [owner replies as answers](/openwiki/integrations/owner-reply-intake.md) is what
@@ -198,7 +242,9 @@ are the same kind of event: a tap on the phone
 long-press reply to the card message in the owner's own words
 ([owner replies as answers](/openwiki/integrations/owner-reply-intake.md)), or
 the local answer path that the console route prints a `curl` line for. The card
-records which channel the answer actually arrived through.
+records which channel the answer actually arrived through; why only the owner
+can use any of them is
+[the credential boundary](/openwiki/security/credential-boundary.md).
 
 The answer then returns through the ask itself, by any of three equal routes: the
 call parks with `wait_seconds`, the backgrounded `paraphe wait` above holds the
@@ -206,6 +252,9 @@ card's lifetime, or a run that missed both drains the answer with `get_response`
 and `list_unprocessed` at its next boundary. Nothing has to be said in chat.
 Showing the card is best effort; the durable store is the source of the answer,
 so a notification or a wake that never arrived is not a lost decision.
+[The wait engine](/openwiki/architecture/wait-engine.md) owns the parking, and
+[card lifecycle](/openwiki/architecture/card-lifecycle.md) owns what a card is
+while all this happens.
 
 `docs/demo/console-loop.md` is a recorded run of that on a clean checkout, with
 no third-party credential and no external service:
@@ -231,7 +280,7 @@ Quickstart routes; these pages are the detail.
 | If you are… | Read |
 |---|---|
 | learning the words (card, revision, tap, return path, owner) | [domain vocabulary and superseded decisions](/openwiki/concepts/domain-vocabulary.md) |
-| writing an agent against it | `docs/tools.md` (the tool surface contract) and [the served MCP surface](/openwiki/architecture/mcp-surface.md) |
+| writing an agent against it | [the served MCP surface](/openwiki/architecture/mcp-surface.md) and `docs/tools.md` (the in-repo tool surface contract) |
 | tracing one decision end to end | [the ask → answer → resume workflow](/openwiki/workflows/ask-answer-resume.md) |
 | changing what a card is or how it closes | [card lifecycle](/openwiki/architecture/card-lifecycle.md) |
 | changing how a call parks until the owner answers | [the wait engine](/openwiki/architecture/wait-engine.md) |
@@ -242,9 +291,9 @@ Quickstart routes; these pages are the detail.
 | changing how a long-press reply becomes the answer | [owner replies as answers](/openwiki/integrations/owner-reply-intake.md) |
 | adding a destination | [adapters: the destination seam](/openwiki/extension/adapters-and-tool-surface.md) and `docs/adapters.md` |
 | changing startup, settings or the ready line | [composition root and runtime](/openwiki/architecture/composition-root-and-runtime.md) |
+| running the owner-side commands (`check telegram`, `store relocate`) | [owner-side commands](/openwiki/operations/owner-side-commands.md) |
 | moving the data or backing it up | [data location and backup](/openwiki/operations/data-location-and-backup.md) |
 | running the tests or landing a change | [suite and integration](/openwiki/testing/suite-and-integration.md) and `CONTRIBUTING.md` |
-| working in this repository rather than using it | `AGENTS.md` (layout, the suite command, the rules) and [suite and integration](/openwiki/testing/suite-and-integration.md) |
 
 `AGENTS.md` is the repository's canonical instruction file. Its `Card surface`
 section summarizes the Telegram card's ordered sections and the owner's
@@ -259,3 +308,9 @@ Alongside these pages, in the repository: `CONTEXT.md` for the vocabulary,
 `docs/adr/` for the decisions behind the shape, `docs/specs/paraphe-v1.md` for
 the v1 specification, `docs/roadmap.md` for what is next, and
 `skills/paraphe-return-path/SKILL.md` for the async return protocol.
+
+The README's documentation table now points at the generated wiki —
+`openwiki/index.md`, `openwiki/quickstart.md` and `openwiki/architecture/` —
+rather than only at in-repo files; `docs/tools.md` and `docs/adapters.md` were
+dropped from that table but remain in the repository and are still cited by the
+demo and by the rows above.
