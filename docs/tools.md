@@ -141,6 +141,11 @@ Approve authorises that one move and nothing else. Deny leaves the store
 where it is and the release waits.
 ```
 
+The full writing standard — plain words for the owner, choices as actions
+with a plus and a minus each, one recommendation, honest risk, the field
+limits — ships as a skill:
+[`skills/paraphe-owner-decision-writing/`](../skills/paraphe-owner-decision-writing/SKILL.md).
+
 ## The rendered card
 
 On the phone the card is ordered rich text: identity line, kind (with a risk
