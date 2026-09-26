@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           # Full history so `openwiki code --update` can diff HEAD against the
           # commit it last documented; a shallow clone hides that commit and the
@@ -49,6 +49,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: rm -f -- openwiki/.run.json
 
+      - name: Drop CLAUDE.md recreated by OpenWiki
+        if: ${{ !cancelled() }}
+        run: |
+          git ls-files --others --modified --cached | grep -E '(^|/)CLAUDE\.md$' | grep -v '^\.agents/skills/' | xargs -r git rm -f --cached --ignore-unmatch
+          find . -path ./.agents -prune -o -name CLAUDE.md -print -exec rm -f {} +
+          ! git ls-files -z | grep -zEv '(^|/)\.agents/skills/' | grep -zE '(^|/)(\.claude/)?CLAUDE(\.local)?\.md$'
+
       - name: Create OpenWiki update pull request
         if: ${{ !cancelled() }}
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
@@ -56,7 +63,6 @@ jobs:
           add-paths: |
             openwiki
             AGENTS.md
-            CLAUDE.md
             .github/workflows/openwiki-update.yml
           branch: openwiki/update
           commit-message: "docs: update OpenWiki"

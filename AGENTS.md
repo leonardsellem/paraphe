@@ -1,8 +1,8 @@
 # Paraphe — agent operating notes
 
-The owner-decision inbox for agents. This file is the canonical instruction
-file for this repository; `CLAUDE.md` is a one-line pointer to it and neither
-level repeats the other.
+The owner-decision inbox for agents. This file is the only instruction
+file for this repository; a tracked `CLAUDE.md` is a defect (CI guard rejects
+it).
 
 ## CodeGraph
 
