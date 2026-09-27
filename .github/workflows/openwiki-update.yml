@@ -26,7 +26,7 @@ jobs:
 
       - name: Install OpenWiki
         # mermaid + jsdom are optional; they add high-fidelity validation of Mermaid diagrams. Remove if your wiki has none.
-        run: npm install --global openwiki@0.5.0 mermaid@11.16.0 jsdom@29.1.1
+        run: npm install --global openwiki@0.6.0 mermaid@11.16.0 jsdom@29.1.1
 
       - name: Run OpenWiki
         id: openwiki
@@ -35,7 +35,8 @@ jobs:
         env:
           OPENWIKI_PROVIDER: openrouter
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENWIKI_MODEL_ID: "z-ai/glm-5.2"
+          OPENWIKI_MODEL_ID: "deepseek/deepseek-v4-flash-0731"
+          OPENWIKI_PAGE_CONCURRENCY: "3"
           # Required for the LangSmith connector's code-mode pull to authenticate.
           # For extra workspaces, add OPENWIKI_LANGSMITH_API_KEY_2, _3, ... as repo
           # secrets and env entries here.
