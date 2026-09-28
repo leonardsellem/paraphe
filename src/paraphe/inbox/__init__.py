@@ -197,7 +197,10 @@ TOOL_SCHEMAS = {
     "how_to_use": _schema(set()),
     "ask_question": _schema(ASK_ONLY | SHARED_CREATE | PROVENANCE, ["question"]),
     "request_approval": _schema(APPROVAL_ONLY | SHARED_CREATE | PROVENANCE, ["title"]),
-    "get_response": _schema({"request_id", "wait_seconds"}, ["request_id"]),
+    "get_response": {
+        **_schema({"request_id", "external_id", "wait_seconds"}),
+        "oneOf": [{"required": ["request_id"]}, {"required": ["external_id"]}],
+    },
     "list_unprocessed": _schema(set()),
     "list_pending": _schema(set()),
     "mark_processed": _schema({"request_id"}, ["request_id"]),
@@ -236,7 +239,9 @@ TOOL_DESCRIPTIONS = {
         "(optional) so the card shows where the ask comes from."
     ),
     "get_response": (
-        "Read a card; the answer is nested at response.choice and is not "
+        "Read a card using exactly one of request_id or external_id (lost-create-ACK recovery). "
+        "Returns external_id, version, choices and expires_at for decision validation. "
+        "The answer is nested at response.choice and is not "
         "consumed. wait_seconds (0-60) parks the call until the card is "
         "answered or the window ends. An owner reply arrives as response.text "
         "with responded_via telegram-reply. Drain the answers that are yours "
@@ -763,6 +768,9 @@ class Inbox:
             "request_approval and get_response accept wait_seconds (0-60): the "
             "call parks until the owner answers inside that window or the "
             "window ends, then returns the answer envelope.\n"
+            "If the create ACK is lost, use get_response with external_id; pass "
+            "exactly one of request_id or external_id. Reads include external_id, "
+            "version, choices and expires_at for decision validation.\n"
             "The owner answers on the configured destination; read with "
             "get_response, where the answer is nested at response.choice and "
             "is not consumed. When you next run, drain the answers that are "
@@ -882,8 +890,17 @@ class Inbox:
 
     def _get_response(self, args: dict[str, Any], *, bearer: str | None) -> dict[str, Any]:
         _ = bearer
-        self._reject_unknown(args, {"request_id", "wait_seconds"})
-        request_id = self._require_str(args, "request_id", required=True)
+        self._reject_unknown(args, {"request_id", "external_id", "wait_seconds"})
+        if ("request_id" in args) == ("external_id" in args):
+            raise InboxError("exactly one of request_id or external_id is required")
+        if "external_id" in args:
+            external_id = self._require_str(args, "external_id", required=True)
+            self._ensure_store()
+            request_id = self._by_external_id.get(external_id)
+            if request_id is None:
+                raise InboxError("unknown external_id")
+        else:
+            request_id = self._require_str(args, "request_id", required=True)
         self._opt_wait(args)
         return self._envelope(self._require_card(request_id))
 
@@ -1144,6 +1161,9 @@ class Inbox:
             "request_id": card.request_id,
             "status": self._status(card),
             "version": card.version,
+            "external_id": card.external_id,
+            "choices": list(card.choices or ["Approve", "Deny"]),
+            "expires_at": card.expires_at,
             "response": response,
             "processed_at": card.processed_at,
             "execution_status": card.execution_status,
