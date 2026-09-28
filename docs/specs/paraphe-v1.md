@@ -112,7 +112,7 @@ Paraphe is a self-hosted owner decision inbox. Agents create a Card through the 
 | `how_to_use` | none | Keep |
 | `ask_question` | `question` | Keep |
 | `request_approval` | `title` | Keep |
-| `get_response` | `request_id` | Keep |
+| `get_response` | exactly one of `request_id` or `external_id` | Keep; external-id lookup recovers a lost create acknowledgement |
 | `list_unprocessed` | none | Keep |
 | `list_pending` | none | Keep |
 | `mark_processed` | `request_id` | Keep |
@@ -135,7 +135,7 @@ Closeout: `note`≤1000, `result` object (`outcome` `success\|failure\|partial`,
 Response envelope after unwrapping MCP `result.content[].text`:
 
 ```
-request_id, status, version,
+request_id, external_id, status, version, choices, expires_at,
 response.choice, response.text, response.responded_at, response.responded_via,
 processed_at, execution_status, kind, pending
 ```

@@ -117,6 +117,12 @@ Paraphe must not collapse those names.
 
 ### Response envelope clients already parse
 
+Paraphe adds `external_id`, offered `choices` and `expires_at` (Unix epoch
+seconds, nullable for legacy cards) to the shared read envelope. `get_response`
+accepts exactly one of `request_id` or `external_id`; the latter recovers a
+lost create acknowledgement without re-notifying. The original external id
+remains immutable across revisions. See [the current contract](../tools.md).
+
 The live `get_response` shape, after unwrapping `result.content[].text`:
 
 ```json

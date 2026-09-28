@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           # Full history so `openwiki code --update` can diff HEAD against the
           # commit it last documented; a shallow clone hides that commit and the
@@ -26,7 +26,7 @@ jobs:
 
       - name: Install OpenWiki
         # mermaid + jsdom are optional; they add high-fidelity validation of Mermaid diagrams. Remove if your wiki has none.
-        run: npm install --global openwiki@0.5.0 mermaid@11.16.0 jsdom@29.1.1
+        run: npm install --global openwiki@0.6.0 mermaid@11.16.0 jsdom@29.1.1
 
       - name: Run OpenWiki
         id: openwiki
@@ -34,8 +34,10 @@ jobs:
         run: openwiki code --update --print
         env:
           OPENWIKI_PROVIDER: openrouter
+          OPENWIKI_OPENROUTER_PROVIDER_ONLY: "DeepInfra"
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENWIKI_MODEL_ID: "z-ai/glm-5.2"
+          OPENWIKI_MODEL_ID: "deepseek/deepseek-v4-flash-0731"
+          OPENWIKI_PAGE_CONCURRENCY: "3"
           # Required for the LangSmith connector's code-mode pull to authenticate.
           # For extra workspaces, add OPENWIKI_LANGSMITH_API_KEY_2, _3, ... as repo
           # secrets and env entries here.
@@ -49,6 +51,13 @@ jobs:
         if: ${{ !cancelled() }}
         run: rm -f -- openwiki/.run.json
 
+      - name: Drop CLAUDE.md recreated by OpenWiki
+        if: ${{ !cancelled() }}
+        run: |
+          git ls-files --others --modified --cached | grep -E '(^|/)CLAUDE\.md$' | grep -v '^\.agents/skills/' | xargs -r git rm -f --cached --ignore-unmatch
+          find . -path ./.agents -prune -o -name CLAUDE.md -print -exec rm -f {} +
+          ! git ls-files -z | grep -zEv '(^|/)\.agents/skills/' | grep -zE '(^|/)(\.claude/)?CLAUDE(\.local)?\.md$'
+
       - name: Create OpenWiki update pull request
         if: ${{ !cancelled() }}
         uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
@@ -56,7 +65,6 @@ jobs:
           add-paths: |
             openwiki
             AGENTS.md
-            CLAUDE.md
             .github/workflows/openwiki-update.yml
           branch: openwiki/update
           commit-message: "docs: update OpenWiki"

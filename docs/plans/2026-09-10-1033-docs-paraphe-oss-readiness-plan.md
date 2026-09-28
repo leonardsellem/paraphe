@@ -61,7 +61,7 @@ The cost is that a reader arriving today cannot evaluate the work without the au
 - **AGPL-3.0-or-later over a permissive license.** Self-hosting stays unrestricted, while offering paraphe as a network service carries the source obligation. Governs R7, R15. (session-settled: user-directed — chosen over MIT: coherent for a self-hosted tool, accepting a possible loss of corporate contribution.)
 - **The working tree is scrubbed; the author's history is not rewritten.** Rewriting is destructive on a shared remote. The exposure the history carries is real and is not a display problem: the personal address sits in commit objects and stays readable in every clone, and the commit subjects name a private tracker and a private branch. A `.mailmap` addresses attribution only and was never a privacy control. Publishing from a fresh single-commit public history resolves the exposure without touching the shared repository. Governs R1.
 - **`implementation-notes.html` is deleted rather than sanitized.** It is a build artifact of a private review process, not documentation. Sanitizing it would preserve the wrong thing in the wrong place. Governs R2.
-- **One canonical AGENTS.md per level, with CLAUDE.md as a pointer.** Duplicated prose drifts; a pointer cannot. Governs R17, R18.
+- ~~**One canonical AGENTS.md per level, with CLAUDE.md as a pointer.**~~ Superseded 2026-09-27 (fleet migration): `AGENTS.md` is the only instruction file; a tracked `CLAUDE.md` is a defect. Governs R17.
 - **The public tracker is the repository's own issues, reusing the existing triage label names.** The labels are already the vocabulary contributors will list against; changing them buys nothing. Governs R19, R23.
 - **paraphe publishes its own tool surface rather than crediting the product it was inherited from.** The tool names are load-bearing, so the repository owns them and explains them on its own terms, and the local teardown of the other product is deleted. Governs R11. (session-settled: user-approved — chosen over crediting the source product as a compatibility baseline: a repository cannot explain why its interface looks the way it does by citing a product it does not control.)
 - **Extend the seams that already exist rather than introduce new ones.** The wake path already exposes a two-method adapter contract, and the example configuration already maps the configuration surface. Governs R3, R9, R10.
@@ -106,7 +106,7 @@ The cost is that a reader arriving today cannot evaluate the work without the au
 **Agent instruction files**
 
 - R17. Every directory level that carries its own instructions has exactly one canonical AGENTS.md, and a nested level states only what differs locally.
-- R18. Every CLAUDE.md is a single line pointing at its level's AGENTS.md.
+- R18. ~~Every CLAUDE.md is a single line pointing at its level's AGENTS.md.~~ Superseded 2026-09-27: no tracked `CLAUDE.md`; `AGENTS.md` alone.
 - R19. Contributor-facing tracker documentation names the public tracker, its labels, and its workflow instead of a private one.
 
 **Repository wiki**
@@ -345,7 +345,7 @@ Paths are given for the layout the unit runs against. U1, U2 and U12 run before 
 | U3 | One installable distribution with a command and a licence | `pyproject.toml`, `LICENSE`, `src/paraphe/` | U2 |
 | U4 | First run that needs no third-party credential | `src/paraphe/__main__.py`, `src/paraphe/inbox/`, `config.example.toml` | U3 |
 | U5 | Runtime neutrality and the published tool surface | `src/paraphe/adapters/`, `src/paraphe/inbox/`, `docs/adapters.md`, `docs/tools.md` | U3 |
-| U6 | Documentation rewrite | `README.md`, `CONTEXT.md`, `AGENTS.md`, `CLAUDE.md`, `docs/agents/`, `docs/demo/` | U5 |
+| U6 | Documentation rewrite | `README.md`, `CONTEXT.md`, `AGENTS.md`, `docs/agents/`, `docs/demo/` | U5 |
 | U7 | Generated repository wiki | `openwiki/`, `AGENTS.md` | U1, U3 |
 | U8 | Contributor on-ramp and trust signals | `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/` | U6 |
 | U9 | Integration, version floor, and the standing private-term gate | `.github/workflows/ci.yml`, `README.md`, `pyproject.toml` | U8 |
@@ -527,7 +527,7 @@ Surface ownership, so a file edited by more than one unit has one owner and the 
 - **Goal:** Every document a stranger reads describes the scrubbed, renamed repository, and the first screen converts.
 - **Requirements:** R5, R12, R13, R14, R15, R16, R17, R18, R19, R36
 - **Dependencies:** U5
-- **Files:** `README.md`, `CONTEXT.md`, `AGENTS.md`, `CLAUDE.md`, `docs/agents/*.md`, `docs/demo/`
+- **Files:** `README.md`, `CONTEXT.md`, `AGENTS.md`, `docs/agents/*.md`, `docs/demo/`
 - **Approach:**
   1. Lead the first screen with what paraphe is, who it is for, the install command, the short run block, and the loop; the status paragraph that presents the project as pre-runtime goes.
   2. State the dependency position plainly: the runtime needs nothing beyond the standard library, and the install fetches the build backend once.
@@ -535,11 +535,11 @@ Surface ownership, so a file edited by more than one unit has one owner and the 
   4. State what the reader supplies: a value for the agent's credential, and a different value for the answer path. Say plainly that the answer credential is the owner's and is never given to an agent.
   5. Show the console run, and reference the recorded asset for the phone variant.
   6. Data-location upgrade note: name the location the previous version used and say that a deployment whose store lives there must configure the location explicitly, because paraphe refuses rather than starting empty.
-  7. Reduce the instruction files to one canonical file per level with a one-line pointer beside it, and put what is identical at every level in the top one only.
+  7. Keep one canonical `AGENTS.md` per level — the `CLAUDE.md` pointer beside it is retired (2026-09-27) — and put what is identical at every level in the top one only.
   8. Rewrite the tracker documentation to name the repository's own tracker, its labels, and its workflow.
   9. Add the roadmap, naming what is next and what is deliberately not planned.
 - **Test expectation:** none — documentation only; SC1 and SC4 are the reader-judged proof.
-- **Verification:** the first screen carries what paraphe is, who it is for, the install command, the run block, and the loop; the command it gives is the command U4 verified; the instruction files are one per level with a pointer; the tracker document names no private tracker; the console run and the recorded asset are both present; the upgrade note names the previous default.
+- **Verification:** the first screen carries what paraphe is, who it is for, the install command, the run block, and the loop; the command it gives is the command U4 verified; the instruction files are one per level (single `AGENTS.md`, no pointer); the tracker document names no private tracker; the console run and the recorded asset are both present; the upgrade note names the previous default.
 
 ### U7. Generated repository wiki
 
@@ -550,7 +550,7 @@ Surface ownership, so a file edited by more than one unit has one owner and the 
 - **Approach:**
   1. Generate the wiki after the scrub and after the namespace move, so no generated page documents a path that later changes and no page can reintroduce a private term.
   2. Keep the generated pages in the repository so they are versioned and reachable from search like any other file.
-  3. Confirm the generator's managed instruction block sits in the canonical instruction file and leaves the pointer beside it intact.
+  3. Confirm the generator's managed instruction block sits in the canonical `AGENTS.md`; a `CLAUDE.md` copy the generator recreates is dropped by the workflow (2026-09-27).
 - **Test expectation:** none — generated content; the standing private-term scan and a regenerability rerun are its proof.
 - **Verification:** the wiki is present and its pages describe the current module layout; a rerun produces no required manual edits; the scan stays at zero.
 
