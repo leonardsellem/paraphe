@@ -65,7 +65,7 @@ create → the owner sees the card → the owner answers → the agent reads the
 | `request_approval` | `title` | `details` | create, open `approval` |
 | `request_feedback` | `title` | `details` | create, open `feedback` |
 | `notify_user` | `title` | `message`, `result` | status only, never a decision |
-| `get_response` | `request_id` | `wait_seconds` | read |
+| `get_response` | exactly one of `request_id` or `external_id` | `wait_seconds` | read |
 | `list_pending` | — | — | read, cards waiting |
 | `list_unprocessed` | — | — | read, answers not yet processed |
 | `update_request` | `request_id`, `expected_version` | `title`, `details`, `choices`, `choice_notes`, `renotify`, and the shared fields | revise in place |
@@ -158,13 +158,22 @@ asks a question; a reply to a status message records nothing.
 
 ## Answers and outcomes
 
-`get_response` returns:
+`get_response` accepts exactly one nonblank string identifier: `request_id`
+or the original `external_id` (at most 200 characters). Both or neither,
+including a second identifier set to null, are rejected. An unknown identifier
+is an error. Use `{"external_id":"decision-1"}` to recover after losing a
+create acknowledgement; lookup does not create or re-notify a card.
+
+`get_response`, `list_unprocessed` and `list_pending` share this read envelope:
 
 ```json
 {
   "request_id": "…",
   "status": "pending | answered | acknowledged | cancelled | expired",
   "version": 2,
+  "external_id": "decision-1",
+  "choices": ["Approve", "Deny"],
+  "expires_at": 1700000900.0,
   "response": {
     "choice": "Approve",
     "text": null,
@@ -177,6 +186,13 @@ asks a question; a reply to a status message records nothing.
   "pending": false
 }
 ```
+
+`external_id` is the immutable create identity, not changed by `update_request`.
+`choices` are the offered choices at the returned `version`; `expires_at` is
+Unix epoch seconds (or null for legacy cards without expiry). Compare these
+fields with the frozen decision before acting. The additions do not change
+the existing `version`, nested answer or non-consuming read semantics; the
+create bearer still cannot answer a card.
 
 `responded_via` reports how the answer actually arrived, so a locally answered
 card is never reported as a phone tap: `telegram` is a tap, `telegram-reply`
