@@ -1162,7 +1162,7 @@ class Inbox:
             "status": self._status(card),
             "version": card.version,
             "external_id": card.external_id,
-            "choices": list(card.choices),
+            "choices": list(card.choices or ["Approve", "Deny"]),
             "expires_at": card.expires_at,
             "response": response,
             "processed_at": card.processed_at,

@@ -188,7 +188,8 @@ create acknowledgement; lookup does not create or re-notify a card.
 ```
 
 `external_id` is the immutable create identity, not changed by `update_request`.
-`choices` are the offered choices at the returned `version`; `expires_at` is
+`choices` are the effective offered choices at the returned `version`, including
+`["Approve", "Deny"]` when the card uses the default buttons; `expires_at` is
 Unix epoch seconds (or null for legacy cards without expiry). Compare these
 fields with the frozen decision before acting. The additions do not change
 the existing `version`, nested answer or non-consuming read semantics; the

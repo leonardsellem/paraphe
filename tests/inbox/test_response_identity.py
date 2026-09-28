@@ -103,6 +103,19 @@ class TestResponseIdentity(unittest.TestCase):
         self.assertIn("exactly one", descriptor["description"])
         self.assertIn("get_response with external_id", self.inbox.call_tool("how_to_use", {}))
 
+    def test_approval_reads_expose_the_effective_offered_choices(self):
+        created = self.inbox.call_tool("request_approval", {
+            "title": "Proceed with the change?", "external_id": "approval-1",
+        }, bearer=BEARER)
+        rid = created["request_id"]
+        pending = self.inbox.call_tool("get_response", {"external_id": "approval-1"})
+        self.assertEqual(pending["choices"], ["Approve", "Deny"])
+        self.assertEqual(self.inbox.call_tool("list_pending", {}), [pending])
+        self.inbox.record_tap(rid, choice="Approve")
+        answered = self.inbox.call_tool("get_response", {"request_id": rid})
+        self.assertIn(answered["response"]["choice"], answered["choices"])
+        self.assertEqual(self.inbox.call_tool("list_unprocessed", {}), [answered])
+
     def test_reads_expose_identity_revision_choices_and_expiry_without_aliasing(self):
         created = self.create()
         rid = created["request_id"]
