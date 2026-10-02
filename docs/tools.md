@@ -34,6 +34,13 @@ create → the owner sees the card → the owner answers → the agent reads the
 - **record** — the create result carries the `request_id` and names the reading
   path (`read_with: get_response`). Keep the id with the work; a session ending
   with an open card records it and its continuation so the next run can act.
+  Every create, duplicate and update result also carries `copy_notes`: short
+  English notes flagging junk copy — a tracker key or a commit hash in the
+  headline, a code in a choice label, a build-jargon token (`PR`, `CI`, `SHA`,
+  `MCP`, `rebase`, `worktree`, `cherry-pick`), or an empty `context` /
+  `details`. An empty list means the copy passed. The card is still created,
+  stored and sent unchanged: the note asks for the fix on the next card, and
+  the identifier belongs in `ticket` / `links`.
 - **see** — the configured destination shows the card to the owner: the tap
   adapter on a phone, or the console destination on the machine running
   Paraphe.
@@ -113,7 +120,7 @@ fields omitted.
 ## Writing the card
 
 Every card carries its origin and its purpose first, and its tap semantics
-are plain. Three rules — this is the writing contract:
+are plain. Four rules — this is the writing contract:
 
 1. **Origin stated.** Who is asking and where it runs: `agent_name` and the
    provenance fields, which render as the identity line. Never guessed:
@@ -128,6 +135,33 @@ are plain. Three rules — this is the writing contract:
    approval sets in motion; `prohibitions` (the *Limits:* section) says
    what it does not authorise. On an approval, spell out both taps — what
    Approve does, what Deny does — so the owner never decodes a button.
+4. **Context first, in plain words.** Open with one or two sentences on the
+   situation — what is happening, why the owner is asked, what the answer
+   changes — before the question or the action detail. No tracker codes
+   (`PROJ-123`, `UPX-99`), commit hashes or build mechanics (`PR`, `CI`,
+   `rebase`, `worktree`, `MCP`) as the subject of the headline, a choice
+   label or the opening sentence; translate them into what they mean for
+   the owner, and keep identifiers in `ticket` / `links` or at the end of a
+   sentence. Three techniques, described here so the card carries them:
+   re-pitch with **context first** — the situation before the ask; write
+   **simplified technical English** — short sentences, one term one
+   meaning, active voice, subjects the owner recognises; and use the
+   **product vocabulary** — card, tap, inbox, owner
+   ([`../CONTEXT.md`](../CONTEXT.md)) — over internal names.
+
+Before — the headline carries the ticket code and names no situation:
+
+```
+question: PROJ-123 : trancher exact canonical bridge
+```
+
+After — the headline carries the situation and the goal; the identifier
+belongs in `ticket`, the situation opens the `context`:
+
+```
+question: La sauvegarde du soir peut-elle rester où elle est ?
+context: La sauvegarde de 22 h a échoué deux fois cette semaine.
+```
 
 Body copy in that order — purpose, origin, the exact command, the tap
 semantics:
