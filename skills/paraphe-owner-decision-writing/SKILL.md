@@ -53,6 +53,34 @@ scope, bounds and lifecycle language that produced them.
    nothing; `prohibitions` (the *Limits:* section) says what it does not
    authorise.
 
+## Context before the ask, in plain words
+
+The owner reads the card away from the code. Before the question or the
+action detail, open with one or two sentences on the situation: what is
+happening, why the owner is asked, what the answer changes. Three
+techniques, and this section is their home:
+
+- **The re-pitch.** Context before the ask: state the situation the owner
+  would recognise, then ask. A headline that names a mechanism ("trancher
+  exact canonical bridge") is a memo to yourself, not a question.
+- **Simplified technical English.** Short sentences, one term per meaning,
+  active voice, subjects the owner knows. Inside a sentence an identifier
+  is fine at the end as identification; as the headline it is the subject —
+  move it to `ticket` / `links`.
+- **Product vocabulary.** Say card, tap, inbox, owner — the words of
+  [`CONTEXT.md`](../../CONTEXT.md) — not the internal name of the thing.
+
+Banned as the subject of `question` / `title`, a choice label or the
+opening sentence: tracker codes (`PROJ-123`, `UPX-99`), commit hashes,
+build mechanics (`PR`, `CI`, `rebase`, `worktree`, `MCP`). Translate them
+into what they mean for the owner — "the checks passed", "the release is
+ready", "the file moves".
+
+The service flags, never blocks: every create, duplicate and update result
+carries `copy_notes`, short notes naming the field and the fix. An empty
+list means the copy passed; a note means the card went out as written and
+the next card fixes the wording.
+
 ## Choices
 
 Good labels name the outcome, not the machinery:
@@ -107,9 +135,11 @@ headline.
 ## Before you send
 
 - [ ] Sentence one gives the end purpose to someone who never saw the code.
+- [ ] The situation opens the card, in plain words, before the ask.
 - [ ] One obvious recommended tap, first.
 - [ ] Three or four choices, each with a plus and a minus.
 - [ ] One decision per card.
 - [ ] No untranslated jargon on the card.
+- [ ] `copy_notes` on the create is empty.
 - [ ] `risk`, `external_id`, `consequence` and `prohibitions` are filled.
 - [ ] You can keep working on something else while the card waits.

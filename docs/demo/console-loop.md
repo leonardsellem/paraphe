@@ -48,13 +48,14 @@ Paraphe ready: mcp http://127.0.0.1:8899/mcp answer-path on
 ## What the owner saw
 
 The example card, composed per the writing contract in
-[`../tools.md`](../tools.md): purpose first, origin, then what each answer
-authorises:
+[`../tools.md`](../tools.md). Context first, in plain words: the question
+carries the goal ("Can the release ship with the card store where it is?"),
+then the origin, then what each answer authorises:
 
 ```
 [paraphe] card 43c1b52f-… (version 1) is waiting for you
   kind: question   risk: low   priority: normal
-  question: Move the card store before the release?
+  question: Can the release ship with the card store where it is?
   context: Pourquoi : the release cannot ship with the store at the old path.
     D'où ça vient : agent Hermes · runtime CLI · repo paraphe · worktree store-move · ticket card-3119
     Action: run `paraphe store relocate` on the deployment host.

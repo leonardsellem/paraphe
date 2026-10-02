@@ -97,20 +97,37 @@ class TestPublishedContracts(unittest.TestCase):
 
     def test_the_served_text_teaches_the_card_writing_contract(self) -> None:
         # Owner correction 2026-09-24: every card carries its origin and its
-        # purpose first, and plain tap semantics.
+        # purpose first, and plain tap semantics. Owner correction 2026-10-02:
+        # context first, in plain words, before the ask.
         inbox = self._inbox()
         how = inbox.call_tool("how_to_use", {}, bearer=CREATE).lower()
         self.assertIn("origin", how)
         self.assertIn("purpose", how)
         self.assertIn("authorise", how)
         self.assertIn("prohibitions", how)
+        self.assertIn("context first", how)
+        self.assertIn("plain words", how)
+        self.assertIn("copy_notes", how)
         descriptors = {
             item["name"]: item["description"].lower()
             for item in inbox.list_tool_descriptors()
         }
-        for tool in ("ask_question", "request_approval"):
+        for tool in ("ask_question", "request_approval", "request_feedback", "update_request"):
+            self.assertIn("context first", descriptors[tool])
+            self.assertIn("plain words", descriptors[tool])
+        for tool in ("ask_question", "request_approval", "request_feedback"):
             self.assertIn("purpose", descriptors[tool])
+        for tool in ("ask_question", "request_approval"):
             self.assertIn("authorise", descriptors[tool])
+
+    def test_update_request_teaches_the_card_writing_contract(self) -> None:
+        # The revision tool served no writing rule at all before this change.
+        descriptors = {
+            item["name"]: item["description"]
+            for item in self._inbox().list_tool_descriptors()
+        }
+        self.assertIn("context first", descriptors["update_request"])
+        self.assertIn("plain words", descriptors["update_request"])
 
     def test_a_created_card_renders_its_identity_line_from_the_payload(self) -> None:
         from paraphe.adapters.telegram import render_card

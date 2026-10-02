@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -11,6 +12,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from paraphe.adapters import console as console_module
 from paraphe.adapters import telegram as tg
 
 MESSAGE_BUDGET = tg.MESSAGE_BUDGET
@@ -23,6 +25,21 @@ EXPIRES_AT = 1_700_000_900
 EXPIRY_LINE = "Expires: 2023-11-14 22:28:20 UTC"
 
 HINT = "Reply to this message to answer in your own words or ask a question."
+
+# The R5 detection patterns, repeated here so the render test fails
+# independently of the module that flags copy.
+TRACKER_KEY = re.compile(r"\b[A-Z][A-Z0-9]{1,9}-\d+\b")
+COMMIT_HASH = re.compile(r"\b[0-9a-fA-F]{7,40}\b")
+
+
+def _codes_in(line: str) -> list[str]:
+    found = TRACKER_KEY.findall(line)
+    for token in COMMIT_HASH.findall(line):
+        if any(char.isdigit() for char in token) and any(
+            char in "abcdefABCDEF" for char in token
+        ):
+            found.append(token)
+    return found
 
 
 def full_card() -> dict:
@@ -213,6 +230,49 @@ class TestCardRenderer(unittest.TestCase):
         self.assertNotIn("\ud800", text)
         self.assertIn("ok", text)
         self.assertIn("end", text)
+
+    def test_plain_french_card_renders_without_codes(self) -> None:
+        # R6: a card written to the standard renders with no tracker key or
+        # commit hash in its headline or choices, and its context opens with
+        # the situation.
+        situation = "La sauvegarde de 22 h a échoué deux fois cette semaine."
+        question = "Garder la sauvegarde du soir, ou changer d'horaire ?"
+        payload = {
+            "request_id": "11111111-1111-4111-8111-111111111111",
+            "version": 1,
+            "kind": "question",
+            "title": question,
+            "details": situation,
+            "choices": ["Garder", "Changer d'horaire", "Déplacer maintenant", "Ne rien changer"],
+            "choice_notes": [
+                "Rien ne change ce soir.",
+                "La sauvegarde part plus tôt.",
+                "Le fichier reste sur place.",
+                "La question revient demain.",
+            ],
+            "recommendation": "Changer d'horaire",
+            "expires_at": EXPIRES_AT,
+        }
+
+        telegram_lines = render_card(payload).splitlines()
+        telegram_title = next(line for line in telegram_lines if question in line)
+        telegram_choices = [line for line in telegram_lines if line.split(".", 1)[0].isdigit()]
+        self.assertTrue(telegram_choices)
+        self.assertEqual(_codes_in(telegram_title), [], telegram_title)
+        for line in telegram_choices:
+            self.assertEqual(_codes_in(line), [], line)
+
+        printed: list[str] = []
+        console_module.ConsoleDestination(port=8792, write=printed.append).notify(payload)
+        console_lines = "\n".join(printed).splitlines()
+        console_title = next(line for line in console_lines if question in line)
+        console_choices = next(line for line in console_lines if "choices:" in line)
+        console_context = next(line for line in console_lines if situation in line)
+        self.assertEqual(_codes_in(console_title), [], console_title)
+        self.assertEqual(_codes_in(console_choices), [], console_choices)
+        self.assertTrue(
+            console_context.split(": ", 1)[1].startswith(situation), console_context
+        )
 
     def test_status_message_renders_identity_and_no_decision_sections(self) -> None:
         text = render_card(
