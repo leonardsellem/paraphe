@@ -157,6 +157,13 @@ class TestMcpLifecycle(unittest.TestCase):
         self.assertTrue(second.get("duplicate"))
         self.assertEqual(len(self.notifier.sent), 1)
 
+    def test_plain_create_ack_carries_empty_copy_notes(self) -> None:
+        ack = self._ask(
+            external_id="plain-ack-1",
+            context="The checks passed and the release is ready when you are.",
+        )
+        self.assertEqual(ack["copy_notes"], [])
+
     def test_concurrent_duplicate_external_id_returns_one_card_and_notifies_once(
         self,
     ) -> None:

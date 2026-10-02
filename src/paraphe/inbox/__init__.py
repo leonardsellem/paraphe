@@ -21,6 +21,7 @@ from .config import (
     SetupError,
     load_settings,
 )
+from .copy_notes import copy_notes
 from .http import BindError
 from .store import Store, default_store_path
 
@@ -214,6 +215,19 @@ TOOL_SCHEMAS = {
 # The served text: what a client that reads only `tools/list` learns. The
 # asking tools carry "record the request id"; the reading tools carry the
 # drain rule; the waiting parameter is a bounded window.
+#
+# The copy contract every asking tool serves: the situation in plain words
+# before the ask (owner correction 2026-10-02).
+CARD_COPY_RULE = (
+    "Compose context first, in plain words: open with one or two sentences "
+    "on the situation and why the owner is asked, before the question; no "
+    "tracker codes, commit hashes or build mechanics as the subject — keep "
+    "identifiers in ticket or links."
+)
+COPY_NOTES_LINE = (
+    "A create or update returns copy_notes: an empty list means the copy "
+    "passed; otherwise fix the wording on your next card."
+)
 TOOL_DESCRIPTIONS = {
     "how_to_use": (
         "Read this first: the card lifecycle, the credential boundary and the "
@@ -227,7 +241,7 @@ TOOL_DESCRIPTIONS = {
         "read the answer with get_response, or pass wait_seconds (0-60) to "
         "let the call park until the answer arrives. Pass "
         "runtime/repo/worktree/ticket (optional) so the card shows where "
-        "the ask comes from."
+        "the ask comes from. " + CARD_COPY_RULE
     ),
     "request_approval": (
         "Ask the owner to approve. Compose it purpose first — why the "
@@ -236,7 +250,7 @@ TOOL_DESCRIPTIONS = {
         "not (prohibitions). Record the returned request_id; read the "
         "answer with get_response, or pass wait_seconds (0-60) to let the "
         "call park until the answer arrives. Pass runtime/repo/worktree/ticket "
-        "(optional) so the card shows where the ask comes from."
+        "(optional) so the card shows where the ask comes from. " + CARD_COPY_RULE
     ),
     "get_response": (
         "Read a card using exactly one of request_id or external_id (lost-create-ACK recovery). "
@@ -260,7 +274,7 @@ TOOL_DESCRIPTIONS = {
     "update_request": (
         "Revise an open card in place; expected_version guards a stale "
         "writer and bumps version. Pass runtime/repo/worktree/ticket "
-        "(optional) so the card shows where the ask comes from."
+        "(optional) so the card shows where the ask comes from. " + CARD_COPY_RULE
     ),
     "cancel_request": "Withdraw an open card; reason cancelled or resolved_elsewhere.",
     "notify_user": "Status to the owner, never a decision card.",
@@ -268,7 +282,7 @@ TOOL_DESCRIPTIONS = {
         "Ask the owner for feedback; a create like the other asking tools. "
         "Purpose first — why the feedback is needed before the detail — "
         "with the tap semantics plain. Pass runtime/repo/worktree/ticket "
-        "(optional) so the card shows where the ask comes from."
+        "(optional) so the card shows where the ask comes from. " + CARD_COPY_RULE
     ),
 }
 
@@ -790,7 +804,7 @@ class Inbox:
             "exact command or change), and spell the tap semantics: what "
             "the answer authorises (consequence) and what it does not "
             "(prohibitions). On an approval, say what Approve does and what "
-            "Deny does.\n"
+            "Deny does. " + CARD_COPY_RULE + "\n" + COPY_NOTES_LINE + "\n"
             "The owner may answer a card with a reply instead of a tap: the "
             "reply text arrives as response.text with responded_via "
             "telegram-reply, and the card closes exactly as a tap. A reply "
@@ -1146,6 +1160,16 @@ class Inbox:
             "status": self._status(card),
             "kind": card.kind,
             "read_with": "get_response",
+            "copy_notes": copy_notes(
+                card.kind,
+                {
+                    "question": card.question,
+                    "title": card.title,
+                    "context": card.context,
+                    "details": card.details,
+                    "choices": card.choices,
+                },
+            ),
         }
 
     def _envelope(self, card: Card) -> dict[str, Any]:
