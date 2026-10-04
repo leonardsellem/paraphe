@@ -5,7 +5,7 @@ description: The founding loop end to end — the agent's create on the MCP surf
 tags: [workflow, return-path, waiting, cards, end-to-end]
 sources:
   - id: openwiki-source-39c3295efc089133e87a9c80
-    resource: repo://CONTEXT.md
+    resource: repo://GLOSSARY.md
   - id: openwiki-source-2cdf19b87eb8c780238e9aca
     resource: repo://docs/adapters.md
   - id: openwiki-source-4248812be758ec7360356412

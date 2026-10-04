@@ -7,7 +7,7 @@
       "statement": "Paraphe's founding loop is ask → you see the card → you answer → the asking agent resumes: an agent raises one decision as a card through the MCP surface with the create bearer, the owner answers it on the configured destination, and the asking run picks the answer up and carries on with nothing said in chat, because the answer returns through the ask itself — the call may wait (`wait_seconds`), `paraphe wait` can hold the card's lifetime, and any run that missed both drains the answer from the store at its next boundary.",
       "evidence": [
         {
-          "resource": "repo://CONTEXT.md#L31-L33",
+          "resource": "repo://GLOSSARY.md#L31-L33",
           "version": "repo-lines-v1:sha256:27ffc002c0570028d74bb64a8f5d0b318d6f7eb0927ce6683cd52c04354581cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTE3Y2QwM2M0YmI2YzM0NDE2YzBhZWY3OGY4YjBiODYwMzI0ZTJmZWM3NjQ2OGI2OWVkZmQ4MmY0MWE1YTQ1NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWM0NzE5MGUxMzYxYTYzZmVhNzU4MGEwZjAxMTZmMGFmNTUyNTc0OGMxMGU0OGRkYTZkOTc3YjI3NTM5ZWVlMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDEzM2Y5NjgzM2UwNDA5MzEyNTQwZDcyNmI2ZGI3ZTk0ZGZhMWU3YTg0ZjlhYTVlNGJiOGE4Nzg0MGM0Njk0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGIzYmZkYjc1MGYxZWU1Nzg0Y2M2MmE2YjE2NDMxODY4MTMyZWJjMmVjMjY1NzY1NGY4NThhNjE5ODlhZjhjMSJ9"
         },
         {

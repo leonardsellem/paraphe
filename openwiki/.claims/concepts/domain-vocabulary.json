@@ -486,10 +486,10 @@
     },
     {
       "id": "claim_e26573d9babe4a95b63ba9baf86f41d4",
-      "statement": "The words the card work added (owner reply, provenance and the identity line, the rendered card and its trim marker) come from the card work rather than from an ADR: docs/tools.md and the v1 spec revision carry them, the served how_to_use text teaches the reply channel as response.text with responded_via telegram-reply, and the requirements behind them — R1–R14 and the acceptance examples, which spell the section order, the escaping and the visible trim marker — live in docs/plans/2026-09-11-1604-feat-card-context-and-reply-plan.md; CONTEXT.md still carries only its original noun list, and no ADR replaces ADR 0007, which keeps a Telegram callback a claim rather than a decision.",
+      "statement": "The words the card work added (owner reply, provenance and the identity line, the rendered card and its trim marker) come from the card work rather than from an ADR: docs/tools.md and the v1 spec revision carry them, the served how_to_use text teaches the reply channel as response.text with responded_via telegram-reply, and the requirements behind them — R1–R14 and the acceptance examples, which spell the section order, the escaping and the visible trim marker — live in docs/plans/2026-09-11-1604-feat-card-context-and-reply-plan.md; GLOSSARY.md still carries only its original noun list, and no ADR replaces ADR 0007, which keeps a Telegram callback a claim rather than a decision.",
       "evidence": [
         {
-          "resource": "repo://CONTEXT.md",
+          "resource": "repo://GLOSSARY.md",
           "version": "repo-file-v1:sha256:731421dca062bcd18641101e5deb128299aac4b5b6217ceaf08852127ffa3cd9"
         },
         {

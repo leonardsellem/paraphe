@@ -16,7 +16,7 @@ sources:
   - id: openwiki-source-7aa209ee4f993345d7092214
     resource: repo://config.example.toml
   - id: openwiki-source-39c3295efc089133e87a9c80
-    resource: repo://CONTEXT.md
+    resource: repo://GLOSSARY.md
   - id: openwiki-source-bb1ebe868e35e9e500714501
     resource: repo://Dockerfile
   - id: openwiki-source-2cdf19b87eb8c780238e9aca
@@ -304,7 +304,7 @@ its OpenWiki note records that the generated `openwiki/` index is optional
 just-in-time context refreshed by a scheduled workflow, not required startup
 reading, with source and tests staying authoritative.
 
-Alongside these pages, in the repository: `CONTEXT.md` for the vocabulary,
+Alongside these pages, in the repository: `GLOSSARY.md` for the vocabulary,
 `docs/adr/` for the decisions behind the shape, `docs/specs/paraphe-v1.md` for
 the v1 specification, `docs/roadmap.md` for what is next, and
 `skills/paraphe-return-path/SKILL.md` for the async return protocol.

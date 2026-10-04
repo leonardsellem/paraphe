@@ -664,7 +664,7 @@
     },
     {
       "id": "claim_fb2a329cf45242c5a7c59b30693fc31d",
-      "statement": "AGENTS.md's Tracker section points to this repository's own issue tracker and its triage labels in docs/agents/, and its Domain docs section describes a single documentation context: root CONTEXT.md plus docs/adr/.",
+      "statement": "AGENTS.md's Tracker section points to this repository's own issue tracker and its triage labels in docs/agents/, and its Domain docs section describes a single documentation context: root GLOSSARY.md plus docs/adr/.",
       "evidence": [
         {
           "resource": "repo://AGENTS.md#L59-L66",

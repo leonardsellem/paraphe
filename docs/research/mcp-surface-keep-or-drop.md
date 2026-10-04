@@ -23,7 +23,7 @@ mutating tool (`request_approval`, `ask_question`, `notify_user`,
 | The deferred client-side schemas | Descriptions, required fields, enums, maxLengths |
 | [ADR 0001](../adr/0001-compatible-mcp-surface.md) | Compatibility already accepted; extras named as drop candidates |
 | [ADR 0002](../adr/0002-telegram-private-bot-tap-surface.md), [ADR 0003](../adr/0003-dual-path-wake.md), [ADR 0004](../adr/0004-cutover-hermes-and-launchers.md) | Telegram tap, poll fallback, v1 caller set |
-| [`CONTEXT.md`](../../CONTEXT.md) | Card / Tap / Inbox / Wake / Cutover vocabulary |
+| [`GLOSSARY.md`](../../GLOSSARY.md) | Card / Tap / Inbox / Wake / Cutover vocabulary |
 | The existing answer-intake and escalation procedures | Recovery fields clients already parse, and the create/closeout field set they require |
 
 ## Verdict
@@ -242,4 +242,4 @@ blocked `mark_processed` does not erase the tap.
 4. `docs/adr/0001-compatible-mcp-surface.md`,
    `0002-telegram-private-bot-tap-surface.md`, `0003-dual-path-wake.md`,
    `0004-cutover-hermes-and-launchers.md`.
-5. `CONTEXT.md`.
+5. `GLOSSARY.md`.

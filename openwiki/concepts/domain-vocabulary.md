@@ -12,7 +12,7 @@ sources:
   - id: openwiki-source-7aa209ee4f993345d7092214
     resource: repo://config.example.toml
   - id: openwiki-source-39c3295efc089133e87a9c80
-    resource: repo://CONTEXT.md
+    resource: repo://GLOSSARY.md
   - id: openwiki-source-c717be32b7f96583a87fa0c5
     resource: repo://docs/adr/0002-telegram-private-bot-tap-surface.md
   - id: openwiki-source-9935c884fcedab5dc5276aad
@@ -88,7 +88,7 @@ verified:
 
 # Domain vocabulary and superseded decisions
 
-`CONTEXT.md` is the product glossary: nouns only, definitions only, implementation deliberately
+`GLOSSARY.md` is the product glossary: nouns only, definitions only, implementation deliberately
 kept out of it. This page is the other half of that contract — where each noun lives in the tree,
 and which decision records the current shape replaces. The glossary owns the words; the source and
 its tests own what exists.
@@ -107,7 +107,7 @@ Three reading rules follow from that split:
   `console.py`, `telegram.py` and `__init__.py` and no wake seam, because ADR 0011 withdrew the
   seam. Any page or table that still names a wake port, `WakePort`, `NullWakePort` or a wake
   adapter is describing the withdrawn mechanism, not this checkout.
-- **The card work added words `CONTEXT.md` does not carry yet.** *Owner reply*, *provenance*, the
+- **The card work added words `GLOSSARY.md` does not carry yet.** *Owner reply*, *provenance*, the
   *identity line*, the *rendered card* and its *trim marker* are the card work's words, not an
   ADR's: `docs/tools.md` and the v1 spec revision define them, the served `how_to_use` text teaches
   the reply channel, and the requirements behind them — R1–R14 and the acceptance examples, which
@@ -117,7 +117,7 @@ Three reading rules follow from that split:
 
 ## Noun to implementation
 
-| Noun (`CONTEXT.md`) | Field, function or file that implements it |
+| Noun (`GLOSSARY.md`) | Field, function or file that implements it |
 |---|---|
 | **Paraphe** | The package `src/paraphe/` and the console script `paraphe = "paraphe.__main__:main"` in `pyproject.toml`, so `paraphe` and `python3 -m paraphe` start the same service; every setting is spelled with the `PARAPHE_` prefix. `src/paraphe/__main__.py` dispatches each subcommand: `ask` / `wait` to `paraphe.cli` (the shell half of the return path), `check telegram` to `paraphe.check` and `store relocate` to `paraphe.store_cli` (the owner-side commands). |
 | **Card** | The `Card` dataclass (`src/paraphe/inbox/card.py`), built by `Inbox._create_card` and addressed by the twelve names in `TOOL_NAMES`. `Card.state` is one of `open`, `tapped`, `cancelled`, `expired`; life is `expires_at` / `expires_in_seconds` with `DEFAULT_TTL_SECONDS = 14400`, `FLOOR_TTL_SECONDS = 900` and `MAX_TTL_SECONDS = 2592000` in `src/paraphe/inbox/config.py`. |
@@ -134,7 +134,7 @@ Three reading rules follow from that split:
 | **Setup** | `load_settings` (`src/paraphe/inbox/config.py`); `paraphe check telegram` (`src/paraphe/check.py`) is the preflight for the phone half; an owner-only `/config` message is recognised but is not a settings editor. |
 | **Cutover** | Plan only — ADR 0004, ADR 0009 and `docs/specs/paraphe-v1.md`. No code path is named for it. |
 
-_Avoid_, as `CONTEXT.md` states it: a clone of another inbox as the product name, a second app or a
+_Avoid_, as `GLOSSARY.md` states it: a clone of another inbox as the product name, a second app or a
 second chat yes for **Paraphe**, a ticket or task tracker for **card**, card id + action as the only
 callback payload for **revision**, a chat reply as the decision for **tap**, a web-console bounce or
 a chat topic as the decision inbox for **tap surface**, a third-party cloud inbox or "git as the

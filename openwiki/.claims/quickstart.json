@@ -273,7 +273,7 @@
       "statement": "The answer returns through the ask itself by any of three equal routes — a call parked with `wait_seconds`, a backgrounded `paraphe wait` holding the card's whole lifetime, or a boundary drain with `get_response` / `list_unprocessed` at the next run — so no chat message and no server-initiated turn is required.",
       "evidence": [
         {
-          "resource": "repo://CONTEXT.md#L31-L33",
+          "resource": "repo://GLOSSARY.md#L31-L33",
           "version": "repo-lines-v1:sha256:27ffc002c0570028d74bb64a8f5d0b318d6f7eb0927ce6683cd52c04354581cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTE3Y2QwM2M0YmI2YzM0NDE2YzBhZWY3OGY4YjBiODYwMzI0ZTJmZWM3NjQ2OGI2OWVkZmQ4MmY0MWE1YTQ1NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWM0NzE5MGUxMzYxYTYzZmVhNzU4MGEwZjAxMTZmMGFmNTUyNTc0OGMxMGU0OGRkYTZkOTc3YjI3NTM5ZWVlMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDEzM2Y5NjgzM2UwNDA5MzEyNTQwZDcyNmI2ZGI3ZTk0ZGZhMWU3YTg0ZjlhYTVlNGJiOGE4Nzg0MGM0Njk0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGIzYmZkYjc1MGYxZWU1Nzg0Y2M2MmE2YjE2NDMxODY4MTMyZWJjMmVjMjY1NzY1NGY4NThhNjE5ODlhZjhjMSJ9"
         },
         {
@@ -292,7 +292,7 @@
     },
     {
       "id": "claim_c823fc2b994d4c6b9d73f9bcc4cdc2fa",
-      "statement": "Alongside the wiki pages, the quickstart points readers at the repository references that own the adjacent contracts: `docs/tools.md` (tool surface), `docs/adapters.md` (destinations), `skills/paraphe-return-path/SKILL.md` (async return protocol), `CONTEXT.md` (vocabulary), `docs/adr/` (decisions), `docs/specs/paraphe-v1.md` (v1 specification) and `docs/roadmap.md`.",
+      "statement": "Alongside the wiki pages, the quickstart points readers at the repository references that own the adjacent contracts: `docs/tools.md` (tool surface), `docs/adapters.md` (destinations), `skills/paraphe-return-path/SKILL.md` (async return protocol), `GLOSSARY.md` (vocabulary), `docs/adr/` (decisions), `docs/specs/paraphe-v1.md` (v1 specification) and `docs/roadmap.md`.",
       "evidence": [
         {
           "resource": "repo://README.md#L84-L94",
@@ -375,7 +375,7 @@
           "version": "repo-lines-v1:sha256:ebf82ed431d7f3ecd5b547ab5aa9d2f0f69efda57b5d52ff32ffbc8593998cd9:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDNiNzhhMGY3YmU0ZmZkNGQwOGQyOWFlNjgxOWZmOGYyZjM4M2NiN2IzNmFhMTM3YTNmZDdmNGNjYTE3ZjU1MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjY5MTI3ODY0N2RkZWIzZjE5ZjMzMDQzZjkxNzc3YTIyZWZlZTNmYWQyMWEwOTU0NzQ3YmU5YTc3ZDM0OGMwMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWUxYjI3NmY3YmRhZDFiYWIxZDFhZGNmMjg1NjJhMThiM2JlMjE2ZTI0YmQwZDIyNTllMzBmNjlmM2I5Mzk5NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjJkNWMxNzQ5OWNkNjZkNjFkMzE5N2IwZjRkOWEyMTViMmVmMTZjNTMwZmJlZGNmMjE1YmRiNjYxMjcxMjhkZCJ9"
         },
         {
-          "resource": "repo://CONTEXT.md#L31-L33",
+          "resource": "repo://GLOSSARY.md#L31-L33",
           "version": "repo-lines-v1:sha256:27ffc002c0570028d74bb64a8f5d0b318d6f7eb0927ce6683cd52c04354581cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTE3Y2QwM2M0YmI2YzM0NDE2YzBhZWY3OGY4YjBiODYwMzI0ZTJmZWM3NjQ2OGI2OWVkZmQ4MmY0MWE1YTQ1NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWM0NzE5MGUxMzYxYTYzZmVhNzU4MGEwZjAxMTZmMGFmNTUyNTc0OGMxMGU0OGRkYTZkOTc3YjI3NTM5ZWVlMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDEzM2Y5NjgzM2UwNDA5MzEyNTQwZDcyNmI2ZGI3ZTk0ZGZhMWU3YTg0ZjlhYTVlNGJiOGE4Nzg0MGM0Njk0ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNGIzYmZkYjc1MGYxZWU1Nzg0Y2M2MmE2YjE2NDMxODY4MTMyZWJjMmVjMjY1NzY1NGY4NThhNjE5ODlhZjhjMSJ9"
         },
         {
@@ -434,7 +434,7 @@
     },
     {
       "id": "claim_f87954a1089a4722a904488e77dae233",
-      "statement": "The README's documentation table now points at the generated wiki — openwiki/index.md, openwiki/quickstart.md and openwiki/architecture/ — so docs/tools.md and docs/adapters.md were dropped from it while the other in-repo documents (CONTEXT.md, docs/adr/, docs/specs/paraphe-v1.md, docs/roadmap.md, skills/paraphe-return-path/SKILL.md) remain listed.",
+      "statement": "The README's documentation table now points at the generated wiki — openwiki/index.md, openwiki/quickstart.md and openwiki/architecture/ — so docs/tools.md and docs/adapters.md were dropped from it while the other in-repo documents (GLOSSARY.md, docs/adr/, docs/specs/paraphe-v1.md, docs/roadmap.md, skills/paraphe-return-path/SKILL.md) remain listed.",
       "evidence": [
         {
           "resource": "repo://README.md#L119-L133",

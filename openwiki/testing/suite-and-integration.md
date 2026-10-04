@@ -169,7 +169,7 @@ touching the suite:
   of direct pushes, force-pushes and deletion.
 - **Tracker** — this repository's own issue tracker and its triage labels, in
   `docs/agents/`.
-- **Domain docs** — a single context: root `CONTEXT.md` plus `docs/adr/`,
+- **Domain docs** — a single context: root `GLOSSARY.md` plus `docs/adr/`,
   described in `docs/agents/domain.md`.
 - **Private-term scan** — the command to run before every push, detailed below.
 - **CodeGraph** — if `.codegraph/` is missing, run
