@@ -68,7 +68,7 @@ techniques, and this section is their home:
   is fine at the end as identification; as the headline it is the subject —
   move it to `ticket` / `links`.
 - **Product vocabulary.** Say card, tap, inbox, owner — the words of
-  [`CONTEXT.md`](../../CONTEXT.md) — not the internal name of the thing.
+  [`GLOSSARY.md`](../../GLOSSARY.md) — not the internal name of the thing.
 
 Banned as the subject of `question` / `title`, a choice label or the
 opening sentence: tracker codes (`PROJ-123`, `UPX-99`), commit hashes,

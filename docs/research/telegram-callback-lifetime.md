@@ -173,7 +173,7 @@ ADR 0002 is a dedicated bot in a **private** chat. Documented differences that t
 
 Telegram will not enforce Paraphe expiry. The spec has to.
 
-1. **Paraphe owns card liveness.** Store `open` / `cancelled` / `expired` / `tapped` on the card. A `callback_query` is a claim, not a decision. CONTEXT.md already says the agent must revalidate live state before acting; the Telegram handler must do the same before recording a tap.
+1. **Paraphe owns card liveness.** Store `open` / `cancelled` / `expired` / `tapped` on the card. A `callback_query` is a claim, not a decision. GLOSSARY.md already says the agent must revalidate live state before acting; the Telegram handler must do the same before recording a tap.
 
 2. **`callback_data` is opaque and ≤ 64 bytes.** Bind a unique card id, current version (or revision nonce), and action. Look up the card. If missing, cancelled, expired, already tapped, or version-mismatched: do not approve. Same id must not be reused across cards.
 
@@ -183,7 +183,7 @@ Telegram will not enforce Paraphe expiry. The spec has to.
 
 5. **Do not delete as the safety mechanism.** `deleteMessage` only works for 48 hours ([deleteMessage](https://core.telegram.org/bots/api#deletemessage)). A deleted message can still yield `InaccessibleMessage` on a late query ([CallbackQuery.message](https://core.telegram.org/bots/api#callbackquery)). Still look up `data` and refuse.
 
-6. **Do not trust delivery.** Updates older than 24 hours may never arrive ([Getting updates](https://core.telegram.org/bots/api#getting-updates)). Silence is not a tap (CONTEXT.md). A delayed `callback_query` after cancel/expiry is refused like any other late tap.
+6. **Do not trust delivery.** Updates older than 24 hours may never arrive ([Getting updates](https://core.telegram.org/bots/api#getting-updates)). Silence is not a tap (GLOSSARY.md). A delayed `callback_query` after cancel/expiry is refused like any other late tap.
 
 7. **Idempotent handler.** Two taps, retries, and duplicate `getUpdates` deliveries must not double-approve. Key on card id + Paraphe version, not on "we already answered this `callback_query.id`" alone (a second tap gets a new query id).
 

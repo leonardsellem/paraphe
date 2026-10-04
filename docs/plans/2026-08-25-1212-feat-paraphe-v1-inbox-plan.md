@@ -15,7 +15,7 @@ execution: code
 
 - **Objective:** the owner can decide hard-to-reverse work with one Telegram tap on an inbox he owns, and the asking Hermes session can resume without him announcing the tap.
 - **Means:** A self-hosted Inbox module with a MCP surface and a private Telegram tap bot (KTD1, KTD2).
-- **Authority:** `docs/specs/paraphe-v1.md` > ADRs 0001–0010 > `CONTEXT.md` > `docs/research/mcp-surface-keep-or-drop.md`.
+- **Authority:** `docs/specs/paraphe-v1.md` > ADRs 0001–0010 > `GLOSSARY.md` > `docs/research/mcp-surface-keep-or-drop.md`.
 - **Stop:** Do not implement unattended batch or cron callers. Do not cut the previous inbox over before the proof card. Do not invent a replacement agent. Do not open-source.
 - **Execution profile:** Test-first at the Inbox seam. Telegram and Hermes wake stay adapters behind fakes until U4/U5.
 - **Tail:** The implementation lane implements; an independent reviewer judges finished packets. The previous inbox stays live until the U7 proof card.
@@ -155,7 +155,7 @@ the previous inbox already collects the tap. The writing contract is good. The r
 - `docs/specs/paraphe-v1.md`
 - `docs/adr/0001-compatible-mcp-surface.md` through `docs/adr/0010-bearer-creates-owner-taps.md`
 - `docs/research/mcp-surface-keep-or-drop.md`
-- `CONTEXT.md`
+- `GLOSSARY.md`
 - Throwaway prototype state machine on `prototype/four-button-expire` (directional only)
 
 ---
@@ -401,7 +401,7 @@ Implementer may adjust names. Per-unit Files stay authoritative.
 ## Documentation / Operational Notes
 
 - Keep `docs/specs/paraphe-v1.md` as the product contract. Do not duplicate field tables into more ADRs.
-- Cutover runbook belongs next to U7, not in `CONTEXT.md`.
+- Cutover runbook belongs next to U7, not in `GLOSSARY.md`.
 - Delete throwaway `@paraphe_app_bot` in BotFather if it still exists.
 
 ## Appendix
