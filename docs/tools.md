@@ -95,13 +95,16 @@ Accepted on every create, and on `update_request`.
 | `project` | string ≤120 | which work the card belongs to |
 | `source_thread` | string ≤200 | the session or thread the card came from; descriptive metadata, nothing is woken from it |
 | `recommendation` | string ≤1000 | what the agent advises |
-| `consequence` | string ≤1000 | what the approval sets in motion, and what happens if the owner does nothing; renders as *If approved:* |
-| `prohibitions` | up to 8 strings, each ≤200 | what the answer does not authorise; renders as *Limits:* |
+| `consequence` | string ≤1000 | what the approval sets in motion, and what happens if the owner does nothing; on the phone (Telegram) card renders as *If approved:* |
+| `prohibitions` | up to 8 strings, each ≤200 | what the answer does not authorise; on the phone (Telegram) card renders as *Limits:* |
 | `links` | up to 8 URIs, each ≤500 | evidence |
 | `agent_name` | string ≤60 | which agent asked |
 | `wait_seconds` | 0–60 | on `ask_question`, `request_approval` and `get_response`, the call parks until the owner answers or the window ends, then returns the answer envelope; elsewhere accepted and not slept on |
 | `expires_in_seconds` | 900–2 592 000 (default 14400) | card life; a card past it is unanswerable |
 | `rule_key` | accepted and ignored | always-allow is not product |
+
+On the console the labels differ: it prints `consequence` as `if ignored:`
+and does not print `prohibitions` at all.
 
 ## Provenance
 
@@ -131,10 +134,10 @@ are plain. Four rules — this is the writing contract:
    `context` / `details` opens with the why, then names the exact command
    or change.
 3. **Tap semantics plain.** What the approve tap authorises and what it
-   does not: `consequence` (the *If approved:* section) says what the
-   approval sets in motion; `prohibitions` (the *Limits:* section) says
-   what it does not authorise. On an approval, spell out both taps — what
-   Approve does, what Deny does — so the owner never decodes a button.
+   does not: on the phone (Telegram) card, `consequence` (the *If approved:* section)
+   says what the approval sets in motion; `prohibitions` (the *Limits:* section)
+   says what it does not authorise. On an approval, spell out both taps —
+   what Approve does, what Deny does — so the owner never decodes a button.
 4. **Context first, in plain words.** Open with one or two sentences on the
    situation — what is happening, why the owner is asked, what the answer
    changes — before the question or the action detail. No tracker codes
