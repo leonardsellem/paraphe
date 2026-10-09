@@ -150,7 +150,7 @@ are plain. Four rules — this is the writing contract:
    **simplified technical English** — short sentences, one term one
    meaning, active voice, subjects the owner recognises; and use the
    **product vocabulary** — card, tap, inbox, owner
-   ([`../CONTEXT.md`](../CONTEXT.md)) — over internal names.
+   ([`../GLOSSARY.md`](../GLOSSARY.md)) — over internal names.
 
 Before — the headline carries the ticket code and names no situation:
 

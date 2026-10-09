@@ -230,7 +230,7 @@ The cost is that a reader arriving today cannot evaluate the work without the au
 ### Sources / Research
 
 - `README.md` — the first screen R12 rewrites, and the surface three units touch. It is stale in two directions at once: it presents the project as pre-runtime while a live deployment serves traffic, and it names a private tracker, a private issue, and the author on its first screen.
-- `CONTEXT.md` and `docs/agents/` — the glossary and the tracker, label, and domain documentation R19 rewrites. The triage label file is already free of private terms and is kept; the tracker file is entirely private-tracker instructions and is rewritten.
+- `GLOSSARY.md` and `docs/agents/` — the glossary and the tracker, label, and domain documentation R19 rewrites. The triage label file is already free of private terms and is kept; the tracker file is entirely private-tracker instructions and is rewritten.
 - `docs/adr/` — ten records. ADR 0010 carries the create/tap separation that R35 makes explicit, and it is the authority the answer path is built against; the records covering the store and the cutover constrain the data-location work; the wake record is the one to amend when the null port is unified.
 - The wake path and the tap adapter — one exposes the two-method contract a contributor writes against, the other holds the tap logic with its transport injected. Together they show that runtime neutrality is a documentation problem, not a redesign. The wake path also holds two null implementations that disagree, which is the defect U5 fixes deliberately.
 - The tool guide string the operator's agent reads first still describes paraphe as compatible with the inherited product. R11 governs; the existing test asserts only that the guide names a tool, so the rewrite is test-safe, and the removal of the inherited name belongs to the scrub while the rewording belongs to the unit that owns the tool surface.
@@ -338,14 +338,14 @@ Paths are given for the layout the unit runs against. U1, U2 and U12 run before 
 
 | Unit | Title | Primary paths | Depends on |
 |---|---|---|---|
-| U12 | Rename the product, repository, tracker and distribution | `README.md`, `CONTEXT.md`, `docs/`, repository settings, tracker project | — |
+| U12 | Rename the product, repository, tracker and distribution | `README.md`, `GLOSSARY.md`, `docs/`, repository settings, tracker project | — |
 | U13 | Migrate the deployed service to the current name | private runbook and tracker issue; no tracked path | U12 |
-| U1 | Scrub private context from the working tree | `README.md`, `CONTEXT.md`, `AGENTS.md`, `docs/`, `src/`, `tests/`, `tools/` | U13 |
+| U1 | Scrub private context from the working tree | `README.md`, `GLOSSARY.md`, `AGENTS.md`, `docs/`, `src/`, `tests/`, `tools/` | U13 |
 | U2 | Make the data location configurable, user-scoped, and fail-closed | `src/inbox/store.py`, `src/inbox/config.py`, `config.example.toml`, `tests/inbox/test_setup.py` | U1 |
 | U3 | One installable distribution with a command and a licence | `pyproject.toml`, `LICENSE`, `src/paraphe/` | U2 |
 | U4 | First run that needs no third-party credential | `src/paraphe/__main__.py`, `src/paraphe/inbox/`, `config.example.toml` | U3 |
 | U5 | Runtime neutrality and the published tool surface | `src/paraphe/adapters/`, `src/paraphe/inbox/`, `docs/adapters.md`, `docs/tools.md` | U3 |
-| U6 | Documentation rewrite | `README.md`, `CONTEXT.md`, `AGENTS.md`, `docs/agents/`, `docs/demo/` | U5 |
+| U6 | Documentation rewrite | `README.md`, `GLOSSARY.md`, `AGENTS.md`, `docs/agents/`, `docs/demo/` | U5 |
 | U7 | Generated repository wiki | `openwiki/`, `AGENTS.md` | U1, U3 |
 | U8 | Contributor on-ramp and trust signals | `CONTRIBUTING.md`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `.github/` | U6 |
 | U9 | Integration, version floor, and the standing private-term gate | `.github/workflows/ci.yml`, `README.md`, `pyproject.toml` | U8 |
@@ -360,7 +360,7 @@ Surface ownership, so a file edited by more than one unit has one owner and the 
 | `AGENTS.md` | U6 (the one-file-per-level structure) | U1 removes private terms only; U7 writes the generator's managed block only |
 | `docs/agents/issue-tracker.md` | U6 (the rewrite) | U1 removes private identifiers only |
 | `config.example.toml` | U2 (the keys) | U12 renames the prefix only; U4 documents the local minimum |
-| `CONTEXT.md` | U6 (the rewrite) | U1 removes private terms only |
+| `GLOSSARY.md` | U6 (the rewrite) | U1 removes private terms only |
 | `src/inbox/config.py` | U2 (the resolution function and the keys) | U1 removes private identifiers only |
 | `src/inbox/store.py` | U2 (the location resolution) | U1 removes private identifiers only |
 | `src/paraphe/inbox/__init__.py` | U4 (the composition root and the answer path) | U1 removes private terms only; U3 rewrites its imports only; U5 rewrites the tool surface only |
@@ -375,7 +375,7 @@ Surface ownership, so a file edited by more than one unit has one owner and the 
 - **Goal:** One name is used everywhere a reader can see, and the previous name survives nowhere they can see it.
 - **Requirements:** R39
 - **Dependencies:** none
-- **Files:** `README.md`, `CONTEXT.md`, `docs/**`, `src/**`, `tests/**`, `pyproject.toml`, repository settings, tracker project
+- **Files:** `README.md`, `GLOSSARY.md`, `docs/**`, `src/**`, `tests/**`, `pyproject.toml`, repository settings, tracker project
 - **Approach:**
   1. Rename the repository, and update the remote in every worktree that points at it.
   2. Rename the tracker project, and rename this plan file and its topic.
@@ -415,7 +415,7 @@ Surface ownership, so a file edited by more than one unit has one owner and the 
 - **Goal:** Every tracked file and tracked filename is free of the private categories R1 names, the build artifact of the private review process is gone, and the scan that keeps it that way exists.
 - **Requirements:** R1, R2
 - **Dependencies:** U13
-- **Files:** `README.md`, `CONTEXT.md`, `AGENTS.md`, `docs/agents/issue-tracker.md`, `docs/adr/*.md`, `docs/specs/*.md`, `docs/plans/*.md`, `docs/research/*.md`, `src/inbox/config.py`, `src/inbox/store.py`, `src/inbox/__init__.py`, `src/adapters/wake.py`, `src/adapters/telegram.py`, `tests/inbox/test_*.py`, `tools/scan_private_terms.py`, `implementation-notes.html` (deleted)
+- **Files:** `README.md`, `GLOSSARY.md`, `AGENTS.md`, `docs/agents/issue-tracker.md`, `docs/adr/*.md`, `docs/specs/*.md`, `docs/plans/*.md`, `docs/research/*.md`, `src/inbox/config.py`, `src/inbox/store.py`, `src/inbox/__init__.py`, `src/adapters/wake.py`, `src/adapters/telegram.py`, `tests/inbox/test_*.py`, `tools/scan_private_terms.py`, `implementation-notes.html` (deleted)
 - **Approach:** One category per hunk, so a reviewer reads a scrub rather than a rewrite.
   1. Delete the build artifact of the private review process; nothing links to it, and the wiki is generated afterwards from the scrubbed tree.
   2. Remove the private tracker identifiers from module docstrings, test docstrings, and the documents that carry them. The tracker rewrite itself belongs to U6; this unit only removes what R1 forbids.
@@ -527,7 +527,7 @@ Surface ownership, so a file edited by more than one unit has one owner and the 
 - **Goal:** Every document a stranger reads describes the scrubbed, renamed repository, and the first screen converts.
 - **Requirements:** R5, R12, R13, R14, R15, R16, R17, R18, R19, R36
 - **Dependencies:** U5
-- **Files:** `README.md`, `CONTEXT.md`, `AGENTS.md`, `docs/agents/*.md`, `docs/demo/`
+- **Files:** `README.md`, `GLOSSARY.md`, `AGENTS.md`, `docs/agents/*.md`, `docs/demo/`
 - **Approach:**
   1. Lead the first screen with what paraphe is, who it is for, the install command, the short run block, and the loop; the status paragraph that presents the project as pre-runtime goes.
   2. State the dependency position plainly: the runtime needs nothing beyond the standard library, and the install fetches the build backend once.

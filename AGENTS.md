@@ -71,7 +71,7 @@ This repository's own issue tracker, with the triage labels in
 
 ## Domain docs
 
-Single context: root `CONTEXT.md` plus `docs/adr/`. See `docs/agents/domain.md`.
+Single context: root `GLOSSARY.md` plus `docs/adr/`. See `docs/agents/domain.md`.
 
 ## Private-term scan
 
