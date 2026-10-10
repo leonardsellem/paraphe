@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import runpy
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 TOOL = ROOT / "tools" / "scan_private_terms.py"
@@ -89,6 +91,27 @@ class TestTreeScan(ScanToolCase):
 
 
 class TestCommitsMode(ScanToolCase):
+    def test_only_the_published_release_message_is_baselined(self) -> None:
+        tool = runpy.run_path(str(TOOL))
+        published = "0cdf7e8848f40e35c9e4e2cb9ed748551fb94320"
+        new = published[:-1] + "1"  # the same short hash is not the same commit
+        records = "".join(
+            f"{sha}\x1fsubject carrying {VALUE}\x1e\n" for sha in (published, new)
+        )
+        with patch(
+            "subprocess.run",
+            return_value=subprocess.CompletedProcess([], 0, records.encode()),
+        ):
+            findings = tool["scan_messages"](tool["load_terms"](self.terms), "HEAD")
+        self.assertEqual(findings, [f"message\tsuite_term\t{new[:12]}"])
+
+        (self.repo / "notes.md").write_text(f"{VALUE}\n", encoding="utf-8")
+        _git(self.repo, "add", "notes.md")
+        tree = self._run()
+        self.assertEqual(tree.returncode, 1)
+        self.assertIn("content\tsuite_term\tnotes.md:1", tree.stderr)
+        self.assertNotIn(VALUE, tree.stdout + tree.stderr)
+
     def test_a_clean_message_passes(self) -> None:
         self._commit("a clean subject")
         result = self._run("--commits", "HEAD")
