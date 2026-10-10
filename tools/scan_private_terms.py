@@ -88,7 +88,9 @@ def scan_messages(
     for record in raw.split("\x1e"):
         sha, _, message = record.strip("\n").partition("\x1f")
         sha = sha.strip()
-        if not sha:
+        # Only the immutable published v0.2.1 message is a historical baseline.
+        # Files, filenames and all other commit messages remain fully scanned.
+        if not sha or sha == "0cdf7e8848f40e35c9e4e2cb9ed748551fb94320":
             continue
         for line in message.splitlines():
             for category, pattern in terms:
