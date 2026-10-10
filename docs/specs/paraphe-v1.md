@@ -2,7 +2,7 @@
 
 Parent: the v1 specification map
 
-Vocabulary from `CONTEXT.md`. Decisions from ADR 0001–0011.
+Vocabulary from `GLOSSARY.md`. Decisions from ADR 0001–0011.
 Keep/drop source of truth: `docs/research/mcp-surface-keep-or-drop.md`
 (inventoried 2026-08-25 from a live `tools/list` + `how_to_use`;
 no card was sent).

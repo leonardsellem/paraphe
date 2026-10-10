@@ -6,7 +6,9 @@ import re
 import sys
 import tempfile
 import unittest
+from importlib.metadata import PackageNotFoundError
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src"
@@ -15,6 +17,7 @@ if str(SRC) not in sys.path:
 
 from paraphe.adapters import console as console_module
 from paraphe import inbox as inbox_module
+from paraphe.inbox import http as http_module
 
 Inbox = inbox_module.Inbox
 TOOL_NAMES = inbox_module.TOOL_NAMES
@@ -175,6 +178,20 @@ class TestPublishedContracts(unittest.TestCase):
         for name in TOOL_NAMES:
             self.assertNotIn("answer", name.split("_"))
             self.assertNotIn("claim", name.split("_"))
+
+    def test_the_mcp_initialize_reply_reports_the_installed_version(self) -> None:
+        # The reply pinned the literal "0.1.0" while the package moved on; it
+        # follows the installed distribution now, with a source-checkout fallback.
+        request = {"jsonrpc": "2.0", "id": 1, "method": "initialize"}
+        with mock.patch.object(http_module, "version", return_value="9.9.9") as patched:
+            result = http_module._dispatch(None, request, bearer=None)
+            patched.assert_called_once_with("paraphe")
+        assert result is not None
+        self.assertEqual(result["result"]["serverInfo"]["version"], "9.9.9")
+        with mock.patch.object(http_module, "version", side_effect=PackageNotFoundError):
+            result = http_module._dispatch(None, request, bearer=None)
+        assert result is not None
+        self.assertEqual(result["result"]["serverInfo"]["version"], "0+unknown")
 
     def test_the_console_destination_implements_the_two_method_contract(self) -> None:
         printed: list[str] = []

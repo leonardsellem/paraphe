@@ -8,6 +8,7 @@ import secrets
 import socket
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 from urllib.parse import urlparse
 
@@ -236,6 +237,14 @@ def _make_handler(inbox: Any, session_id: str) -> type[BaseHTTPRequestHandler]:
     return Handler
 
 
+def _installed_version() -> str:
+    """The installed distribution version, or ``0+unknown`` in a source checkout."""
+    try:
+        return version("paraphe")
+    except PackageNotFoundError:
+        return "0+unknown"
+
+
 def _dispatch(inbox: Any, payload: dict[str, Any], *, bearer: str | None) -> dict[str, Any] | None:
     if not isinstance(payload, dict):
         return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "invalid request"}}
@@ -251,7 +260,7 @@ def _dispatch(inbox: Any, payload: dict[str, Any], *, bearer: str | None) -> dic
             "result": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {"tools": {"listChanged": False}},
-                "serverInfo": {"name": "paraphe", "version": "0.1.0"},
+                "serverInfo": {"name": "paraphe", "version": _installed_version()},
             },
         }
     if method == "ping":
