@@ -9,6 +9,7 @@ import socket
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from importlib.metadata import PackageNotFoundError, version
+from socketserver import TCPServer
 from typing import Any
 from urllib.parse import urlparse
 
@@ -91,6 +92,12 @@ def serve_inbox(inbox: Any, host: str, port: int = 0) -> ServerHandle:
 
     class Server(ThreadingHTTPServer):
         address_family = family
+
+        def server_bind(self) -> None:
+            # HTTPServer's reverse-DNS metadata lookup can stall a local bind.
+            TCPServer.server_bind(self)
+            self.server_name = host
+            self.server_port = int(self.server_address[1])
 
     server = Server((host, port), handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
