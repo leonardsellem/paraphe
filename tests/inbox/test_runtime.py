@@ -159,6 +159,15 @@ class TestRuntime(unittest.TestCase):
             runtime.run()
         runtime._stopping.clear()
 
+    def test_loopback_listener_does_not_require_reverse_dns(self):
+        module = _load_runtime()
+        with mock.patch.object(module, "TelegramBotAPI", return_value=FakeTelegramAPI()):
+            with mock.patch("socket.getfqdn", side_effect=AssertionError("reverse DNS during bind")) as resolver:
+                runtime = module.Runtime.start(self.environ)
+        self.addCleanup(runtime.close)
+        resolver.assert_not_called()
+        self._assert_http(runtime)
+
     def test_start_returns_before_event_blocked_telegram(self):
         module = _load_runtime()
         api = FakeTelegramAPI()
@@ -217,18 +226,16 @@ class TestRuntime(unittest.TestCase):
             "original = r.TelegramBotAPI.__init__; "
             f"r.TelegramBotAPI.__init__ = lambda self, token: (original(self, token), "
             f"setattr(self, '_url', 'http://127.0.0.1:{endpoint.server_port}/')) and None; "
-            "r.TELEGRAM_REQUEST_TIMEOUT_SECONDS = 1; "
-            "print('Runtime fixture prepared', flush=True); input(); r.main()"
+            "r.TELEGRAM_REQUEST_TIMEOUT_SECONDS = 1; r.main()"
         )
-        launched = time.monotonic()
+        started = time.monotonic()
         process = subprocess.Popen(
-            [sys.executable, "-c", code], stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            [sys.executable, "-c", code], stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             env={**os.environ, **self.environ, "PYTHONPATH": str(ROOT / "src"),
                  "PARAPHE_CONFIG_PATH": str(Path(self._tmpdir.name) / "absent.toml")},
         )
         output = b""
-        assert process.stdout is not None and process.stdin is not None
+        assert process.stdout is not None
         selector = selectors.DefaultSelector()
         selector.register(process.stdout, selectors.EVENT_READ)
 
@@ -243,12 +250,6 @@ class TestRuntime(unittest.TestCase):
             self.assertIn(text, output)
 
         try:
-            # Cold interpreter/import setup is separate from application startup.
-            until(b"Runtime fixture prepared", launched + 10)
-            prepared_seconds = time.monotonic() - launched
-            started = time.monotonic()
-            process.stdin.write(b"\n")
-            process.stdin.flush()
             until(b"Paraphe ready:", started + 2)
             self.assertTrue(pending.wait(1), output)
             ready = next(line for line in output.splitlines() if b"Paraphe ready:" in line)
@@ -259,7 +260,7 @@ class TestRuntime(unittest.TestCase):
             caught.exception.close()
             ready_seconds = time.monotonic() - started
             self.assertLess(ready_seconds, 2)
-            print(f"Blackhole fixture setup={prepared_seconds:.3f}s runtime-to-401={ready_seconds:.3f}s")
+            print(f"Blackhole process-start-to-401={ready_seconds:.3f}s")
             until(b"bootstrap failed", time.monotonic() + 2)
             self.assertIsNone(process.poll())
         finally:
@@ -271,7 +272,6 @@ class TestRuntime(unittest.TestCase):
                 process.kill()
                 process.wait(timeout=2)
             selector.close()
-            process.stdin.close()
             process.stdout.close()
             endpoint.shutdown()
             endpoint.server_close()
