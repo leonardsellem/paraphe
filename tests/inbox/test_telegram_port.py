@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
+import io
 import sys
 import tempfile
+import threading
 import unittest
 from collections.abc import Callable
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 BEARER = "test-mcp-bearer"
 OWNER = 999001
@@ -176,6 +180,163 @@ class TestTelegramPort(unittest.TestCase):
         self.adapter = TelegramAdapter(self.inbox, api, owner_id=OWNER, bot_token=TOKEN)
         self.inbox._notifier = self.adapter
         self.inbox._telegram = self.adapter
+
+    def _overlap_reconcile(self, action, *, reject=False):
+        with mock.patch.object(self.inbox, "_notify_owner"):
+            created = self._create()
+        self._use_api(FakeBotAPI())
+        pending, release, changed = threading.Event(), threading.Event(), threading.Event()
+        original = self.api.send_message
+        errors = []
+
+        def send(*args, **kwargs):
+            if not pending.is_set():
+                pending.set()
+                release.wait(2)
+                if reject:
+                    raise NotifyRejected("known rejection")
+            return original(*args, **kwargs)
+
+        def reconcile():
+            try:
+                self.inbox.reconcile_notifications()
+            except Exception as exc:
+                errors.append(exc)
+
+        def change():
+            try:
+                action(created)
+            finally:
+                changed.set()
+
+        self.api.send_message = send
+        worker = threading.Thread(target=reconcile)
+        changer = threading.Thread(target=change)
+        worker.start()
+        try:
+            self.assertTrue(pending.wait(1))
+            changer.start()
+            self.assertTrue(changed.wait(1), "reconcile held the inbox lock during network I/O")
+        finally:
+            release.set()
+            worker.join(2)
+            if changer.ident is not None:
+                changer.join(2)
+        self.assertFalse(worker.is_alive())
+        self.assertFalse(changer.is_alive())
+        return created, errors
+
+    def test_reconcile_send_overlap_update_does_not_restore_old_identity(self):
+        def update(card):
+            self.inbox.call_tool("update_request", {
+                "request_id": card["request_id"], "expected_version": 1,
+                "title": "Updated decision", "renotify": True,
+            })
+            self.inbox.call_tool("request_approval", {
+                "title": "Created during reconcile", "external_id": "reconcile-new",
+            }, bearer=BEARER)
+
+        created, errors = self._overlap_reconcile(update)
+        self.assertEqual(len(self.api.messages), 3)
+        current = self.inbox.call_tool("get_response", {"request_id": created["request_id"]})
+        self.assertEqual(current["version"], 2)
+        self.assertEqual(self.inbox._cards[created["request_id"]].telegram_message_id, 1)
+        self.assertIsNone(self.api.messages[-1]["reply_markup"])
+        self.assertEqual(len(errors), 1)  # old version cannot bind its accepted message
+        self.inbox.reconcile_notifications()
+        self.assertEqual(len(self.api.messages), 3)
+
+    def test_reconcile_send_overlap_cancel_leaves_no_keyboard(self):
+        created, _errors = self._overlap_reconcile(lambda card: self.inbox.call_tool(
+            "cancel_request", {"request_id": card["request_id"]}
+        ))
+        self.assertEqual(self.inbox.call_tool("get_response", {
+            "request_id": created["request_id"],
+        })["status"], "cancelled")
+        self.assertEqual(self.api.messages[0]["reply_markup"], {"inline_keyboard": []})
+
+    def test_reconcile_rejection_cannot_overwrite_concurrent_answer(self):
+        created, errors = self._overlap_reconcile(lambda card: self.inbox.answer(
+            card["request_id"], version=1, choice="Approve"
+        ), reject=True)
+        self.assertIsInstance(errors[0], NotifyRejected)
+        self.inbox.close()
+        restarted, _adapter, api = self._restart()
+        response = restarted.call_tool("get_response", {"request_id": created["request_id"]})
+        self.assertEqual(response["response"]["choice"], "Approve")
+        self.assertEqual(api.messages, [])
+
+    def test_reconcile_keyboard_expiry_strip_does_not_hold_lock(self):
+        with mock.patch.object(self.inbox, "_notify_owner"):
+            created = self._create()
+        self._use_api(FakeBotAPI())
+        pending, release, read = threading.Event(), threading.Event(), threading.Event()
+        original = self.api.edit_message_reply_markup
+        errors = []
+
+        def edit(chat_id, message_id, reply_markup):
+            if reply_markup.get("inline_keyboard"):
+                self.clock.now += 901
+            else:
+                pending.set()
+                release.wait(2)
+            original(chat_id, message_id, reply_markup)
+
+        def reconcile():
+            try:
+                self.inbox.reconcile_notifications()
+            except inbox_mod.InboxError as exc:
+                errors.append(exc)
+
+        self.api.edit_message_reply_markup = edit
+        worker = threading.Thread(target=reconcile)
+        reader = threading.Thread(target=lambda: (
+            self.inbox.call_tool("get_response", {"request_id": created["request_id"]}), read.set()
+        ))
+        worker.start()
+        try:
+            self.assertTrue(pending.wait(1))
+            reader.start()
+            self.assertTrue(read.wait(1), "post-I/O expiry cleanup held the inbox lock")
+        finally:
+            release.set()
+            worker.join(2)
+            if reader.ident is not None:
+                reader.join(2)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(self.api.messages[0]["reply_markup"], {"inline_keyboard": []})
+
+    def test_reconcile_expiry_strip_does_not_hold_lock_and_logs_failure(self):
+        self._use_api(FakeBotAPI())
+        created = self._create()
+        self.clock.now += 901
+        pending, release, read = threading.Event(), threading.Event(), threading.Event()
+        output = io.StringIO()
+
+        def strip(chat_id, message_id, reply_markup):
+            pending.set()
+            release.wait(2)
+            raise RuntimeError("https://example.invalid/bot-private-token/card-content")
+
+        self.api.edit_message_reply_markup = strip
+        with redirect_stdout(output):
+            worker = threading.Thread(target=self.inbox.reconcile_notifications)
+            reader = threading.Thread(target=lambda: (
+                self.inbox.call_tool("get_response", {"request_id": created["request_id"]}), read.set()
+            ))
+            worker.start()
+            try:
+                self.assertTrue(pending.wait(1))
+                reader.start()
+                self.assertTrue(read.wait(1), "expiry cleanup held the inbox lock")
+            finally:
+                release.set()
+                worker.join(2)
+                if reader.ident is not None:
+                    reader.join(2)
+        self.assertRegex(output.getvalue(), r"strip failed.*RuntimeError")
+        self.assertNotIn("private-token", output.getvalue())
+        self.assertNotIn("card-content", output.getvalue())
 
     def test_send_builds_callback_data_with_card_id_version_and_choice_index(self) -> None:
         created = self._create()
