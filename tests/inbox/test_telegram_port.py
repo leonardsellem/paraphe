@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import io
+import json
+import sqlite3
 import sys
 import tempfile
 import threading
 import unittest
+import urllib.error
 from collections.abc import Callable
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
+from email.message import EmailMessage
 from pathlib import Path
+from typing import Any
 from unittest import mock
 
 BEARER = "test-mcp-bearer"
@@ -23,6 +28,7 @@ if str(SRC) not in sys.path:
 
 from paraphe import inbox as inbox_mod
 from paraphe.adapters import telegram as tg_mod
+from paraphe.inbox.runtime import TelegramAPIError, TelegramBotAPI
 
 ClaimRefused = inbox_mod.ClaimRefused
 Inbox = inbox_mod.Inbox
@@ -132,7 +138,7 @@ class TestTelegramPort(unittest.TestCase):
     def setUp(self) -> None:
         self._tmpdir = tempfile.TemporaryDirectory()
         self.addCleanup(self._tmpdir.cleanup)
-        self.api = FakeBotAPI()
+        self.api: Any = FakeBotAPI()
         self.clock = FakeClock()
         self.inbox = Inbox(
             owner_telegram_id=OWNER,
@@ -175,11 +181,249 @@ class TestTelegramPort(unittest.TestCase):
         self.addCleanup(restarted.close)
         return restarted, adapter, restarted_api
 
-    def _use_api(self, api: FakeBotAPI) -> None:
+    def _use_api(self, api: FakeBotAPI | TelegramBotAPI) -> None:
         self.api = api
         self.adapter = TelegramAdapter(self.inbox, api, owner_id=OWNER, bot_token=TOKEN)
         self.inbox._notifier = self.adapter
         self.inbox._telegram = self.adapter
+
+    def _stored(self, request_id):
+        with closing(sqlite3.connect(self.inbox.store_path)) as conn:
+            return json.loads(conn.execute(
+                "SELECT payload FROM cards WHERE request_id = ?", (request_id,)
+            ).fetchone()[0])
+
+    def test_not_modified_strip_persists_and_is_not_retried(self):
+        descriptions = (
+            "Bad Request: message is not modified",
+            "bAd ReQuEsT: MeSsAgE Is NoT MoDiFiEd: specified reply markup is unchanged",
+        )
+        for index, mode in enumerate(("http", "json", "success", "legacy")):
+            with self.subTest(mode=mode):
+                self._use_api(FakeBotAPI())
+                created = self.inbox.call_tool("request_approval", {
+                    "title": "Cleanup", "external_id": f"cleanup-{mode}",
+                }, bearer=BEARER)
+                request_id = created["request_id"]
+                self.inbox.record_tap(request_id, choice="Approve")
+                if mode == "legacy":
+                    payload = self._stored(request_id)
+                    del payload["telegram_keyboard_attached"]
+                    with closing(sqlite3.connect(self.inbox.store_path)) as conn:
+                        conn.execute("UPDATE cards SET payload=? WHERE request_id=?",
+                                     (json.dumps(payload), request_id))
+                        conn.commit()
+                    self.inbox.close()
+                self._use_api(TelegramBotAPI(TOKEN))
+                # The adapter cache is deliberately empty: the durable locator wins.
+                body = json.dumps({"ok": False, "error_code": 400,
+                                   "description": descriptions[index % 2]}).encode()
+                response = mock.MagicMock()
+                response.__enter__.return_value.read.return_value = (
+                    b'{"ok":true,"result":true}' if mode == "success" else body
+                )
+                error = urllib.error.HTTPError(
+                    "https://example.invalid/edit", 400, "Bad Request", EmailMessage(), io.BytesIO(body)
+                )
+                output = io.StringIO()
+                with mock.patch("urllib.request.urlopen", return_value=response,
+                                side_effect=error if mode == "http" else None) as opened:
+                    with redirect_stdout(output):
+                        self.assertTrue(self.inbox.reconcile_notifications())
+                error.close()
+                self.assertEqual(opened.call_count, 1)
+                self.assertNotIn("Telegram strip failed", output.getvalue())
+                self.assertFalse(self._stored(request_id)["telegram_keyboard_attached"])
+                self.assertEqual(self._stored(request_id)["response_choice"], "Approve")
+                for _ in range(2):
+                    restarted, _adapter, api = self._restart()
+                    self.assertFalse(restarted._cards[request_id].telegram_keyboard_attached)
+                    self.assertEqual(api.edits, [])
+                    restarted.close()
+
+    def test_only_classified_empty_keyboard_rejection_is_success(self):
+        self._use_api(TelegramBotAPI(TOKEN))
+        canonical = "Bad Request: message is not modified"
+        cases = (
+            ({"ok": False, "error_code": 400, "description": "Bad Request: message not found"}, NotifyRejected),
+            ({"ok": False, "description": canonical}, NotifyRejected),
+            ({"ok": False, "error_code": 401, "description": canonical}, NotifyRejected),
+            ({"ok": False, "error_code": "400", "description": canonical}, NotifyRejected),
+            ({"ok": False, "error_code": 400, "description": canonical + "ish"}, NotifyRejected),
+            ({"ok": False, "error_code": 400, "description": "prefix " + canonical}, NotifyRejected),
+            ({"ok": False, "error_code": 400, "description": canonical + "\n"}, NotifyRejected),
+            ({"ok": False, "error_code": 400, "description": None}, NotifyRejected),
+            (b"not-json", TelegramAPIError),
+        )
+        for body, error_type in cases:
+            with self.subTest(body=body):
+                response = mock.MagicMock()
+                response.__enter__.return_value.read.return_value = (
+                    body if isinstance(body, bytes) else json.dumps(body).encode()
+                )
+                with mock.patch("urllib.request.urlopen", return_value=response):
+                    with self.assertRaises(error_type):
+                        self.adapter.strip_message(OWNER, 1)
+        for error in (TimeoutError(canonical), RuntimeError(canonical), NotifyRejected(canonical)):
+            with self.subTest(error=type(error).__name__):
+                with mock.patch.object(self.api, "edit_message_reply_markup", side_effect=error):
+                    with self.assertRaises(type(error)):
+                        self.adapter.strip_message(OWNER, 1)
+        body = json.dumps({"ok": False, "error_code": 400,
+                           "description": canonical + ": private-provider-text"}).encode()
+        card_id = "00000000-0000-0000-0000-000000000001"
+        self.adapter.remember_message(card_id, 1, OWNER, 1)
+        for call in (
+            lambda: self.api.send_message(OWNER, "hi", None),
+            lambda: self.adapter.finalize_message({"request_id": card_id, "version": 1}),
+            lambda: self.api.answer_callback_query("callback"),
+            lambda: self.api.edit_message_reply_markup(OWNER, 1, tg_mod.EMPTY_KEYBOARD),
+        ):
+            response = mock.MagicMock()
+            response.__enter__.return_value.read.return_value = body
+            with mock.patch("urllib.request.urlopen", return_value=response):
+                with self.assertRaises(NotifyRejected) as caught:
+                    call()
+            self.assertEqual(caught.exception.code, 400)
+            self.assertEqual(caught.exception.reason, "message_not_modified")
+            self.assertNotIn("private-provider-text", str(caught.exception))
+
+    def test_cleanup_failure_keeps_flag_retryable(self):
+        self._use_api(FakeBotAPI())
+        created = self._create()
+        request_id = created["request_id"]
+        self.inbox.record_tap(request_id, choice="Approve")
+        output = io.StringIO()
+        for target, method in ((self.api, "edit_message_reply_markup"),
+                               (self.inbox._store, "save_card")):
+            with self.subTest(method=method):
+                with mock.patch.object(target, method, side_effect=OSError("private-provider-text")):
+                    with redirect_stdout(output):
+                        self.assertFalse(self.inbox.reconcile_notifications())
+                self.assertTrue(self._stored(request_id)["telegram_keyboard_attached"])
+                self.assertTrue(self.inbox._cards[request_id].telegram_keyboard_attached)
+        self.assertNotIn("private-provider-text", output.getvalue())
+        restarted, _adapter, api = self._restart()
+        self.assertEqual(len(api.edits), 1)
+        self.assertFalse(restarted._cards[request_id].telegram_keyboard_attached)
+
+    def test_strip_completion_preserves_current_answer_and_identity(self):
+        from copy import deepcopy
+
+        for change in ("answer", "version", "message", "chat", "open"):
+            with self.subTest(change=change):
+                self._use_api(FakeBotAPI())
+                created = self.inbox.call_tool("request_approval", {
+                    "title": "Cleanup race", "external_id": f"cleanup-race-{change}",
+                }, bearer=BEARER)
+                request_id = created["request_id"]
+                self.inbox.record_tap(request_id, choice="Approve")
+                pending, release = threading.Event(), threading.Event()
+                result = []
+
+                def strip(*args):
+                    pending.set()
+                    self.assertTrue(release.wait(2))
+
+                with mock.patch.object(self.api, "edit_message_reply_markup", side_effect=strip):
+                    worker = threading.Thread(target=lambda: result.append(self.inbox.reconcile_notifications()))
+                    worker.start()
+                    try:
+                        self.assertTrue(pending.wait(1))
+                        with self.inbox._lock:
+                            current = deepcopy(self.inbox._cards[request_id])
+                            current.processed_at = "processed-now"
+                            current.execution_status = "completed"
+                            current.response_text = "keep these exact words"
+                            if change == "version":
+                                current.version += 1
+                            elif change == "message":
+                                assert current.telegram_message_id is not None
+                                current.telegram_message_id += 1
+                            elif change == "chat":
+                                assert current.telegram_chat_id is not None
+                                current.telegram_chat_id += 1
+                            elif change == "open":
+                                current.state = "open"
+                            self.inbox._save(current)
+                    finally:
+                        release.set()
+                        worker.join(2)
+                self.assertFalse(worker.is_alive())
+                stored = self._stored(request_id)
+                self.assertEqual(stored["telegram_keyboard_attached"], change != "answer")
+                self.assertEqual(stored["response_choice"], "Approve")
+                self.assertEqual(stored["response_text"], "keep these exact words")
+                self.assertEqual(stored["processed_at"], "processed-now")
+                self.assertEqual(stored["execution_status"], "completed")
+                self.assertEqual(result, [True])
+                # Keep the next subcase's sweep focused on its own identity.
+                with self.inbox._lock:
+                    current.telegram_keyboard_attached = False
+                    current.state = "tapped"
+                    self.inbox._save(current)
+
+    def test_late_attach_failed_compensation_retries_only_matching_terminal_identity(self):
+        for newer in (False, True):
+            with self.subTest(newer=newer):
+                api = AcceptKeyboardThenUnknown()
+                self._use_api(api)
+                with self.assertRaises(TimeoutError):
+                    self.inbox.call_tool("request_approval", {
+                        "title": "Attach race", "external_id": f"attach-race-{newer}",
+                    }, bearer=BEARER)
+                created = self.inbox.call_tool("get_response", {"external_id": f"attach-race-{newer}"})
+                request_id = created["request_id"]
+                self.assertFalse(self._stored(request_id)["telegram_keyboard_attached"])
+                pending, release = threading.Event(), threading.Event()
+                original = api.edit_message_reply_markup
+                errors = []
+
+                def edit(chat_id, message_id, reply_markup):
+                    if message_id == 1 and reply_markup.get("inline_keyboard"):
+                        pending.set()
+                        self.assertTrue(release.wait(3))
+                    elif message_id == 1 and release.is_set():
+                        raise OSError("compensation failed")
+                    original(chat_id, message_id, reply_markup)
+
+                def reconcile():
+                    try:
+                        self.inbox.reconcile_notifications()
+                    except inbox_mod.InboxError as exc:
+                        errors.append(exc)
+
+                with mock.patch.object(api, "edit_message_reply_markup", side_effect=edit):
+                    worker = threading.Thread(target=reconcile)
+                    worker.start()
+                    try:
+                        self.assertTrue(pending.wait(1))
+                        if newer:
+                            created = self.inbox.call_tool("update_request", {
+                                "request_id": request_id, "expected_version": 1, "renotify": True,
+                            })
+                        message = api.messages[-1]
+                        self._callback(message["reply_markup"]["inline_keyboard"][0][0]["callback_data"],
+                                       "attach-answer", chat={"id": OWNER, "type": "private"},
+                                       message_id=message["message_id"])
+                        self.assertFalse(self._stored(request_id)["telegram_keyboard_attached"])
+                    finally:
+                        release.set()
+                        worker.join(2)
+                self.assertFalse(worker.is_alive())
+                self.assertEqual(len(errors), 1)
+                stored = self._stored(request_id)
+                self.assertEqual(stored["state"], "tapped")
+                self.assertEqual(stored["response_choice"], "Approve")
+                self.assertEqual(stored["responded_via"], "telegram")
+                self.assertEqual(stored["version"], 2 if newer else 1)
+                self.assertEqual(stored["telegram_message_id"], 2 if newer else 1)
+                self.assertEqual(stored["telegram_keyboard_attached"], not newer)
+                restarted, _adapter, retry_api = self._restart()
+                self.assertEqual(len(retry_api.edits), 0 if newer else 1)
+                self.assertFalse(restarted._cards[request_id].telegram_keyboard_attached)
+                self.assertEqual(restarted._cards[request_id].response_choice, "Approve")
+                restarted.close()
 
     def _overlap_reconcile(self, action, *, reject=False):
         with mock.patch.object(self.inbox, "_notify_owner"):

@@ -178,11 +178,34 @@ class TestReplyIntake(unittest.TestCase):
             (reply_card.telegram_chat_id, reply_card.telegram_message_id),
             (OWNER, 2),
         )
-        self.assertTrue(reply_card.telegram_keyboard_attached)
+        self.assertFalse(tap_card.telegram_keyboard_attached)
+        self.assertFalse(reply_card.telegram_keyboard_attached)
         self.assertEqual(
             [edit["message_id"] for edit in self.api.edits if edit["reply_markup"] == {"inline_keyboard": []}],
             [1, 2],
         )
+        restarted, _adapter, api = self._restart()
+        for card in (tap_card, reply_card):
+            restored = restarted._cards[card.request_id]
+            self.assertEqual(restored, card)
+            self.assertFalse(restored.telegram_keyboard_attached)
+        self.assertEqual(api.edits, [])
+
+    def test_failed_reply_strip_keeps_answer_and_retry_flag(self):
+        from unittest import mock
+
+        created = self._create()
+        self.adapter.send(created, text="Cut over?")
+        with mock.patch.object(self.api, "edit_message_reply_markup", side_effect=OSError("unavailable")):
+            self._reply("keep my answer verbatim")
+        card = self.inbox._cards[created["request_id"]]
+        self.assertTrue(card.telegram_keyboard_attached)
+        restarted, _adapter, api = self._restart()
+        restored = restarted._cards[card.request_id]
+        self.assertEqual(restored.response_text, "keep my answer verbatim")
+        self.assertEqual(restored.responded_via, "telegram-reply")
+        self.assertFalse(restored.telegram_keyboard_attached)
+        self.assertEqual(len(api.edits), 1)
 
     def test_reply_wakes_the_parked_waiter_with_the_text(self) -> None:
         created = self._create()
