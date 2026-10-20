@@ -129,17 +129,26 @@ class TestCommitsMode(ScanToolCase):
         self.assertIn(sha, result.stderr)
 
     def test_a_co_author_trailer_is_metadata_not_content(self) -> None:
-        self._commit(
-            f"the subject is clean\n\nbody line\n\nCo-authored-by: Someone <{VALUE}@example.test>"
-        )
+        # A trailer alone does not fire ...
+        self._commit(f"the subject is clean\n\nbody line\n\nCo-authored-by: Someone <{VALUE}@example.test>")
         trailer_only = self._run("--commits", "HEAD")
         self.assertEqual(trailer_only.returncode, 0, trailer_only.stderr)
-        self.assertIn("clean", trailer_only.stdout)
 
-        self._commit(f"the trailer is skipped but the body is not: {VALUE}")
-        still_fires = self._run("--commits", "HEAD^..HEAD")
-        self.assertEqual(still_fires.returncode, 1)
-        self.assertIn("message", still_fires.stderr)
+        # ... but it must not mask the body of its own message.
+        self._commit(f"a clean subject\n\nthe body carries {VALUE}\n\nCo-authored-by: Someone <a@example.test>")
+        same_message = self._run("--commits", "HEAD^..HEAD")
+        self.assertEqual(same_message.returncode, 1, same_message.stderr)
+        self.assertIn("message", same_message.stderr)
+        self.assertNotIn(VALUE, same_message.stderr)
+
+        # A prefixed subject and an indented body line are authored content.
+        self._commit(f"Co-authored-by: {VALUE}\n")
+        prefixed_subject = self._run("--commits", "HEAD^..HEAD")
+        self.assertEqual(prefixed_subject.returncode, 1, prefixed_subject.stderr)
+
+        self._commit(f"a clean subject\n\n  Co-authored-by: indented body {VALUE}\n")
+        indented = self._run("--commits", "HEAD^..HEAD")
+        self.assertEqual(indented.returncode, 1, indented.stderr)
 
     def test_the_range_limits_the_scan(self) -> None:
         self._commit(f"the older subject carries {VALUE}")
