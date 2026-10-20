@@ -6,6 +6,7 @@ import json
 import os
 import signal
 import threading
+import time
 import urllib.error
 import urllib.request
 from typing import Any, Mapping
@@ -21,6 +22,7 @@ from .http import is_loopback_host
 DEFAULT_MCP_HOST = "127.0.0.1"
 DEFAULT_MCP_PORT = 8787
 DEFAULT_POLL_SECONDS = 25
+TELEGRAM_REQUEST_TIMEOUT_SECONDS = 15
 
 
 class TelegramAPIError(Exception):
@@ -89,9 +91,13 @@ class TelegramBotAPI:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        timeout = int(payload.get("timeout", 0)) + 10
+        poll_seconds = int(payload.get("timeout", 0))
+        timeout = (
+            max(TELEGRAM_REQUEST_TIMEOUT_SECONDS, poll_seconds + 10)
+            if poll_seconds > 0 else TELEGRAM_REQUEST_TIMEOUT_SECONDS
+        )
         try:
-            with urllib.request.urlopen(request, timeout=max(15, timeout)) as response:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
                 raw = response.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
             try:
@@ -144,6 +150,8 @@ class Runtime:
         self.next_update_id = 0
         self._stopping = threading.Event()
         self._closed = False
+        self._offset_ready = False
+        self._reconciled = False
 
     @classmethod
     def start(cls, environ: Mapping[str, str] | None = None) -> "Runtime":
@@ -190,9 +198,11 @@ class Runtime:
             destination = ConsoleDestination(host=host, port=port)
         inbox._notifier = destination
         inbox._telegram = destination if telegram is not None else NullTelegramPort()
+        inbox._notifications_ready = telegram is None
         try:
-            if telegram is not None:
-                inbox.reconcile_notifications()
+            with inbox._lock:
+                store = inbox._ensure_store()
+                saved_offset = store.load_telegram_next_offset() if telegram is not None else None
             server = inbox.serve(host=host, port=port)
         except Exception:
             inbox.close()
@@ -204,12 +214,9 @@ class Runtime:
             server=server,
             poll_seconds=poll_seconds,
         )
-        if telegram is not None:
-            try:
-                runtime._restore_telegram_offset()
-            except Exception:
-                runtime.close()
-                raise
+        if saved_offset is not None:
+            runtime.next_update_id = saved_offset
+            runtime._offset_ready = True
         return runtime
 
     def _store(self):
@@ -219,8 +226,9 @@ class Runtime:
         return store
 
     def _persist_offset(self, offset: int) -> None:
-        self._store().save_telegram_next_offset(offset)
-        self.next_update_id = offset
+        with self.inbox._lock:
+            self._store().save_telegram_next_offset(offset)
+            self.next_update_id = offset
 
     def _require_update_id(self, update: object) -> int:
         if not isinstance(update, Mapping):
@@ -231,18 +239,25 @@ class Runtime:
         return update_id
 
     def _restore_telegram_offset(self) -> None:
-        loaded = self._store().load_telegram_next_offset()
+        with self.inbox._lock:
+            loaded = self._store().load_telegram_next_offset()
         if loaded is not None:
             self.next_update_id = loaded
+            self._offset_ready = True
             return
+        assert self.api is not None
         updates = self.api.get_updates(offset=-1, timeout=0)
         newest: int | None = None
         for update in updates:
             update_id = self._require_update_id(update)
             newest = update_id if newest is None else max(newest, update_id)
         self._persist_offset(0 if newest is None else newest + 1)
+        self._offset_ready = True
 
     def poll_once(self) -> None:
+        assert self.api is not None and self.telegram is not None
+        if not self._offset_ready:
+            raise TelegramAPIError("Telegram bootstrap is pending")
         updates = self.api.get_updates(
             offset=self.next_update_id, timeout=self.poll_seconds
         )
@@ -257,6 +272,37 @@ class Runtime:
             # is no tap transport to poll.
             self._stopping.wait()
             return
+        while not self._stopping.is_set() and not self._offset_ready:
+            started = time.monotonic()
+            print("Telegram bootstrap started", flush=True)
+            try:
+                self._restore_telegram_offset()
+            except Exception as exc:
+                print(
+                    f"Telegram bootstrap failed: {type(exc).__name__} "
+                    f"elapsed={time.monotonic() - started:.3f}s", flush=True,
+                )
+                self._stopping.wait(1)
+            else:
+                print(f"Telegram bootstrap completed elapsed={time.monotonic() - started:.3f}s", flush=True)
+        if self._stopping.is_set():
+            return
+        if not self._reconciled:
+            self._reconciled = True
+            with self.inbox._lock:
+                self.inbox._notifications_ready = True
+            started = time.monotonic()
+            print("Telegram reconcile started", flush=True)
+            try:
+                result = self.inbox.reconcile_notifications()
+            except Exception as exc:
+                print(
+                    f"Telegram reconcile failed: {type(exc).__name__} "
+                    f"elapsed={time.monotonic() - started:.3f}s", flush=True,
+                )
+            else:
+                state = "degraded" if result is False else "completed"
+                print(f"Telegram reconcile {state} elapsed={time.monotonic() - started:.3f}s", flush=True)
         while not self._stopping.is_set():
             try:
                 self.poll_once()

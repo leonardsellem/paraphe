@@ -323,6 +323,7 @@ class Inbox:
         self._owner_answer_token = owner_answer_token
         self._bot_token = bot_token
         self._notifier = notifier if notifier is not None else _NullNotifier()
+        self._notifications_ready = True
         self._telegram = telegram_port if telegram_port is not None else NullTelegramPort()
         self._clock = clock if clock is not None else time.time
         self._cards: dict[str, Card] = {}
@@ -373,7 +374,7 @@ class Inbox:
                 self._store.close()
                 self._store = None
 
-    def reconcile_notifications(self) -> None:
+    def reconcile_notifications(self) -> bool:
         with self._lock:
             self._ensure_store()
             cards = list(self._cards.values())
@@ -387,20 +388,22 @@ class Inbox:
                             card.telegram_chat_id,
                             card.telegram_message_id,
                         )
-            for card in cards:
-                if card.state == "open":
-                    refreshed = self._refresh_expiry(card)
-                    if refreshed.state == "open":
-                        if (
-                            refreshed.telegram_chat_id is not None
-                            and refreshed.telegram_message_id is not None
-                            and not refreshed.telegram_keyboard_attached
-                        ):
-                            self._finalize_telegram(refreshed)
-                        else:
-                            self._notify_owner(refreshed)
-                else:
-                    self._request_strip(card)
+        healthy = True
+        for saved in cards:
+            with self._lock:
+                card = self._refresh_expiry(self._cards[saved.request_id], strip=False)
+            # The HTTP thread must be able to read/modify cards during remote work.
+            if card.state != "open":
+                healthy = self._request_strip(card) and healthy
+            elif (
+                card.telegram_chat_id is not None
+                and card.telegram_message_id is not None
+                and not card.telegram_keyboard_attached
+            ):
+                self._finalize_telegram(card)
+            else:
+                self._notify_owner(card)
+        return healthy
 
     def record_telegram_message(
         self,
@@ -411,7 +414,7 @@ class Inbox:
         message_id: int,
     ) -> None:
         with self._lock:
-            card = self._require_card(request_id)
+            card = self._require_card(request_id, strip=False)
             if version != card.version:
                 raise InboxError("telegram message version does not match")
             if chat_id != self.owner_telegram_id or message_id <= 0:
@@ -431,7 +434,8 @@ class Inbox:
         message_id: int,
     ) -> None:
         with self._lock:
-            card = self._require_card(request_id)
+            # The adapter strips after a failed finalisation, outside this lock.
+            card = self._require_card(request_id, strip=False)
             if card.state != "open":
                 raise InboxError("card is not open")
             if (
@@ -664,11 +668,17 @@ class Inbox:
         self._request_strip(updated)
         return self._envelope(updated)
 
-    def _request_strip(self, card: Card) -> None:
+    def _request_strip(self, card: Card) -> bool:
+        started = time.monotonic()
         try:
             self._telegram.edit_and_strip(card.request_id, card.version)
-        except Exception:
-            return
+        except Exception as exc:
+            print(
+                f"Telegram strip failed: {type(exc).__name__} "
+                f"elapsed={time.monotonic() - started:.3f}s", flush=True,
+            )
+            return False
+        return True
 
     def _park(self, request_id: str, wait_seconds: float) -> Card:
         """Block until the card leaves `open`, or the window ends.
@@ -874,6 +884,8 @@ class Inbox:
         if "result" in args:
             self._validate_result(args["result"])
         shared = self._opt_shared(args, require_external=False)
+        if not self._notifications_ready:
+            raise NotifyRejected("Telegram bootstrap is pending")
         external_id = shared["external_id"]
         store = self._ensure_store()
         if external_id and external_id in self._notify_external_ids:
@@ -1206,14 +1218,14 @@ class Inbox:
             return "expired"
         return "pending"
 
-    def _require_card(self, request_id: str) -> Card:
+    def _require_card(self, request_id: str, *, strip: bool = True) -> Card:
         self._ensure_store()
         card = self._cards.get(request_id)
         if card is None:
             raise InboxError("unknown request_id")
-        return self._refresh_expiry(card)
+        return self._refresh_expiry(card, strip=strip)
 
-    def _refresh_expiry(self, card: Card) -> Card:
+    def _refresh_expiry(self, card: Card, *, strip: bool = True) -> Card:
         if (
             card.state == "open"
             and card.expires_at is not None
@@ -1223,7 +1235,8 @@ class Inbox:
             updated.state = "expired"
             self._save(updated)
             self._notify_waiters(updated.request_id)
-            self._request_strip(updated)
+            if strip:
+                self._request_strip(updated)
             return updated
         return card
 
@@ -1289,34 +1302,46 @@ class Inbox:
         return payload
 
     def _finalize_telegram(self, card: Card) -> None:
+        with self._lock:
+            current = self._cards.get(card.request_id)
+            if current is None or current.version != card.version or current.state != "open":
+                return
+            payload = self._notification_payload(current)
         finalize = getattr(self._telegram, "finalize_message", None)
         if finalize is not None:
-            finalize(self._notification_payload(card))
+            finalize(payload)
 
     def _notify_owner(self, card: Card, *, renotify: bool = False) -> None:
-        if card.notified:
-            return
-        reserved = deepcopy(card)
-        reserved.notified = True
-        self._save(reserved)
-        try:
-            self._notifier.notify(self._notification_payload(card, renotify=renotify))
-        except Exception as exc:
+        with self._lock:
             current = self._cards.get(card.request_id)
             if (
-                isinstance(exc, NotifyRejected)
-                and current is not None
-                and current.telegram_message_id is None
+                not self._notifications_ready or current is None
+                or current.version != card.version or current.state != "open" or current.notified
             ):
-                rolled = deepcopy(reserved)
-                rolled.notified = False
-                try:
-                    self._save(rolled)
-                except Exception:
-                    # ponytail: leftover reservation fail-closes after restart
-                    self._cards[rolled.request_id] = rolled
-                    if rolled.external_id:
-                        self._by_external_id[rolled.external_id] = rolled.request_id
+                return
+            reserved = deepcopy(current)
+            reserved.notified = True
+            self._save(reserved)
+            payload = self._notification_payload(current, renotify=renotify)
+        try:
+            self._notifier.notify(payload)
+        except Exception as exc:
+            with self._lock:
+                current = self._cards.get(card.request_id)
+                if (
+                    isinstance(exc, NotifyRejected)
+                    and current is not None and current.version == reserved.version
+                    and current.telegram_message_id is None
+                ):
+                    rolled = deepcopy(current)
+                    rolled.notified = False
+                    try:
+                        self._save(rolled)
+                    except Exception:
+                        # ponytail: leftover reservation fail-closes after restart
+                        self._cards[rolled.request_id] = rolled
+                        if rolled.external_id:
+                            self._by_external_id[rolled.external_id] = rolled.request_id
             raise
 
     def _save(self, card: Card) -> None:
