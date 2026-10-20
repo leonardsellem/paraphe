@@ -294,6 +294,11 @@ class InboxError(Exception):
 class NotifyRejected(Exception):
     """Provider response proved the send did not happen. Reservation may roll back."""
 
+    def __init__(self, *args: object, code: int | None = None, reason: str | None = None) -> None:
+        super().__init__(*args)
+        self.code = code
+        self.reason = reason
+
 
 class _NullNotifier:
     def notify(self, payload: object) -> None:
@@ -374,7 +379,7 @@ class Inbox:
                 self._store.close()
                 self._store = None
 
-    def reconcile_notifications(self) -> bool:
+    def reconcile_notifications(self, *, cancelled: Callable[[], bool] | None = None) -> bool:
         with self._lock:
             self._ensure_store()
             cards = list(self._cards.values())
@@ -390,11 +395,18 @@ class Inbox:
                         )
         healthy = True
         for saved in cards:
+            if cancelled is not None and cancelled():
+                break
             with self._lock:
                 card = self._refresh_expiry(self._cards[saved.request_id], strip=False)
             # The HTTP thread must be able to read/modify cards during remote work.
             if card.state != "open":
-                healthy = self._request_strip(card) and healthy
+                if (
+                    card.telegram_chat_id is not None
+                    and card.telegram_message_id is not None
+                    and card.telegram_keyboard_attached
+                ):
+                    healthy = self._request_strip(card) and healthy
             elif (
                 card.telegram_chat_id is not None
                 and card.telegram_message_id is not None
@@ -444,6 +456,21 @@ class Inbox:
                 or message_id != card.telegram_message_id
             ):
                 raise InboxError("telegram message identity does not match")
+            updated = deepcopy(card)
+            updated.telegram_keyboard_attached = True
+            self._save(updated)
+
+    def _record_terminal_keyboard_retry(
+        self, request_id: str, *, version: int, chat_id: int, message_id: int
+    ) -> None:
+        """A late attach survived compensation; keep that terminal identity retryable."""
+        with self._lock:
+            card = self._cards.get(request_id)
+            if (
+                card is None or card.state == "open" or card.version != version
+                or card.telegram_chat_id != chat_id or card.telegram_message_id != message_id
+            ):
+                return
             updated = deepcopy(card)
             updated.telegram_keyboard_attached = True
             self._save(updated)
@@ -671,7 +698,27 @@ class Inbox:
     def _request_strip(self, card: Card) -> bool:
         started = time.monotonic()
         try:
-            self._telegram.edit_and_strip(card.request_id, card.version)
+            strip = getattr(self._telegram, "strip_message", None)
+            located = card.telegram_chat_id is not None and card.telegram_message_id is not None
+            if strip is not None:
+                if not located or not card.telegram_keyboard_attached:
+                    return True
+                # Use the captured durable locator, never a newer adapter-cache entry.
+                strip(card.telegram_chat_id, card.telegram_message_id)
+            else:
+                self._telegram.edit_and_strip(card.request_id, card.version)
+            if located:
+                with self._lock:
+                    current = self._cards.get(card.request_id)
+                    if (
+                        current is not None and current.state != "open"
+                        and current.version == card.version
+                        and current.telegram_chat_id == card.telegram_chat_id
+                        and current.telegram_message_id == card.telegram_message_id
+                    ):
+                        updated = deepcopy(current)
+                        updated.telegram_keyboard_attached = False
+                        self._save(updated)
         except Exception as exc:
             print(
                 f"Telegram strip failed: {type(exc).__name__} "

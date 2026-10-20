@@ -5,8 +5,10 @@ from __future__ import annotations
 import io
 import json
 import os
+import queue
 import selectors
 import socket
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -15,12 +17,14 @@ import time
 import unittest
 import urllib.error
 import urllib.request
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
+from dataclasses import asdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from email.message import EmailMessage
 from enum import IntEnum
 from pathlib import Path
 from unittest import mock
+from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -89,6 +93,176 @@ class TestRuntime(unittest.TestCase):
             "PARAPHE_STORE_PATH": str(self.store_path),
         }
 
+    def _seed_store(self, terminal_count=1833, open_count=2):
+        _load_runtime()
+        from paraphe.inbox.card import Card
+        from paraphe.inbox.store import Store
+
+        store = Store(self.store_path)
+        store.open()
+        assert store._conn is not None
+        cards = [Card(
+            request_id=str(uuid4()), kind="approval", state="tapped" if i < terminal_count else "open",
+            notified=True, expires_at=time.time() + 3600, telegram_chat_id=999001,
+            telegram_message_id=i + 1, telegram_keyboard_attached=True,
+        ) for i in range(terminal_count + open_count)]
+        try:
+            with store._conn:
+                store._conn.executemany("INSERT INTO cards VALUES (?, ?)", [
+                    (card.request_id, json.dumps(asdict(card))) for card in cards
+                ])
+            store.save_telegram_next_offset(100)
+        finally:
+            store.close()
+        return cards
+
+    def _tap_update(self, card, update_id):
+        from paraphe.adapters.telegram import encode_callback_data
+
+        return {"update_id": update_id, "callback_query": {
+            "id": f"callback-{update_id}", "from": {"id": 999001},
+            "message": {"message_id": card.telegram_message_id,
+                        "chat": {"id": 999001, "type": "private"}},
+            "data": encode_callback_data(card.request_id, card.version, 0),
+        }}
+
+    def _stored_card(self, request_id):
+        with closing(sqlite3.connect(self.store_path)) as conn:
+            return json.loads(conn.execute(
+                "SELECT payload FROM cards WHERE request_id = ?", (request_id,)
+            ).fetchone()[0])
+
+    def test_many_terminal_cards_do_not_block_tap_during_reconcile(self):
+        module = _load_runtime()
+        cards = self._seed_store()
+        pending, release = threading.Event(), threading.Event()
+        observed = {101: threading.Event(), 102: threading.Event()}
+        updates = queue.Queue()
+        stripped = []
+        api = FakeTelegramAPI()
+
+        def edit(chat_id, message_id, reply_markup):
+            if message_id == 1:
+                pending.set()
+                self.assertTrue(release.wait(5))
+            stripped.append(message_id)
+
+        def poll(*, offset, timeout):
+            api.polls.append((offset, timeout))
+            if offset in observed:
+                observed[offset].set()
+            return updates.get(timeout=5)
+
+        api.edit_message_reply_markup = edit
+        api.get_updates = poll
+        with mock.patch.object(module, "TelegramBotAPI", return_value=api):
+            runtime = module.Runtime.start(self.environ)
+        worker = threading.Thread(target=runtime.run)
+        worker.start()
+        try:
+            self.assertTrue(pending.wait(2))
+            for update_id, card in zip((100, 101), cards[-2:]):
+                updates.put([self._tap_update(card, update_id)])
+                self.assertTrue(observed[update_id + 1].wait(2), "polling waited for historical cleanup")
+                self.assertFalse(release.is_set())
+                stored = self._stored_card(card.request_id)
+                self.assertEqual(stored["state"], "tapped")
+                self.assertEqual(stored["response_choice"], "Approve")
+                self.assertEqual(stored["responded_via"], "telegram")
+                self.assertFalse(stored["telegram_keyboard_attached"])
+                self.assertIn(card.telegram_message_id, stripped)
+                with closing(sqlite3.connect(self.store_path)) as conn:
+                    self.assertEqual(conn.execute(
+                        "SELECT value FROM durable_state WHERE key='telegram_next_offset'"
+                    ).fetchone()[0], str(update_id + 1))
+            self.assertEqual(len(cards) - 2, 1833)
+        finally:
+            runtime.stop()
+            updates.put([])
+            release.set()
+            worker.join(2)
+            runtime.close()
+        self.assertFalse(worker.is_alive())
+
+    def test_reconcile_worker_is_single_and_failure_does_not_stop_polling(self):
+        module = _load_runtime()
+        cards = self._seed_store(1)
+        api = FakeTelegramAPI()
+        output = io.StringIO()
+        with mock.patch.object(module, "TelegramBotAPI", return_value=api):
+            runtime = module.Runtime.start(self.environ)
+        self.addCleanup(runtime.close)
+        finished = threading.Event()
+
+        def failed(**kwargs):
+            finished.set()
+            raise RuntimeError("https://example.invalid/private-provider-text")
+
+        batches = iter(([self._tap_update(cards[-2], 100)], [self._tap_update(cards[-1], 101)]))
+
+        def poll(*, offset, timeout):
+            self.assertTrue(finished.wait(2))
+            runtime.stop()
+            return next(batches)
+
+        api.get_updates = poll
+        with redirect_stdout(output), mock.patch.object(runtime.inbox, "reconcile_notifications", side_effect=failed) as reconcile:
+            runtime.run()
+            runtime._reconcile_worker.join(2)
+            runtime._stopping.clear()
+            runtime.run()
+        self.assertEqual(reconcile.call_count, 1)
+        for card in cards[-2:]:
+            self.assertEqual(self._stored_card(card.request_id)["response_choice"], "Approve")
+        self.assertRegex(output.getvalue(), r"reconcile failed: RuntimeError elapsed=")
+        self.assertNotIn("private-provider-text", output.getvalue())
+
+    def test_stop_finishes_current_reconcile_action_before_store_close(self):
+        module = _load_runtime()
+        self._seed_store(2, 0)
+        api = FakeTelegramAPI()
+        pending, release, polled = threading.Event(), threading.Event(), threading.Event()
+        calls = []
+
+        def edit(chat_id, message_id, reply_markup):
+            calls.append(message_id)
+            pending.set()
+            self.assertTrue(release.wait(3))
+
+        def poll(*, offset, timeout):
+            polled.set()
+            runtime._stopping.wait(3)
+            return []
+
+        api.edit_message_reply_markup = edit
+        api.get_updates = poll
+        with mock.patch.object(module, "TelegramBotAPI", return_value=api):
+            runtime = module.Runtime.start(self.environ)
+        store = runtime.inbox._store
+        worker = threading.Thread(target=runtime.run)
+        assert store is not None
+        worker.start()
+        closer = threading.Thread(target=runtime.close)
+        try:
+            self.assertTrue(pending.wait(1))
+            self.assertTrue(polled.wait(1))
+            runtime.stop()  # Signal-handler path must not join the blocked action.
+            worker.join(1)
+            self.assertFalse(worker.is_alive())
+            closer.start()
+            self.assertIsNotNone(store._conn)
+        finally:
+            release.set()
+            worker.join(2)
+            if closer.ident is not None:
+                closer.join(2)
+            runtime.close()
+        self.assertFalse(closer.is_alive())
+        self.assertFalse(runtime._reconcile_worker.is_alive())
+        self.assertIsNone(store._conn)
+        self.assertEqual(calls, [1])
+        self.assertFalse(self._stored_card(next(iter(runtime.inbox._cards)))["telegram_keyboard_attached"])
+
     def test_start_uses_one_store_loopback_and_polls_telegram(self) -> None:
         runtime_module = _load_runtime()
         api = FakeTelegramAPI()
@@ -142,7 +316,12 @@ class TestRuntime(unittest.TestCase):
         caught.exception.close()
 
     def _start_lifecycle(self, runtime):
-        with mock.patch.object(runtime, "poll_once", side_effect=runtime.stop):
+        def ready():
+            runtime._reconcile_worker.join(2)
+            self.assertFalse(runtime._reconcile_worker.is_alive())
+            runtime.stop()
+
+        with mock.patch.object(runtime, "poll_once", side_effect=ready):
             runtime.run()
         runtime._stopping.clear()
 
@@ -151,6 +330,8 @@ class TestRuntime(unittest.TestCase):
 
         def once():
             try:
+                runtime._reconcile_worker.join(2)
+                self.assertFalse(runtime._reconcile_worker.is_alive())
                 original()
             finally:
                 runtime.stop()
@@ -334,6 +515,9 @@ class TestRuntime(unittest.TestCase):
                 release.wait(2)
                 return [{"update_id": 41}]
             assert runtime is not None
+            assert runtime._reconcile_worker is not None
+            runtime._reconcile_worker.join(2)
+            self.assertFalse(runtime._reconcile_worker.is_alive())
             runtime.stop()
             return [{"update_id": 42, "message": {
                 "from": {"id": 999001}, "chat": {"id": 999001, "type": "private"},
