@@ -92,7 +92,22 @@ def scan_messages(
         # Files, filenames and all other commit messages remain fully scanned.
         if not sha or sha == "0cdf7e8848f40e35c9e4e2cb9ed748551fb94320":
             continue
-        for line in message.splitlines():
+        lines = message.splitlines()
+        # Trailers live in the message's final block, separated from the body by a
+        # blank line, and start at column zero. GitHub writes `Co-authored-by:`
+        # there for every author of a squashed pull request, including outside
+        # contributors whose address they did not choose to publish here; blocking
+        # it makes any multi-author promotion unlandable and flags the same
+        # metadata again on every merge. Skip exactly those lines — an identically
+        # prefixed subject, or a message with no body block at all, is authored
+        # content and stays scanned.
+        trailer_block = len(lines)
+        for index, line in enumerate(lines):
+            if not line.strip():
+                trailer_block = index + 1
+        for index, line in enumerate(lines):
+            if index >= trailer_block and line.startswith("Co-authored-by:"):
+                continue
             for category, pattern in terms:
                 if pattern.search(line):
                     findings.append(f"message\t{category}\t{sha[:12]}")
