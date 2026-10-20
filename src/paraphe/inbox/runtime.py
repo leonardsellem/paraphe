@@ -101,7 +101,8 @@ class TelegramBotAPI:
                 raw = response.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
             try:
-                raw = exc.read().decode("utf-8")
+                with exc:
+                    raw = exc.read().decode("utf-8")
             except (OSError, ValueError):
                 raise TelegramAPIError("Telegram Bot API request failed") from None
         except (OSError, ValueError, urllib.error.URLError):
@@ -111,7 +112,19 @@ class TelegramBotAPI:
         except ValueError:
             raise TelegramAPIError("Telegram Bot API request failed") from None
         if isinstance(body, dict) and body.get("ok") is False:
-            raise NotifyRejected("Telegram Bot API rejected the request") from None
+            code = body.get("error_code")
+            description = body.get("description")
+            prefix = "bad request: message is not modified"
+            reason = None
+            if isinstance(description, str) and (
+                description.lower() == prefix or description.lower().startswith(prefix + ":")
+            ):
+                reason = "message_not_modified"
+            raise NotifyRejected(
+                "Telegram Bot API rejected the request",
+                code=code if type(code) is int else None,
+                reason=reason,
+            ) from None
         if not isinstance(body, dict) or body.get("ok") is not True:
             raise TelegramAPIError("Telegram Bot API request failed")
         return body.get("result")
@@ -151,7 +164,7 @@ class Runtime:
         self._stopping = threading.Event()
         self._closed = False
         self._offset_ready = False
-        self._reconciled = False
+        self._reconcile_worker: threading.Thread | None = None
 
     @classmethod
     def start(cls, environ: Mapping[str, str] | None = None) -> "Runtime":
@@ -287,27 +300,34 @@ class Runtime:
                 print(f"Telegram bootstrap completed elapsed={time.monotonic() - started:.3f}s", flush=True)
         if self._stopping.is_set():
             return
-        if not self._reconciled:
-            self._reconciled = True
-            with self.inbox._lock:
+        with self.inbox._lock:
+            if self._reconcile_worker is None and not self._stopping.is_set():
                 self.inbox._notifications_ready = True
-            started = time.monotonic()
-            print("Telegram reconcile started", flush=True)
-            try:
-                result = self.inbox.reconcile_notifications()
-            except Exception as exc:
-                print(
-                    f"Telegram reconcile failed: {type(exc).__name__} "
-                    f"elapsed={time.monotonic() - started:.3f}s", flush=True,
+                self._reconcile_worker = threading.Thread(
+                    target=self._reconcile_notifications, name="telegram-reconcile"
                 )
-            else:
-                state = "degraded" if result is False else "completed"
-                print(f"Telegram reconcile {state} elapsed={time.monotonic() - started:.3f}s", flush=True)
+                self._reconcile_worker.start()
         while not self._stopping.is_set():
             try:
                 self.poll_once()
             except (TelegramAPIError, NotifyRejected):
                 self._stopping.wait(1)
+
+    def _reconcile_notifications(self) -> None:
+        started = time.monotonic()
+        print("Telegram reconcile started", flush=True)
+        try:
+            result = self.inbox.reconcile_notifications(cancelled=self._stopping.is_set)
+        except Exception as exc:
+            print(
+                f"Telegram reconcile failed: {type(exc).__name__} "
+                f"elapsed={time.monotonic() - started:.3f}s", flush=True,
+            )
+        else:
+            state = "degraded" if result is False else "completed"
+            if self._stopping.is_set():
+                state = "stopped"
+            print(f"Telegram reconcile {state} elapsed={time.monotonic() - started:.3f}s", flush=True)
 
     def stop(self) -> None:
         self._stopping.set()
@@ -320,6 +340,10 @@ class Runtime:
         try:
             self.server.close()
         finally:
+            with self.inbox._lock:
+                worker = self._reconcile_worker
+            if worker is not None:
+                worker.join()
             self.inbox.close()
 
 

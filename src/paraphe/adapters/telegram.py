@@ -7,6 +7,8 @@ from html import escape as _html_escape
 from typing import Any
 from uuid import UUID
 
+from ..inbox import NotifyRejected
+
 EMPTY_KEYBOARD = {"inline_keyboard": []}
 
 # The card renderer composes the message text from the card payload in a
@@ -345,7 +347,9 @@ class TelegramAdapter:
             try:
                 self.strip_message(chat_id, message_id)
             except Exception:
-                pass
+                self._inbox._record_terminal_keyboard_retry(
+                    created["request_id"], version=version, chat_id=chat_id, message_id=message_id
+                )
             raise
 
     def edit_and_strip(self, card_id: str, version: int) -> None:
@@ -357,7 +361,11 @@ class TelegramAdapter:
         self.strip_message(chat_id, message_id)
 
     def strip_message(self, chat_id: int, message_id: int) -> None:
-        self._api.edit_message_reply_markup(chat_id, message_id, EMPTY_KEYBOARD)
+        try:
+            self._api.edit_message_reply_markup(chat_id, message_id, EMPTY_KEYBOARD)
+        except NotifyRejected as exc:
+            if exc.code != 400 or exc.reason != "message_not_modified":
+                raise
 
     def strip_stale_message(self, card_id: str, chat_id: int, message_id: int) -> None:
         current = self._messages.get(card_id)
