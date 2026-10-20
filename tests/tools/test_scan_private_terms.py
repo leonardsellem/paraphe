@@ -128,6 +128,19 @@ class TestCommitsMode(ScanToolCase):
         sha = _git(self.repo, "rev-parse", "--short=12", "HEAD").strip()
         self.assertIn(sha, result.stderr)
 
+    def test_a_co_author_trailer_is_metadata_not_content(self) -> None:
+        self._commit(
+            f"the subject is clean\n\nbody line\n\nCo-authored-by: Someone <{VALUE}@example.test>"
+        )
+        trailer_only = self._run("--commits", "HEAD")
+        self.assertEqual(trailer_only.returncode, 0, trailer_only.stderr)
+        self.assertIn("clean", trailer_only.stdout)
+
+        self._commit(f"the trailer is skipped but the body is not: {VALUE}")
+        still_fires = self._run("--commits", "HEAD^..HEAD")
+        self.assertEqual(still_fires.returncode, 1)
+        self.assertIn("message", still_fires.stderr)
+
     def test_the_range_limits_the_scan(self) -> None:
         self._commit(f"the older subject carries {VALUE}")
         self._commit("the newer subject")

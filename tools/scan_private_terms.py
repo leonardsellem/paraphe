@@ -93,6 +93,14 @@ def scan_messages(
         if not sha or sha == "0cdf7e8848f40e35c9e4e2cb9ed748551fb94320":
             continue
         for line in message.splitlines():
+            # GitHub writes a `Co-authored-by:` trailer for every author of a
+            # squashed pull request, including outside contributors whose address
+            # the contributor did not choose to publish here. Blocking those lines
+            # makes any multi-author promotion unlandable while flagging the same
+            # metadata on every rebase of it. They are generated metadata, not
+            # authored content: skip the trailer line, keep scanning the rest.
+            if line.lstrip().lower().startswith("co-authored-by:"):
+                continue
             for category, pattern in terms:
                 if pattern.search(line):
                     findings.append(f"message\t{category}\t{sha[:12]}")
