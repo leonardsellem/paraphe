@@ -38,6 +38,24 @@ jobs:
         run: |
           /tmp/paraphe-ci/bin/paraphe > /tmp/usage.txt
           grep -q "Paraphe" /tmp/usage.txt
+      - name: the optional Hermes entry point loads without Hermes
+        run: |
+          /tmp/paraphe-ci/bin/python - <<'PY'
+          import importlib.metadata, importlib.util, pathlib, sys
+          assert importlib.util.find_spec("hermes_cli") is None
+          import paraphe.__main__, paraphe.cli, paraphe.inbox.runtime
+          assert "paraphe.integrations.hermes" not in sys.modules
+          dist = importlib.metadata.distribution("paraphe")
+          assert not dist.requires
+          entries = [ep for ep in dist.entry_points if ep.group == "hermes_agent.plugins"]
+          assert [(ep.name, ep.value) for ep in entries] == [
+              ("paraphe-approval-transport", "paraphe.integrations.hermes")
+          ]
+          plugin = entries[0].load()
+          assert callable(plugin.register) and plugin._CTX is None
+          manifest = pathlib.Path(plugin.__file__).with_name("plugin.yaml")
+          assert manifest.is_file()
+          PY
       - name: exactly one top-level package, and it is ours
         run: |
           tops=$(/tmp/paraphe-ci/bin/python - <<'PY'

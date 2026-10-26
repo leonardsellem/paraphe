@@ -122,6 +122,7 @@ inbox, so this is not configurable.
 |---|---|
 | [`docs/tools.md`](docs/tools.md) | the MCP tool surface and the card lifecycle |
 | [`docs/adapters.md`](docs/adapters.md) | adding a destination, in two methods |
+| [`docs/integrations/hermes.md`](docs/integrations/hermes.md) | optional Hermes approval transport, installation and bounded diagnostics |
 | [`skills/paraphe-return-path/SKILL.md`](skills/paraphe-return-path/SKILL.md) | the async return protocol, per runtime |
 | [`skills/paraphe-owner-decision-writing/SKILL.md`](skills/paraphe-owner-decision-writing/SKILL.md) | writing a card the owner can answer at a glance |
 | [`GLOSSARY.md`](GLOSSARY.md) | what the words mean (card, tap, return path, owner) |
