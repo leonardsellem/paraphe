@@ -1,0 +1,10 @@
+name: paraphe-approval-transport
+version: 0.4.3
+kind: standalone
+description: >-
+  Forward host approval requests to the configured Paraphe MCP server.
+  Explicit Approve grants once; explicit Deny denies. Technical faults and
+  timeouts fail closed. Two atomic latest-only diagnostic files, capped at
+  2048 UTF-8 bytes each, leave legacy state untouched.
+provides_hooks:
+  - post_approval_response

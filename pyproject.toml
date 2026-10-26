@@ -28,8 +28,11 @@ classifiers = [
 [project.scripts]
 paraphe = "paraphe.__main__:main"
 
+[project.entry-points."hermes_agent.plugins"]
+paraphe-approval-transport = "paraphe.integrations.hermes"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/paraphe"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/paraphe", "LICENSE", "README.md", "config.example.toml"]
+include = ["src/paraphe", "LICENSE", "README.md", "config.example.toml", "docs/integrations/hermes.md"]
