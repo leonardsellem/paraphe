@@ -1,5 +1,5 @@
 name: paraphe-approval-transport
-version: 0.4.3
+version: 0.4.4
 kind: standalone
 description: >-
   Forward host approval requests to the configured Paraphe MCP server.

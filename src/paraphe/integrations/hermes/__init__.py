@@ -40,6 +40,9 @@ SERVER = "paraphe"
 TITLE_CAP = 200
 DETAILS_CAP = 2000  # Paraphe details cap
 POLL_S = 3.0
+# One second per closeout call: two calls stay the whole 2 s budget, inside the
+# host's 1-600 s clamp (a smaller value would silently become 1 s).
+CLOSE_TIMEOUT_S = 1.0
 COMMAND_HEAD_CAP = 200  # the trace row keeps the command's first line only
 # Match whole words; carry the severity explicitly named by the host guard.
 HIGH_RISK_WORDS = frozenset(("rm", "delete", "force", "reset", "prod", "drop", "shred", "truncate"))
@@ -170,6 +173,29 @@ def _call_mcp(request: Any, ctx: Any, tool: str, arguments: dict) -> dict:
         category = _exception_type(exc)
         return _fail(request, f"mcp_error:{category}", phase=tool,
                      code=code, exception_type=category)
+
+
+def _close_card(ctx: Any, request_id: str, outcome: str) -> None:
+    """Book the owner's answer on the card; one call per try, one warning per failure.
+
+    Runs after the host already holds the decision: never raises, never retries and
+    never lets a failed ``report_execution`` skip ``mark_processed``.
+    """
+    for tool, arguments in (("report_execution", {"request_id": request_id, "outcome": outcome}),
+                            ("mark_processed", {"request_id": request_id})):
+        try:
+            _payload(ctx.call_mcp(SERVER, tool, arguments, timeout=CLOSE_TIMEOUT_S))
+        except Exception as exc:  # noqa: BLE001 — the decision is out of our hands already
+            logger.warning("paraphe approval transport: closeout %s failed (%s)",
+                           tool, _exception_type(exc))
+
+
+def _spawn_closeout(ctx: Any, request_id: str, outcome: str) -> None:
+    """Keep the close off the decision path; a thread that cannot start never costs it."""
+    try:
+        threading.Thread(target=_close_card, args=(ctx, request_id, outcome), daemon=True).start()
+    except Exception as exc:  # noqa: BLE001 — e.g. RuntimeError: can't start new thread
+        logger.warning("paraphe approval transport: closeout not started (%s)", _exception_type(exc))
 
 
 def _marker_high(text: str) -> bool:
@@ -387,14 +413,14 @@ def _present(request: Any, *, ctx: Any, sleep: Callable[[float], None],
             if not isinstance(response, dict):
                 return _fail(request, "invalid_response")
             choice = response.get("choice")
-            if choice == "Approve":
-                LAST["failure"] = None
-                _persist("present", "owner_approve")
-                return request.respond("once")
-            if choice == "Deny":
-                LAST["failure"] = "owner_deny"
-                _persist("present", "owner_deny")
-                return request.respond("deny")
+            if choice in ("Approve", "Deny"):
+                approve = choice == "Approve"
+                LAST["failure"] = None if approve else "owner_deny"
+                _persist("present", "owner_approve" if approve else "owner_deny")
+                decision = request.respond("once" if approve else "deny")
+                # The host has the decision now; the card close is bookkeeping.
+                _spawn_closeout(ctx, request_id, "accepted" if approve else "rejected")
+                return decision
             return _fail(request, "invalid_response")
         if clock() >= deadline:
             try:

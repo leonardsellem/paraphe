@@ -1,7 +1,7 @@
 # Hermes approval transport
 
 Paraphe ships an optional Hermes plugin, `paraphe-approval-transport`, in
-`paraphe.integrations.hermes`. The plugin component is version 0.4.3; this is
+`paraphe.integrations.hermes`. The plugin component is version 0.4.4; this is
 independent of the Paraphe distribution version. Installing Paraphe does not
 enable the plugin, select a transport, add dependencies, or contact a service.
 The ordinary Paraphe CLI and server do not import Hermes or activate the plugin.
@@ -62,7 +62,7 @@ same-name standalone directory copy can shadow the pip entry point, even when
 Paraphe has been upgraded. `hermes plugins list` and `hermes plugins doctor`
 should identify the source actually loaded; the registration diagnostic also
 fingerprints its module bytes. Directory manifests report component version
-0.4.3; entry-point discovery reports the distribution version from package
+0.4.4; entry-point discovery reports the distribution version from package
 metadata, not that component version.
 
 Choose one source deliberately. Review and back up an existing standalone copy
@@ -99,6 +99,12 @@ an owner denial. A timeout attempts `cancel_request` with `resolved_elsewhere`,
 then raises even if cancellation fails. Card expiry stays within Paraphe's API
 bounds; it does not extend the host's decision deadline. Calls are not retried
 on technical failure; pending cards are polled every three seconds.
+
+An explicit owner answer also closes its card off the decision path: the host
+receives the decision first, then a daemon thread calls `report_execution`
+(`accepted` or `rejected`) and `mark_processed`, one second each, so the card
+leaves `list_unprocessed` without ever delaying or blocking the answer. A failed
+close logs one warning and changes neither the decision nor the other call.
 
 Cards retain the existing French copy, command, origin and best-effort read-only
 Git context. Commands longer than 2000 characters are refused before creation.

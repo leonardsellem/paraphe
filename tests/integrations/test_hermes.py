@@ -15,6 +15,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from types import ModuleType, SimpleNamespace
 import unittest
 from unittest import mock
@@ -28,6 +29,7 @@ from paraphe.integrations import hermes as plugin
 
 CARD_ID = "12345678-1234-1234-1234-123456789abc"
 SNAPSHOTS = {"transport-registration-latest.json", "transport-attempt-latest.json"}
+REAL_SPAWN = plugin._spawn_closeout  # the async seam; most tests run the close inline
 
 
 def fake_atomic_json_write(path, row, *, indent, ensure_ascii, mode, fsync_dir):
@@ -64,6 +66,7 @@ class FakeUnitContext:
         self.choice = choice
         self.replies = replies or {}
         self.calls = []
+        self.timeouts = []
         self.hooks = {}
 
     def register_approval_transport(self, name, callback):
@@ -73,9 +76,10 @@ class FakeUnitContext:
     def register_hook(self, name, callback):
         self.hooks[name] = callback
 
-    def call_mcp(self, server, tool, arguments):
+    def call_mcp(self, server, tool, arguments, timeout=None):
         assert server == "paraphe"
         self.calls.append((tool, arguments))
+        self.timeouts.append(timeout)
         if tool in self.replies:
             reply = self.replies[tool]
             if isinstance(reply, Exception):
@@ -107,6 +111,9 @@ class TestHermesTransport(unittest.TestCase):
         self._patch(mock.patch.object(plugin, "_work_context", return_value={}))
         self._patch(mock.patch.object(plugin, "_origin", return_value="example session"))
         self._patch(mock.patch.object(plugin, "_CTX", None))
+        # Inline by default: the close is a side effect, not the thing under test here.
+        self.spawn = self._patch(mock.patch.object(
+            plugin, "_spawn_closeout", side_effect=plugin._close_card))
         old = dict(plugin._WARNING_STATE)
         self.addCleanup(lambda: plugin._WARNING_STATE.update(old))
         plugin._WARNING_STATE.update(lock=threading.Lock(), pid=None)
@@ -143,8 +150,96 @@ class TestHermesTransport(unittest.TestCase):
                 self.assertEqual(ctx.present(req), answer)
                 self.assertEqual(req.answers, [answer])
                 self.assertEqual(self.row()["code"], code)
-                self.assertEqual([name for name, _ in ctx.calls], ["request_approval", "get_response"])
+                # The closeout calls follow the decision, never precede it.
+                self.assertEqual([name for name, _ in ctx.calls],
+                                 ["request_approval", "get_response", "report_execution", "mark_processed"])
                 self.assertEqual(ctx.calls[1][1], {"request_id": CARD_ID})
+
+    def test_approve_reports_accepted_then_marks_processed(self):
+        ctx = self.context()
+        self.assertEqual(ctx.present(request()), "once")
+        self.assertEqual(ctx.calls[2:], [("report_execution", {"request_id": CARD_ID, "outcome": "accepted"}),
+                                        ("mark_processed", {"request_id": CARD_ID})])
+        self.assertEqual(ctx.timeouts[2:], [1.0, 1.0])
+
+    def test_deny_reports_rejected_then_marks_processed(self):
+        ctx = self.context(choice="Deny")
+        self.assertEqual(ctx.present(request()), "deny")
+        self.assertEqual(ctx.calls[2:], [("report_execution", {"request_id": CARD_ID, "outcome": "rejected"}),
+                                        ("mark_processed", {"request_id": CARD_ID})])
+
+    def test_closeout_failure_keeps_the_owner_decision(self):
+        for reply in (ConnectionError("sensitive-example-marker"), {"ok": False, "error": "sensitive-example-marker"}):
+            with self.subTest(failure=type(reply).__name__):
+                ctx = self.context(replies={"report_execution": reply})
+                req = request()
+                with self.assertLogs(plugin.logger, "WARNING") as logs:
+                    self.assertEqual(ctx.present(req), "once")
+                self.assertEqual(req.answers, ["once"])
+                self.assertIn("report_execution", logs.output[0])
+                self.assertNotIn("sensitive-example-marker", "".join(logs.output))
+        # A closeout thread that cannot start is a closeout failure too.
+        self.spawn.side_effect = REAL_SPAWN
+        ctx = self.context()
+        with mock.patch.object(plugin.threading, "Thread", side_effect=RuntimeError("can't start new thread")), \
+                self.assertLogs(plugin.logger, "WARNING") as logs:
+            self.assertEqual(ctx.present(request()), "once")
+        self.assertIn("closeout not started", logs.output[0])
+
+    def test_failed_report_still_marks_processed(self):
+        for reply in (ConnectionError("sensitive-example-marker"), {"ok": False, "error": "sensitive-example-marker"},
+                      {"ok": True, "result": "not-json-sensitive-example-marker"}):
+            with self.subTest(failure=type(reply).__name__), self.assertLogs(plugin.logger, "WARNING"):
+                ctx = self.context(replies={"report_execution": reply})
+                self.assertEqual(ctx.present(request()), "once")
+                self.assertEqual(ctx.calls[-2:], [("report_execution", {"request_id": CARD_ID, "outcome": "accepted"}),
+                                                  ("mark_processed", {"request_id": CARD_ID})])
+
+    def test_decision_returns_before_closeout_completes(self):
+        self.spawn.side_effect = REAL_SPAWN
+        entered, release = threading.Event(), threading.Event()
+        ctx = self.context()
+        def call_mcp(server, tool, arguments, timeout=None):
+            ctx.calls.append((tool, arguments))
+            ctx.timeouts.append(timeout)
+            if tool == "report_execution":
+                entered.set()
+                self.assertTrue(release.wait(5))
+            result = ({"status": "answered", "pending": False, "response": {"choice": "Approve"}}
+                      if tool == "get_response" else {"request_id": CARD_ID})
+            return {"ok": True, "result": result}
+        ctx.call_mcp = call_mcp
+        seen = []
+        req = request()
+        answer = req.respond
+        req.respond = lambda choice: seen.append([name for name, _ in ctx.calls]) or answer(choice)
+        try:
+            self.assertEqual(ctx.present(req), "once")
+            self.assertEqual(seen, [["request_approval", "get_response"]])
+            self.assertTrue(entered.wait(5))
+            self.assertEqual([name for name, _ in ctx.calls][-1], "report_execution")
+        finally:
+            release.set()
+        deadline = time.monotonic() + 5
+        while "mark_processed" not in [name for name, _ in ctx.calls] and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertEqual([name for name, _ in ctx.calls][-2:], ["report_execution", "mark_processed"])
+
+    def test_timeout_cancel_expiry_and_invalid_never_close(self):
+        cases = (({"get_response": {"ok": True, "result": {"status": "cancelled"}}}, "card_cancelled"),
+                 ({"get_response": {"ok": True, "result": {"status": "expired"}}}, "card_expired"),
+                 ({"get_response": {"ok": True, "result": {"pending": False, "response": {"choice": "Always"}}}},
+                  "invalid_response"),
+                 ({"get_response": {"ok": True, "result": {"pending": True}}}, "timeout"))
+        for replies, error in cases:
+            with self.subTest(error=error), self.assertLogs(plugin.logger, "WARNING"):
+                ctx = self.context(replies=replies)
+                with self.assertRaisesRegex(RuntimeError, f"^{error}$"):
+                    if error == "timeout":
+                        ctx.present(request(), clock=iter((0, 31)).__next__, sleep=lambda _: None)
+                    else:
+                        ctx.present(request())
+                self.assertEqual([name for name, _ in ctx.calls if name in ("report_execution", "mark_processed")], [])
 
     def test_invalid_owner_answers_fail_without_responding(self):
         for response in (None, "Approve", {}, {"choice": "approve"}, {"choice": "Always"}, {"text": "Approve"}):
@@ -227,7 +322,7 @@ class TestHermesTransport(unittest.TestCase):
                 req = request()
                 req.timeout_seconds = timeout
                 self.assertEqual(ctx.present(req), "once")
-                card = ctx.calls[-2][1]
+                card = [arguments for name, arguments in ctx.calls if name == "request_approval"][-1]
                 self.assertEqual(card["expires_in_seconds"], expiry)
                 self.assertEqual(req.timeout_seconds, timeout)
                 self.assertEqual(card["external_id"], f"hermes-approval-{req.digest[:24]}")
