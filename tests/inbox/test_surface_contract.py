@@ -98,6 +98,28 @@ class TestPublishedContracts(unittest.TestCase):
         for tool in ("ask_question", "request_approval", "request_feedback", "update_request"):
             self.assertIn("runtime/repo/worktree/ticket", descriptors[tool])
 
+    def test_create_and_read_tools_name_the_background_waiter(self) -> None:
+        # LS-3580: a session that asks and ends its turn must be told the
+        # tracked waiter exists; wait_seconds is a bounded read on this call,
+        # never the return path after the turn.
+        descriptors = {
+            item["name"]: item["description"]
+            for item in self._inbox().list_tool_descriptors()
+        }
+        for tool in ("ask_question", "request_approval", "get_response"):
+            text = descriptors[tool]
+            for fragment in (
+                "paraphe wait <request_id>",
+                "terminal(background=true, notify=true)",
+                "covers only this call",
+                "a 60 s read is not a return path",
+            ):
+                self.assertIn(fragment, text, f"{tool} must name {fragment!r}")
+        for tool in ("ask_question", "request_approval"):
+            self.assertNotIn(
+                "to let the call park until the answer arrives", descriptors[tool]
+            )
+
     def test_the_served_text_teaches_the_card_writing_contract(self) -> None:
         # Owner correction 2026-09-24: every card carries its origin and its
         # purpose first, and plain tap semantics. Owner correction 2026-10-02:
