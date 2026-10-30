@@ -99,7 +99,7 @@ class TestPublishedContracts(unittest.TestCase):
             self.assertIn("runtime/repo/worktree/ticket", descriptors[tool])
 
     def test_create_and_read_tools_name_the_background_waiter(self) -> None:
-        # LS-3580: a session that asks and ends its turn must be told the
+        # A session that asks and ends its turn must be told the
         # tracked waiter exists; wait_seconds is a bounded read on this call,
         # never the return path after the turn.
         descriptors = {
