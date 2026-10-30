@@ -238,8 +238,11 @@ TOOL_DESCRIPTIONS = {
         "exists before the action detail — with the origin stated and the "
         "tap semantics plain: what the answer authorises and what it does "
         "not (consequence, prohibitions). Record the returned request_id; "
-        "read the answer with get_response, or pass wait_seconds (0-60) to "
-        "let the call park until the answer arrives. Pass "
+        "if the answer may come after your turn ends, start "
+        "`paraphe wait <request_id>` with terminal(background=true, "
+        "notify=true) before ending it; get_response reads it, and "
+        "wait_seconds (0-60) covers only this call: a 60 s read is not a "
+        "return path. Pass "
         "runtime/repo/worktree/ticket (optional) so the card shows where "
         "the ask comes from. " + CARD_COPY_RULE
     ),
@@ -247,9 +250,12 @@ TOOL_DESCRIPTIONS = {
         "Ask the owner to approve. Compose it purpose first — why the "
         "approval is needed before the action detail — and spell the tap "
         "semantics: what Approve authorises (consequence) and what it does "
-        "not (prohibitions). Record the returned request_id; read the "
-        "answer with get_response, or pass wait_seconds (0-60) to let the "
-        "call park until the answer arrives. Pass runtime/repo/worktree/ticket "
+        "not (prohibitions). Record the returned request_id; "
+        "if the answer may come after your turn ends, start "
+        "`paraphe wait <request_id>` with terminal(background=true, "
+        "notify=true) before ending it; get_response reads it, and "
+        "wait_seconds (0-60) covers only this call: a 60 s read is not a "
+        "return path. Pass runtime/repo/worktree/ticket "
         "(optional) so the card shows where the ask comes from. " + CARD_COPY_RULE
     ),
     "get_response": (
@@ -257,7 +263,10 @@ TOOL_DESCRIPTIONS = {
         "Returns external_id, version, choices and expires_at for decision validation. "
         "The answer is nested at response.choice and is not "
         "consumed. wait_seconds (0-60) parks the call until the card is "
-        "answered or the window ends. An owner reply arrives as response.text "
+        "answered or the window ends. wait_seconds covers only this call: a "
+        "60 s read is not a return path; an answer after your turn ends needs "
+        "`paraphe wait <request_id>` started with terminal(background=true, "
+        "notify=true) before ending it. An owner reply arrives as response.text "
         "with responded_via telegram-reply. Drain the answers that are yours "
         "when you next run."
     ),
