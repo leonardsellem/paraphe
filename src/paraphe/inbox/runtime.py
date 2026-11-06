@@ -23,6 +23,7 @@ DEFAULT_MCP_HOST = "127.0.0.1"
 DEFAULT_MCP_PORT = 8787
 DEFAULT_POLL_SECONDS = 25
 TELEGRAM_REQUEST_TIMEOUT_SECONDS = 15
+NAVIGATOR_TICK_SECONDS = 1
 
 
 class TelegramAPIError(Exception):
@@ -84,6 +85,45 @@ class TelegramBotAPI:
     def answer_callback_query(self, callback_id: str) -> None:
         self._call("answerCallbackQuery", {"callback_query_id": callback_id})
 
+    def edit_message_text(
+        self,
+        chat_id: int,
+        message_id: int,
+        text: str,
+        reply_markup: dict[str, Any] | None,
+        parse_mode: str | None = "HTML",
+    ) -> None:
+        payload: dict[str, Any] = {
+            "chat_id": chat_id,
+            "message_id": message_id,
+            "text": text,
+        }
+        if parse_mode is not None:
+            payload["parse_mode"] = parse_mode
+        if reply_markup is not None:
+            payload["reply_markup"] = reply_markup
+        self._call("editMessageText", payload)
+
+    def pin_chat_message(self, chat_id: int, message_id: int) -> None:
+        self._call(
+            "pinChatMessage",
+            {"chat_id": chat_id, "message_id": message_id, "disable_notification": True},
+        )
+
+    def unpin_chat_message(self, chat_id: int, message_id: int) -> None:
+        self._call("unpinChatMessage", {"chat_id": chat_id, "message_id": message_id})
+
+    def get_my_commands(self, scope: dict[str, Any]) -> list[dict[str, Any]]:
+        result = self._call("getMyCommands", {"scope": scope})
+        if not isinstance(result, list):
+            raise TelegramAPIError("Telegram returned an invalid command list")
+        return [item for item in result if isinstance(item, dict)]
+
+    def set_my_commands(
+        self, commands: list[dict[str, Any]], scope: dict[str, Any]
+    ) -> None:
+        self._call("setMyCommands", {"commands": commands, "scope": scope})
+
     def _call(self, method: str, payload: dict[str, Any]) -> Any:
         request = urllib.request.Request(
             self._url + method,
@@ -120,10 +160,17 @@ class TelegramBotAPI:
                 description.lower() == prefix or description.lower().startswith(prefix + ":")
             ):
                 reason = "message_not_modified"
+            retry_after = None
+            parameters = body.get("parameters")
+            if isinstance(parameters, dict):
+                wait = parameters.get("retry_after")
+                if type(wait) is int and wait >= 0:
+                    retry_after = wait
             raise NotifyRejected(
                 "Telegram Bot API rejected the request",
                 code=code if type(code) is int else None,
                 reason=reason,
+                retry_after=retry_after,
             ) from None
         if not isinstance(body, dict) or body.get("ok") is not True:
             raise TelegramAPIError("Telegram Bot API request failed")
@@ -165,6 +212,7 @@ class Runtime:
         self._closed = False
         self._offset_ready = False
         self._reconcile_worker: threading.Thread | None = None
+        self._navigator_worker: threading.Thread | None = None
 
     @classmethod
     def start(cls, environ: Mapping[str, str] | None = None) -> "Runtime":
@@ -274,6 +322,8 @@ class Runtime:
         updates = self.api.get_updates(
             offset=self.next_update_id, timeout=self.poll_seconds
         )
+        if not self.telegram.commands_registered:
+            self.telegram.retry_register_commands(time.time())
         for update in updates:
             update_id = self._require_update_id(update)
             self.telegram.handle_update(update)
@@ -307,6 +357,12 @@ class Runtime:
                     target=self._reconcile_notifications, name="telegram-reconcile"
                 )
                 self._reconcile_worker.start()
+            if self._navigator_worker is None and not self._stopping.is_set():
+                self._navigator_worker = threading.Thread(
+                    target=self._navigator_refresh, name="telegram-navigator"
+                )
+                self._navigator_worker.start()
+        self.telegram.register_commands()
         while not self._stopping.is_set():
             try:
                 self.poll_once()
@@ -329,6 +385,15 @@ class Runtime:
                 state = "stopped"
             print(f"Telegram reconcile {state} elapsed={time.monotonic() - started:.3f}s", flush=True)
 
+    def _navigator_refresh(self) -> None:
+        while not self._stopping.wait(NAVIGATOR_TICK_SECONDS):
+            try:
+                self.telegram.refresh_navigator(time.time())
+            except Exception as exc:
+                print(
+                    f"Telegram navigator refresh failed: {type(exc).__name__}", flush=True
+                )
+
     def stop(self) -> None:
         self._stopping.set()
 
@@ -342,8 +407,11 @@ class Runtime:
         finally:
             with self.inbox._lock:
                 worker = self._reconcile_worker
+                navigator = self._navigator_worker
             if worker is not None:
                 worker.join()
+            if navigator is not None:
+                navigator.join()
             self.inbox.close()
 
 

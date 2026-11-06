@@ -1450,5 +1450,105 @@ class TestTelegramPort(unittest.TestCase):
         self.assertEqual(len(self.api.messages), 1)
 
 
+    def test_rate_limit_rejection_carries_retry_after(self) -> None:
+        api = TelegramBotAPI(TOKEN)
+        body = {
+            "ok": False,
+            "error_code": 429,
+            "description": "Too Many Requests: retry after 7",
+            "parameters": {"retry_after": 7},
+        }
+        response = mock.MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps(body).encode()
+        with mock.patch("urllib.request.urlopen", return_value=response):
+            with self.assertRaises(NotifyRejected) as caught:
+                api.edit_message_text(OWNER, 4, "hi", None)
+        self.assertEqual(caught.exception.code, 429)
+        self.assertEqual(caught.exception.retry_after, 7)
+        self.assertIsNone(caught.exception.reason)
+        for bad in ({"retry_after": "7"}, {"retry_after": True}, {"retry_after": -1}):
+            with self.subTest(parameters=bad):
+                body["parameters"] = bad
+                response = mock.MagicMock()
+                response.__enter__.return_value.read.return_value = json.dumps(body).encode()
+                with mock.patch("urllib.request.urlopen", return_value=response):
+                    with self.assertRaises(NotifyRejected) as caught:
+                        api.edit_message_text(OWNER, 4, "hi", None)
+                self.assertIsNone(caught.exception.retry_after)
+
+    def test_new_methods_post_exact_payloads(self) -> None:
+        api = TelegramBotAPI(TOKEN)
+        scope = {"type": "chat", "chat_id": OWNER}
+        commands = [{"command": "pending", "description": "Cards waiting for your answer"}]
+        posts: list[tuple[str, dict]] = []
+
+        def urlopen(request: Any, timeout: float) -> Any:
+            method = request.full_url.rsplit("/", 1)[-1]
+            posts.append((method, json.loads(request.data.decode())))
+            result: Any = (
+                [{"command": "config", "description": "ttl and owner knobs only"}]
+                if method == "getMyCommands" else True
+            )
+            response = mock.MagicMock()
+            response.__enter__.return_value.read.return_value = json.dumps(
+                {"ok": True, "result": result}
+            ).encode()
+            return response
+
+        with mock.patch("urllib.request.urlopen", side_effect=urlopen):
+            api.edit_message_text(OWNER, 4, "hi", {"inline_keyboard": []})
+            api.pin_chat_message(OWNER, 4)
+            api.unpin_chat_message(OWNER, 4)
+            self.assertEqual(
+                api.get_my_commands(scope),
+                [{"command": "config", "description": "ttl and owner knobs only"}],
+            )
+            api.set_my_commands(commands, scope)
+
+        self.assertEqual(
+            posts,
+            [
+                (
+                    "editMessageText",
+                    {
+                        "chat_id": OWNER,
+                        "message_id": 4,
+                        "text": "hi",
+                        "parse_mode": "HTML",
+                        "reply_markup": {"inline_keyboard": []},
+                    },
+                ),
+                (
+                    "pinChatMessage",
+                    {"chat_id": OWNER, "message_id": 4, "disable_notification": True},
+                ),
+                ("unpinChatMessage", {"chat_id": OWNER, "message_id": 4}),
+                ("getMyCommands", {"scope": scope}),
+                ("setMyCommands", {"commands": commands, "scope": scope}),
+            ],
+        )
+
+    def test_new_methods_never_expose_the_token_bearing_url(self) -> None:
+        api = TelegramBotAPI(TOKEN)
+        scope = {"type": "chat", "chat_id": OWNER}
+        calls = (
+            lambda: api.edit_message_text(OWNER, 4, "hi", None),
+            lambda: api.pin_chat_message(OWNER, 4),
+            lambda: api.unpin_chat_message(OWNER, 4),
+            lambda: api.get_my_commands(scope),
+            lambda: api.set_my_commands([], scope),
+        )
+        for call in calls:
+            with self.subTest(call=call):
+                leak = "https://api.telegram.org/bot" + TOKEN + "/private-provider-text"
+                with mock.patch(
+                    "urllib.request.urlopen", side_effect=urllib.error.URLError(leak)
+                ):
+                    with self.assertRaises(TelegramAPIError) as caught:
+                        call()
+                self.assertNotIn(TOKEN, str(caught.exception))
+                self.assertNotIn("private-provider-text", str(caught.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

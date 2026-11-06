@@ -17,8 +17,12 @@ The card `version` (or equivalent nonce) bound into Telegram `callback_data`. A 
 _Avoid_: card id + action as the only callback payload
 
 **Tap**:
-The owner's answer on the inbox surface. Silence is not a tap. A tap is not an instruction to skip revalidation.
+The owner's answer on the inbox surface. Silence is not a tap. A tap is not an instruction to skip revalidation. A tap includes the owner's reply to a card-bound Write answer prompt: that reply answers the card the prompt named, at the revision it named, and records nothing once that revision has moved or closed.
 _Avoid_: chat reply as the decision, bouncing to a web console for the same yes
+
+**Pending list**:
+The navigator the owner opens with `/pending`: one pinned message in the private chat that lists every still-open card oldest first, opens a card's own rendering in that same message, and answers it. It is a view over the inbox — never a second store, a second answer path or a second notification.
+_Avoid_: a second inbox, a web console for the same list, a topic per list, an answered or history browser, a bulk answer
 
 **Inbox**:
 The store and surface that holds cards. Secondary to the authoritative conversation and repository. Never the source of truth. The store is a SQLite file under the configured data location, owned by a dedicated service user, and copied off-box by the daily backup after a consistent snapshot.

@@ -290,3 +290,20 @@ class Store:
             ("telegram_next_offset", str(offset)),
         )
         self._conn.commit()
+
+    def load_state(self, key: str) -> str | None:
+        if self._conn is None:
+            raise RuntimeError("store is not open")
+        row = self._conn.execute(
+            "SELECT value FROM durable_state WHERE key = ?", (key,)
+        ).fetchone()
+        return None if row is None else str(row[0])
+
+    def save_state(self, key: str, value: str) -> None:
+        if self._conn is None:
+            raise RuntimeError("store is not open")
+        self._conn.execute(
+            "INSERT OR REPLACE INTO durable_state (key, value) VALUES (?, ?)",
+            (key, value),
+        )
+        self._conn.commit()
