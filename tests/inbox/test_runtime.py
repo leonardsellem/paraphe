@@ -50,6 +50,14 @@ class FakeTelegramAPI:
     def __init__(self) -> None:
         self.polls: list[tuple[int, int]] = []
         self.messages: list[dict] = []
+        self.edited: list[dict] = []
+        self.pins: list[tuple[int, int]] = []
+        self.unpins: list[tuple[int, int]] = []
+        self.commands: list[dict] = []
+        self.default_commands: list[dict] = []
+        self.command_sets: list[dict] = []
+        self.command_reads: list[dict] = []
+        self.command_error: BaseException | None = None
 
     def get_updates(self, *, offset: int, timeout: int) -> list[dict]:
         self.polls.append((offset, timeout))
@@ -74,6 +82,36 @@ class FakeTelegramAPI:
         self, chat_id: int, message_id: int, reply_markup: dict
     ) -> None:
         return None
+
+    def edit_message_text(
+        self, chat_id: int, message_id: int, text: str, reply_markup: dict | None,
+        parse_mode: str | None = "HTML",
+    ) -> None:
+        self.edited.append(
+            {
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "text": text,
+                "reply_markup": reply_markup,
+            }
+        )
+
+    def pin_chat_message(self, chat_id: int, message_id: int) -> None:
+        self.pins.append((chat_id, message_id))
+
+    def unpin_chat_message(self, chat_id: int, message_id: int) -> None:
+        self.unpins.append((chat_id, message_id))
+
+    def get_my_commands(self, scope: dict) -> list[dict]:
+        self.command_reads.append(scope)
+        if self.command_error is not None:
+            error, self.command_error = self.command_error, None
+            raise error
+        source = self.commands if scope.get("type") == "chat" else self.default_commands
+        return [dict(item) for item in source]
+
+    def set_my_commands(self, commands: list[dict], scope: dict) -> None:
+        self.command_sets.append({"commands": commands, "scope": scope})
 
     def answer_callback_query(self, callback_id: str) -> None:
         return None
@@ -990,6 +1028,175 @@ class TestRuntime(unittest.TestCase):
         )
         self.assertEqual(handled, [10, 11, 11])
         self.assertEqual(second.next_update_id, 11)
+
+
+    def test_navigator_worker_reflects_change_within_five_seconds(self) -> None:
+        module = _load_runtime()
+        api = FakeTelegramAPI()
+        with mock.patch.object(module, "TelegramBotAPI", return_value=api):
+            runtime = module.Runtime.start(self.environ)
+        self.addCleanup(runtime.close)
+        self.assertLessEqual(module.NAVIGATOR_TICK_SECONDS, 1)
+        runtime.inbox.call_tool(
+            "request_approval",
+            {"title": "First", "external_id": "navigator-worker-1"},
+            bearer="test-mcp-bearer",
+        )
+        assert runtime.telegram is not None
+        runtime.telegram.open_navigator()
+        navigator = runtime.inbox.load_navigator()["message_id"]
+        self.assertEqual(api.pins[-1], (999001, navigator))
+
+        def poll(*, offset: int, timeout: int) -> list:
+            api.polls.append((offset, timeout))
+            runtime._stopping.wait(0.05)
+            return []
+
+        api.get_updates = poll  # type: ignore[method-assign]
+        worker = threading.Thread(target=runtime.run)
+        worker.start()
+        try:
+            runtime.inbox.call_tool(
+                "request_approval",
+                {"title": "Second", "external_id": "navigator-worker-2"},
+                bearer="test-mcp-bearer",
+            )
+            deadline = time.monotonic() + 5
+            while time.monotonic() < deadline and not api.edited:
+                time.sleep(0.02)
+            self.assertTrue(api.edited, "the navigator did not refresh within 5 s")
+            self.assertEqual(api.edited[-1]["message_id"], navigator)
+            self.assertIn("Pending: 2", api.edited[-1]["text"])
+        finally:
+            runtime.stop()
+            worker.join(3)
+        self.assertFalse(worker.is_alive())
+
+    def test_navigator_worker_stops_on_close(self) -> None:
+        module = _load_runtime()
+        api = FakeTelegramAPI()
+        with mock.patch.object(module, "TelegramBotAPI", return_value=api):
+            runtime = module.Runtime.start(self.environ)
+
+        def poll(*, offset: int, timeout: int) -> list:
+            api.polls.append((offset, timeout))
+            runtime._stopping.wait(0.02)
+            return []
+
+        api.get_updates = poll  # type: ignore[method-assign]
+        worker = threading.Thread(target=runtime.run)
+        worker.start()
+        try:
+            deadline = time.monotonic() + 3
+            while runtime._navigator_worker is None and time.monotonic() < deadline:
+                time.sleep(0.02)
+            self.assertIsNotNone(runtime._navigator_worker)
+        finally:
+            runtime.close()
+            worker.join(3)
+        self.assertFalse(worker.is_alive())
+        self.assertFalse(runtime._navigator_worker.is_alive())
+
+    def test_navigator_worker_failure_does_not_stop_polling(self) -> None:
+        module = _load_runtime()
+        api = FakeTelegramAPI()
+        output = io.StringIO()
+        with mock.patch.object(module, "TelegramBotAPI", return_value=api):
+            runtime = module.Runtime.start(self.environ)
+        self.addCleanup(runtime.close)
+
+        def poll(*, offset: int, timeout: int) -> list:
+            api.polls.append((offset, timeout))
+            runtime._stopping.wait(0.02)
+            return []
+
+        api.get_updates = poll  # type: ignore[method-assign]
+        leak = "https://example.invalid/bot-test-secret/card-private-content"
+        assert runtime.telegram is not None
+        with mock.patch.object(
+            runtime.telegram, "refresh_navigator", side_effect=RuntimeError(leak)
+        ):
+            worker = threading.Thread(target=runtime.run)
+            with redirect_stdout(output):
+                worker.start()
+                deadline = time.monotonic() + 4
+                while (
+                    "Telegram navigator refresh failed" not in output.getvalue()
+                    and time.monotonic() < deadline
+                ):
+                    time.sleep(0.02)
+                runtime.stop()
+                worker.join(3)
+        self.assertGreaterEqual(len(api.polls), 3)
+        self.assertIn("Telegram navigator refresh failed: RuntimeError", output.getvalue())
+        self.assertNotIn("test-secret", output.getvalue())
+        self.assertNotIn("card-private-content", output.getvalue())
+        self.assertFalse(worker.is_alive())
+
+    def test_command_registration_adds_pending_and_keeps_existing(self) -> None:
+        module = _load_runtime()
+        api = FakeTelegramAPI()
+        existing = {"command": "config", "description": "ttl and owner knobs only"}
+        api.commands = [existing]
+        with mock.patch.object(module, "TelegramBotAPI", return_value=api):
+            runtime = module.Runtime.start(self.environ)
+        self.addCleanup(runtime.close)
+        assert runtime.telegram is not None
+        runtime.telegram.register_commands()
+        self.assertTrue(runtime.telegram.commands_registered)
+        self.assertEqual(
+            api.command_sets[-1],
+            {
+                "scope": {"type": "chat", "chat_id": 999001},
+                "commands": [
+                    existing,
+                    {"command": "pending", "description": "Cards waiting for your answer"},
+                ],
+            },
+        )
+        # An empty chat-scoped list starts from the default-scope list.
+        api.commands = []
+        api.default_commands = [{"command": "start", "description": "begin"}]
+        api.command_sets = []
+        runtime.telegram._commands_registered = False
+        runtime.telegram.register_commands()
+        self.assertEqual(
+            api.command_sets[-1]["commands"],
+            [
+                {"command": "start", "description": "begin"},
+                {"command": "pending", "description": "Cards waiting for your answer"},
+            ],
+        )
+
+    def test_command_registration_failure_is_logged_not_fatal(self) -> None:
+        module = _load_runtime()
+        api = FakeTelegramAPI()
+        output = io.StringIO()
+        with mock.patch.object(module, "TelegramBotAPI", return_value=api):
+            runtime = module.Runtime.start(self.environ)
+        self.addCleanup(runtime.close)
+        assert runtime.telegram is not None
+        with redirect_stdout(output):
+            api.command_error = RuntimeError("private-provider-text")
+            runtime.telegram.register_commands()
+        self.assertFalse(runtime.telegram.commands_registered)
+        self.assertIn("Telegram command registration failed: RuntimeError", output.getvalue())
+        self.assertNotIn("private-provider-text", output.getvalue())
+
+        # A failed retry opens a backoff window; inside it, nothing is retried.
+        api.command_error = RuntimeError("again")
+        runtime.telegram.retry_register_commands(10.0)
+        reads = len(api.command_reads)
+        runtime.telegram.retry_register_commands(10.5)
+        self.assertEqual(len(api.command_reads), reads)
+        # After the window a later successful poll registers once, then never again.
+        runtime.telegram.retry_register_commands(11.5)
+        self.assertTrue(runtime.telegram.commands_registered)
+        self.assertEqual(len(api.command_sets), 1)
+        reads = len(api.command_reads)
+        runtime.telegram.retry_register_commands(12.0)
+        self.assertEqual(len(api.command_reads), reads)
+        self.assertEqual(len(api.command_sets), 1)
 
 
 class _FakeHTTPResponse:

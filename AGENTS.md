@@ -31,6 +31,16 @@ long-press reply as the card's text answer on the same claim path as a tap
 (`response.text`, `responded_via` `telegram-reply`). The reply is an
 owner-side surface: it never gives the create credential a way to answer.
 
+The same adapter owns the **Pending navigator**: `/pending` sends one pinned
+message that lists every open card oldest first in pages of eight, opens a
+card's own rendering and answer buttons in that message, and offers a
+**Write answer** prompt whose `ForceReply` message is durably bound to one
+card revision. It refreshes itself within 5 s of a card changing, edits at
+most one message per tick, and never sends, pins or unpins while refreshing.
+Every answer it carries goes through the owner-only claim path, so the create
+credential still cannot answer, and the navigator's identity survives a
+restart.
+
 ## Run the suite
 
 ```bash
