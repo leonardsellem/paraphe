@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import secrets
 import threading
@@ -303,10 +304,29 @@ class InboxError(Exception):
 class NotifyRejected(Exception):
     """Provider response proved the send did not happen. Reservation may roll back."""
 
-    def __init__(self, *args: object, code: int | None = None, reason: str | None = None) -> None:
+    def __init__(
+        self,
+        *args: object,
+        code: int | None = None,
+        reason: str | None = None,
+        retry_after: int | None = None,
+    ) -> None:
         super().__init__(*args)
         self.code = code
         self.reason = reason
+        self.retry_after = retry_after
+
+
+NAVIGATOR_STATE_KEY = "telegram_navigator"
+
+
+def _reply_prompt_key(chat_id: int, message_id: int) -> str:
+    return f"reply_prompt:{chat_id}:{message_id}"
+
+
+def _card_sort_key(card: Card) -> tuple[float, str]:
+    """The navigator's one total order: creation time, then request id."""
+    return (card.created_at or 0.0, card.request_id)
 
 
 class _NullNotifier:
@@ -604,7 +624,21 @@ class Inbox:
             self._ensure_store()
             card = self._card_by_telegram_message(chat_id, message_id)
             if card is None:
-                raise ClaimRefused("unknown")
+                # A reply to a "Write answer" prompt answers the Card that
+                # prompt was bound to, at the revision it was bound at.
+                binding = self.reply_prompt(chat_id, message_id)
+                if binding is None:
+                    raise ClaimRefused("unknown")
+                bound_id, bound_version = binding
+                card = self._cards.get(bound_id)
+                if card is None:
+                    raise ClaimRefused("unknown")
+                return self._claim_locked(
+                    card,
+                    version=bound_version,
+                    text=text,
+                    responded_via="telegram-reply",
+                )
             return self._claim_locked(
                 card,
                 version=card.version,
@@ -613,6 +647,129 @@ class Inbox:
                 telegram_message_id=message_id,
                 responded_via="telegram-reply",
             )
+
+    def pending_cards(self) -> list[Card]:
+        """The open Cards in one stable oldest-first order."""
+        with self._lock:
+            self._ensure_store()
+            ordered = sorted(self._cards.values(), key=_card_sort_key)
+            return [
+                card
+                for card in (self._refresh_expiry(item, strip=False) for item in ordered)
+                if card.state == "open"
+            ]
+
+    def pending_page(
+        self, anchor_id: str | None, before: bool = False, size: int = 8
+    ) -> tuple[list[Card], int, str | None, list[Card]]:
+        """One page of the R3 contract: a contiguous key range, never an offset.
+
+        The anchor's key comes from the retained full card map, so a
+        just-closed anchor still resolves. Returns the page, the total of open
+        Cards, the first unseen open Card and the Cards that just expired.
+        """
+        with self._lock:
+            self._ensure_store()
+            expired: list[Card] = []
+            open_cards: list[Card] = []
+            for card in sorted(self._cards.values(), key=_card_sort_key):
+                current = self._refresh_expiry(card, strip=False)
+                if current is not card:
+                    expired.append(current)
+                if current.state == "open":
+                    open_cards.append(current)
+            total = len(open_cards)
+            anchor = None
+            if anchor_id not in (None, "", "0"):
+                anchor_card = self._cards.get(str(anchor_id))
+                if anchor_card is not None:
+                    anchor = _card_sort_key(anchor_card)
+            if before:
+                page = [
+                    card for card in open_cards
+                    if anchor is not None and _card_sort_key(card) < anchor
+                ][-size:]
+                if not page:
+                    page = open_cards[:size]
+            else:
+                start = 0
+                if anchor is not None:
+                    start = next(
+                        (
+                            index
+                            for index, card in enumerate(open_cards)
+                            if _card_sort_key(card) >= anchor
+                        ),
+                        len(open_cards),
+                    )
+                page = open_cards[start:start + size]
+                if not page:
+                    page = [
+                        card for card in open_cards
+                        if anchor is not None and _card_sort_key(card) < anchor
+                    ][-size:]
+            next_anchor = None
+            if page:
+                last = _card_sort_key(page[-1])
+                later = [
+                    card for card in open_cards if _card_sort_key(card) > last
+                ]
+                if later:
+                    next_anchor = later[0].request_id
+            return page, total, next_anchor, expired
+
+    def strip_closed(self, cards: list[Card]) -> None:
+        """Strip the just-expired Cards' keyboards with no caller-held lock."""
+        for card in cards:
+            self._request_strip(card)
+
+    def navigation_payload(self, request_id: str) -> dict[str, Any] | None:
+        """The Card payload the navigator renders, with its live state."""
+        with self._lock:
+            card = self._cards.get(request_id)
+            if card is None:
+                return None
+            current = self._refresh_expiry(card, strip=False)
+            payload = self._notification_payload(current)
+            payload["state"] = current.state
+            return payload
+
+    def load_navigator(self) -> dict[str, Any] | None:
+        with self._lock:
+            raw = self._ensure_store().load_state(NAVIGATOR_STATE_KEY)
+        if raw is None:
+            return None
+        try:
+            state = json.loads(raw)
+        except ValueError:
+            return None
+        return state if isinstance(state, dict) else None
+
+    def save_navigator(self, state: dict[str, Any]) -> None:
+        with self._lock:
+            self._ensure_store().save_state(NAVIGATOR_STATE_KEY, json.dumps(state))
+
+    def record_reply_prompt(
+        self, chat_id: int, message_id: int, request_id: str, version: int
+    ) -> None:
+        with self._lock:
+            self._ensure_store().save_state(
+                _reply_prompt_key(chat_id, message_id), f"{request_id}:{version}"
+            )
+
+    def reply_prompt(self, chat_id: int, message_id: int) -> tuple[str, int] | None:
+        with self._lock:
+            raw = self._ensure_store().load_state(_reply_prompt_key(chat_id, message_id))
+        if not raw:
+            return None
+        try:
+            request_id, version_text = raw.split(":")
+            version = int(version_text)
+        except ValueError:
+            return None
+        if version < 1:
+            return None
+        return request_id, version
 
     def _card_by_telegram_message(self, chat_id: int, message_id: int) -> Card | None:
         for card in self._cards.values():
@@ -1133,6 +1290,7 @@ class Inbox:
             external_id=external_id,
             expires_in_seconds=ttl,
             expires_at=now + ttl,
+            created_at=now,
             allow_freeform=allow_freeform,
             **fields,
             **{k: v for k, v in shared.items() if k != "external_id" and k != "wait_seconds"},
@@ -1301,6 +1459,7 @@ class Inbox:
             return self._store
         store = Store(self.store_path)
         store.open()
+        derived: list[Card] = []
         try:
             cards: dict[str, Card] = {}
             by_external: dict[str, str] = {}
@@ -1309,6 +1468,8 @@ class Inbox:
                 cards[card.request_id] = card
                 if card.external_id:
                     by_external[card.external_id] = card.request_id
+                if payload.get("created_at") is None:
+                    derived.append(card)
             notify_ids = set(store.load_notification_ids())
         except Exception:
             store.close()
@@ -1317,6 +1478,17 @@ class Inbox:
         self._by_external_id = by_external
         self._notify_external_ids = notify_ids
         self._store = store
+        if derived:
+            # The derived sort timestamp is written once, straight to the
+            # store: nothing here may re-enter `_ensure_store`.
+            try:
+                with self._lock:
+                    for card in derived:
+                        store.save_card(asdict(card))
+            except Exception:
+                self._store = None
+                store.close()
+                raise
         return store
 
     def _card_from_payload(self, payload: dict[str, Any]) -> Card:
@@ -1324,6 +1496,21 @@ class Inbox:
             raise TypeError("card payload is not an object")
         allowed = {item.name for item in dataclass_fields(Card)}
         data = {key: value for key, value in payload.items() if key in allowed}
+        if data.get("created_at") is None:
+            # Cards that predate `created_at`: exact for an unrevised Card,
+            # the admitted estimate for one whose TTL edit moved `expires_at`.
+            # Frozen once here, never recomputed.
+            expires_at = payload.get("expires_at")
+            ttl = data.get("expires_in_seconds")
+            if (
+                isinstance(expires_at, (int, float))
+                and not isinstance(expires_at, bool)
+                and isinstance(ttl, (int, float))
+                and not isinstance(ttl, bool)
+            ):
+                data["created_at"] = float(expires_at) - float(ttl)
+            else:
+                data["created_at"] = 0.0
         if "notified" not in payload:
             data["notified"] = True
         if "telegram_keyboard_attached" not in payload:

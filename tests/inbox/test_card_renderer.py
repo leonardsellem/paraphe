@@ -296,6 +296,13 @@ class TestCardRenderer(unittest.TestCase):
         text = render_card({"kind": "notify", "title": "Sync.", "message": "Done."})
         self.assertEqual(text, "Status\n\n<b>Sync.</b>\n\nDone.")
 
+    def test_reply_hint_override_changes_only_that_line(self) -> None:
+        payload = full_card()
+        default = render_card(payload)
+        write_hint = "Tap Write answer to answer in your own words."
+        self.assertEqual(render_card(payload, reply_hint=write_hint), default.replace(HINT, write_hint))
+        self.assertEqual(render_card(payload), default)
+
 
 if __name__ == "__main__":
     unittest.main()

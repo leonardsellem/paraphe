@@ -35,6 +35,7 @@ class Card:
     agent_name: str | None = None
     expires_in_seconds: int = 14400
     expires_at: float | None = None
+    created_at: float | None = None
     response_choice: str | None = None
     response_text: str | None = None
     responded_at: str | None = None

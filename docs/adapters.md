@@ -42,6 +42,37 @@ makes, the reply channel marked on the answer envelope. A reply to a status
 message resolves to nothing, and no tool and never the create credential can
 record an answer.
 
+### The Pending navigator
+
+In the owner's private chat, `/pending` sends one **Pending navigator** — a
+fresh message at the bottom of the chat, pinned silently, replacing the
+previous one as the only active navigator. The previous navigator keeps its
+text; only its keyboard and its own pin are retired. It lists every still-open
+card oldest first, in pages of eight anchored on a card id, and it opens a
+card's existing rich rendering and answer buttons **in the same message**:
+opening, Back, Refresh and paging edit that one message and send nothing new.
+Answers go through the same owner-only claim path as a card callback, so
+`responded_via` stays `telegram`, the original card's keyboard is stripped and
+a stale view can never record an answer.
+
+**Write answer** sends one `ForceReply` prompt durably bound to that card id
+and revision. A reply to it answers that card at that revision even after a
+restart or after the navigator moved on, with `responded_via`
+`telegram-reply`; once the revision has moved or closed the bot records
+nothing and says so in one line. A reply to the navigator message itself is
+never an answer.
+
+The list keeps itself current within 5 s of a card being created, updated,
+answered, cancelled or expiring. Change is judged on the semantic view (text
+and keyboard, excluding the `Updated` line), so an unchanged view makes no
+API call and never moves the `Updated` time; refresh never sends, pins or
+unpins. Navigator edits are serialized, so a refresh already in flight can
+never replace a card the owner just opened. A failed edit backs off (1 s
+doubling to 60 s, or the provider's `retry_after`); a permanent rejection
+suspends that navigator until the next `/pending`. Its message id, view,
+suspension and last published view live in the store, so a restart keeps
+editing the same message.
+
 `paraphe.adapters.telegram` is one implementation of the same contract, not
 the contract itself. It is the runtime-specific mapping this product was built
 against: it encodes the card into an inline keyboard, strips the keyboard when
