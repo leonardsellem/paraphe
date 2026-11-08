@@ -89,6 +89,16 @@ class TestPublishedContracts(unittest.TestCase):
         self.assertIn("drain", descriptors["get_response"].lower())
         self.assertIn("drain", descriptors["list_unprocessed"].lower())
 
+    def test_the_served_text_makes_reading_consumption(self) -> None:
+        # One sentence replaces both pinned "reads do not consume" statements:
+        # an own read consumes, a listing does not.
+        how = self._inbox().call_tool("how_to_use", {}, bearer=CREATE)
+        self.assertEqual(how.count("An answer you have read is consumed: close it with "
+                                   "mark_processed in the same run; listing answers never "
+                                   "consumes them."), 1)
+        self.assertNotIn("is not consumed", how)
+        self.assertNotIn("Reads do not consume answers", how)
+
     def test_the_served_text_teaches_provenance(self) -> None:
         inbox = self._inbox()
         how = inbox.call_tool("how_to_use", {}, bearer=CREATE)

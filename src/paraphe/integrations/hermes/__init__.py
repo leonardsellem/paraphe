@@ -43,6 +43,9 @@ POLL_S = 3.0
 # One second per closeout call: two calls stay the whole 2 s budget, inside the
 # host's 1-600 s clamp (a smaller value would silently become 1 s).
 CLOSE_TIMEOUT_S = 1.0
+# Closeout journal: one line per attempt, bounded, one rotated generation.
+JOURNAL_MAX_BYTES = 256 * 1024
+JOURNAL_LINE_CAP = 4096
 COMMAND_HEAD_CAP = 200  # the trace row keeps the command's first line only
 # Match whole words; carry the severity explicitly named by the host guard.
 HIGH_RISK_WORDS = frozenset(("rm", "delete", "force", "reset", "prod", "drop", "shred", "truncate"))
@@ -175,8 +178,36 @@ def _call_mcp(request: Any, ctx: Any, tool: str, arguments: dict) -> dict:
                      code=code, exception_type=category)
 
 
+def _journal(ctx: Any, request_id: str, stage: str, ok: bool,
+             error_type: str | None = None) -> None:
+    """Append one closeout attempt; bounded, best effort, never raises.
+
+    The drain's ``read_journal`` attaches the last attempt to each transport
+    row, so a failed report, mark or thread start stays observable off the
+    decision path.
+    """
+    try:
+        path = Path(ctx.state.data_dir) / "transport-closeout.jsonl"
+        row = {"schema": 1, "ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+               "request_id": str(request_id)[:64], "stage": str(stage)[:32],
+               "ok": bool(ok), "error_type": str(error_type)[:64] if error_type else None}
+        line = (json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n").encode("utf-8")
+        if len(line) > JOURNAL_LINE_CAP:
+            return
+        try:
+            size = path.stat().st_size
+        except OSError:
+            size = 0
+        if size and size + len(line) > JOURNAL_MAX_BYTES:
+            os.replace(path, path.with_name(path.name + ".1"))
+        with path.open("ab") as stream:
+            stream.write(line)
+    except Exception:  # noqa: BLE001 — the decision is out of our hands already
+        return
+
+
 def _close_card(ctx: Any, request_id: str, outcome: str) -> None:
-    """Book the owner's answer on the card; one call per try, one warning per failure.
+    """Book the owner's answer on the card; one call per try, one journal line each.
 
     Runs after the host already holds the decision: never raises, never retries and
     never lets a failed ``report_execution`` skip ``mark_processed``.
@@ -186,8 +217,11 @@ def _close_card(ctx: Any, request_id: str, outcome: str) -> None:
         try:
             _payload(ctx.call_mcp(SERVER, tool, arguments, timeout=CLOSE_TIMEOUT_S))
         except Exception as exc:  # noqa: BLE001 — the decision is out of our hands already
+            _journal(ctx, request_id, tool, False, _exception_type(exc))
             logger.warning("paraphe approval transport: closeout %s failed (%s)",
                            tool, _exception_type(exc))
+        else:
+            _journal(ctx, request_id, tool, True)
 
 
 def _spawn_closeout(ctx: Any, request_id: str, outcome: str) -> None:
@@ -195,6 +229,7 @@ def _spawn_closeout(ctx: Any, request_id: str, outcome: str) -> None:
     try:
         threading.Thread(target=_close_card, args=(ctx, request_id, outcome), daemon=True).start()
     except Exception as exc:  # noqa: BLE001 — e.g. RuntimeError: can't start new thread
+        _journal(ctx, request_id, "spawn", False, _exception_type(exc))
         logger.warning("paraphe approval transport: closeout not started (%s)", _exception_type(exc))
 
 
