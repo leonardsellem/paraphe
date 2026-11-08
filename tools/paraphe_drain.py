@@ -1005,7 +1005,7 @@ def _client_class():
         raise LedgerError(f"cannot load {path}")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.ParagheSendClient
+    return module.ParapheSendClient
 
 
 def main(argv: list[str] | None = None) -> int:
