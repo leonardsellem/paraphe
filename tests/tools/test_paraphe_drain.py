@@ -305,10 +305,14 @@ class TestDrain(DrainCase):
         drain.apply(self.out, client)
         rows = self.rows()
         self.assertEqual([rid for name, rid in client.mutations if rid == "b1"], [])
-        self.assertEqual((rows["b1"]["readback_processed_at"], rows["b1"]["execution_status_after"]),
-                         ("2026-11-08T00:05:00Z", "completed"))
+        self.assertEqual(rows["b1"]["readback_processed_at"], "2026-11-08T00:05:00Z")
+        self.assertIsNone(rows["b1"]["execution_status_after"])
         self.assertEqual(rows["b1"]["outcome"], "not_recorded")
         drain.verify_ledger(self.out)
+        live = drain.verify_live(
+            self.out, client,
+            trace_fn=lambda ids: {rid: traces.get(rid, trace()) for rid in ids})
+        self.assertEqual(live["rows"], 2)
         first = (self.out / "ledger.jsonl").read_bytes(), list(client.mutations)
         drain.apply(self.out, client)
         self.assertEqual((self.out / "ledger.jsonl").read_bytes(), first[0])

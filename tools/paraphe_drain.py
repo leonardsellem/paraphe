@@ -585,19 +585,15 @@ def apply(out_dir: str | os.PathLike, client: Any, *, now: str | None = None) ->
                 row["readback_processed_at"] = state["processed_at"]
             continue
         state = client.get_response(rid) or {}
-        owner_closed = bool(state.get("processed_at"))
-        if not owner_closed:
+        if not state.get("processed_at"):
             client.mark_processed(rid)
             state = client.get_response(rid) or {}
         if state.get("processed_at") and not row["readback_processed_at"]:
             row["readback_processed_at"] = state["processed_at"]
         if state.get("processed_at") and row["applied_at"] is None:
             row["applied_at"] = stamp
-        status_after = state.get("execution_status")
-        # R1: a card its owner closed and reported after T0 keeps that outcome; it never blocks the apply.
-        if not owner_closed and status_after != row["execution_status_before"]:
-            raise LedgerError(f"{rid}: execution_status changed during a mark_only close")
-        row["execution_status_after"] = status_after
+        # G3(g)/R2: a non-C row never claims an outcome, and the drain never writes an execution status.
+        row["execution_status_after"] = row["execution_status_before"]
     _write_rows(out / "ledger.jsonl", rows)
     write_ledger_md(out, rows)
     summary["ledger_sha256_after_apply"] = _sha256((out / "ledger.jsonl").read_bytes())
@@ -857,11 +853,7 @@ def verify_ledger(out_dir: str | os.PathLike, *,
             if row["outcome"] != "not_recorded" or row["action"] == "report_and_mark":
                 raise LedgerError(f"{rid}: a non-C row cannot claim an outcome")
             if row["action"] == "mark_only" and row["execution_status_after"] != row["execution_status_before"]:
-                # R1: the change belongs to the owner's own close after T0, proved by an earlier readback.
-                readback, applied = _ts(row.get("readback_processed_at")), _ts(row.get("applied_at"))
-                owner_closed = (readback is not None and applied is not None and readback < applied)
-                if not owner_closed:
-                    raise LedgerError(f"{rid}: mark_only changed the execution status")
+                raise LedgerError(f"{rid}: mark_only changed the execution status")
             if row["class"] == "T" and row["execution_status_after"] is not None:
                 raise LedgerError(f"{rid}: a transport row has an execution_status_after")
         card = snapshot.get(rid)
@@ -958,7 +950,7 @@ def verify_live(out_dir: str | os.PathLike, client: Any, *,
             state = client.get_response(rid) or {}
             if not state.get("processed_at"):
                 errors.append(f"{rid}: a closed row is not processed")
-            if state.get("execution_status") != expected:
+            if expected is not None and state.get("execution_status") != expected:
                 errors.append(f"{rid}: execution_status differs after the close")
             if not row.get("readback_processed_at"):
                 errors.append(f"{rid}: a closed row has no readback")
