@@ -297,9 +297,22 @@ class TestDrain(DrainCase):
         self.assertIsNone(row["applied_at"])
 
     def test_second_apply_is_a_noop(self) -> None:
-        items = [card("t1", external_id="hermes-approval-a", expires_at=EXPIRED)]
-        client, _ = self.build(items, {"t1": trace()})
+        items = [card("t1", external_id="hermes-approval-a", expires_at=EXPIRED), card("b1")]
+        traces = {"t1": trace(), "b1": trace(origin("s-b1"), reads=(read("own"),))}
+        client, _ = self.build(items, traces)
+        # The owner closed and reported its card between T0 and the apply.
+        items[1].update(processed_at="2026-11-08T00:05:00Z", execution_status="completed")
         drain.apply(self.out, client)
+        rows = self.rows()
+        self.assertEqual([rid for name, rid in client.mutations if rid == "b1"], [])
+        self.assertEqual(rows["b1"]["readback_processed_at"], "2026-11-08T00:05:00Z")
+        self.assertIsNone(rows["b1"]["execution_status_after"])
+        self.assertEqual(rows["b1"]["outcome"], "not_recorded")
+        drain.verify_ledger(self.out)
+        live = drain.verify_live(
+            self.out, client,
+            trace_fn=lambda ids: {rid: traces.get(rid, trace()) for rid in ids})
+        self.assertEqual(live["rows"], 2)
         first = (self.out / "ledger.jsonl").read_bytes(), list(client.mutations)
         drain.apply(self.out, client)
         self.assertEqual((self.out / "ledger.jsonl").read_bytes(), first[0])
