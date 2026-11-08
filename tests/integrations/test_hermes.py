@@ -344,7 +344,7 @@ class TestHermesTransport(unittest.TestCase):
             req = request()
             self.assertEqual(ctx.present(req), "once")
             self.assertEqual(self.row()["host_request_id"], req.request_id)
-        files = list(self.root.iterdir())
+        files = [p for p in self.root.iterdir() if p.name != "transport-closeout.jsonl"]
         self.assertEqual({p.name for p in files}, SNAPSHOTS)
         self.assertLessEqual(sum(p.stat().st_size for p in files), 4096)
         for path in files:
@@ -375,7 +375,8 @@ class TestHermesTransport(unittest.TestCase):
                 self.assertEqual(ctx.present(request()), "once")
                 self.assertEqual(path.read_bytes(), content)
                 self.assertEqual(unrelated.read_bytes(), b"example unrelated data")
-                self.assertEqual({p.name for p in self.root.iterdir()}, SNAPSHOTS | {"state.json", "unrelated.log"})
+                self.assertEqual({p.name for p in self.root.iterdir()},
+                                 SNAPSHOTS | {"state.json", "unrelated.log", "transport-closeout.jsonl"})
 
     def test_unknown_kinds_phases_codes_and_exception_names_cannot_escape(self):
         ctx = self.context()
@@ -488,7 +489,8 @@ class TestHermesTransport(unittest.TestCase):
             self.assertEqual((row["host_request_id"], row["host_digest"], row["pid"]), (req.request_id, req.digest, os.getpid()))
             self.assertEqual(row["file_at_registration_sha256"], hashlib.sha256(Path(plugin.__file__).read_bytes()).hexdigest())
         self.assertIn(self.row(), rows)
-        self.assertEqual({p.name for p in self.root.iterdir()}, SNAPSHOTS)
+        self.assertEqual({p.name for p in self.root.iterdir()},
+                         SNAPSHOTS | {"transport-closeout.jsonl"})
 
     def test_latest_means_last_replace_not_latest_started_attempt(self):
         ctx = self.context()
@@ -549,6 +551,82 @@ class TestHermesTransport(unittest.TestCase):
             self.assertEqual(tuple(len(card[key]) for key in ("repo", "worktree", "ticket")), (120, 120, 200))
         self.assertEqual(plugin._normalize_remote("ssh://git.example.org/example/project.git"), "example/project")
         self.assertEqual(plugin._normalize_remote("https://example.org/example/project.git"), "example/project")
+
+    def journal(self) -> list[dict]:
+        path = self.root / "transport-closeout.jsonl"
+        if not path.exists():
+            return []
+        return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+    def test_journal_on_success(self):
+        ctx = self.context()
+        self.assertEqual(ctx.present(request()), "once")
+        rows = self.journal()
+        self.assertEqual([(row["stage"], row["ok"], row["error_type"]) for row in rows],
+                         [("report_execution", True, None), ("mark_processed", True, None)])
+        self.assertEqual({row["request_id"] for row in rows}, {CARD_ID})
+
+    def test_journal_on_tool_failure(self):
+        ctx = self.context(replies={"report_execution": ConnectionError("sensitive-example-marker")})
+        self.assertEqual(ctx.present(request()), "once")
+        rows = self.journal()
+        self.assertEqual([(row["stage"], row["ok"], row["error_type"]) for row in rows],
+                         [("report_execution", False, "ConnectionError"),
+                          ("mark_processed", True, None)])
+        self.assertNotIn("sensitive-example-marker", json.dumps(rows))
+
+    def test_journal_on_thread_start_failure(self):
+        self.spawn.side_effect = REAL_SPAWN
+        ctx = self.context()
+        with mock.patch.object(plugin.threading, "Thread", side_effect=RuntimeError("can't start new thread")):
+            self.assertEqual(ctx.present(request()), "once")
+        self.assertEqual([(row["stage"], row["ok"], row["error_type"]) for row in self.journal()],
+                         [("spawn", False, "RuntimeError")])
+
+    def test_decision_returns_first(self):
+        self.spawn.side_effect = REAL_SPAWN
+        entered, release = threading.Event(), threading.Event()
+        ctx = self.context()
+        def call_mcp(server, tool, arguments, timeout=None):
+            ctx.calls.append((tool, arguments))
+            ctx.timeouts.append(timeout)
+            if tool == "report_execution":
+                entered.set()
+                self.assertTrue(release.wait(5))
+            result = ({"status": "answered", "pending": False, "response": {"choice": "Approve"}}
+                      if tool == "get_response" else {"request_id": CARD_ID})
+            return {"ok": True, "result": result}
+        ctx.call_mcp = call_mcp
+        try:
+            self.assertEqual(ctx.present(request()), "once")
+            self.assertTrue(entered.wait(5))
+            self.assertEqual(self.journal(), [])  # the decision path wrote nothing yet
+        finally:
+            release.set()
+        deadline = time.monotonic() + 5
+        while len(self.journal()) < 2 and time.monotonic() < deadline:
+            time.sleep(0.01)
+        self.assertEqual([(row["stage"], row["ok"]) for row in self.journal()],
+                         [("report_execution", True), ("mark_processed", True)])
+
+    def test_journal_rotation_keeps_one_generation(self):
+        path = self.root / "transport-closeout.jsonl"
+        first = (json.dumps({"request_id": "old", "stage": "mark_processed", "ok": True,
+                             "error_type": None}) + "\n") * 9000
+        path.write_text(first, encoding="utf-8")
+        self.assertGreater(path.stat().st_size, 256 * 1024)
+        ctx = self.context()
+        plugin._journal(ctx, CARD_ID, "mark_processed", True)
+        previous = self.root / "transport-closeout.jsonl.1"
+        self.assertTrue(previous.is_file())
+        self.assertEqual(previous.read_text(encoding="utf-8"), first)
+        self.assertEqual([row["request_id"] for row in self.journal()], [CARD_ID])
+        second = (json.dumps({"request_id": "older", "stage": "spawn", "ok": False,
+                              "error_type": "RuntimeError"}) + "\n") * 9000
+        path.write_text(second, encoding="utf-8")
+        plugin._journal(ctx, CARD_ID, "mark_processed", True)
+        self.assertFalse((self.root / "transport-closeout.jsonl.2").exists())
+        self.assertEqual(previous.read_text(encoding="utf-8"), second)
 
     def test_normal_imports_and_entrypoint_import_need_no_hermes(self):
         script = '''
