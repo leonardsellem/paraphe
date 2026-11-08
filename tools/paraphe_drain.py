@@ -585,7 +585,8 @@ def apply(out_dir: str | os.PathLike, client: Any, *, now: str | None = None) ->
                 row["readback_processed_at"] = state["processed_at"]
             continue
         state = client.get_response(rid) or {}
-        if not state.get("processed_at"):
+        owner_closed = bool(state.get("processed_at"))
+        if not owner_closed:
             client.mark_processed(rid)
             state = client.get_response(rid) or {}
         if state.get("processed_at") and not row["readback_processed_at"]:
@@ -593,7 +594,8 @@ def apply(out_dir: str | os.PathLike, client: Any, *, now: str | None = None) ->
         if state.get("processed_at") and row["applied_at"] is None:
             row["applied_at"] = stamp
         status_after = state.get("execution_status")
-        if status_after != row["execution_status_before"]:
+        # R1: a card its owner closed and reported after T0 keeps that outcome; it never blocks the apply.
+        if not owner_closed and status_after != row["execution_status_before"]:
             raise LedgerError(f"{rid}: execution_status changed during a mark_only close")
         row["execution_status_after"] = status_after
     _write_rows(out / "ledger.jsonl", rows)
@@ -855,7 +857,11 @@ def verify_ledger(out_dir: str | os.PathLike, *,
             if row["outcome"] != "not_recorded" or row["action"] == "report_and_mark":
                 raise LedgerError(f"{rid}: a non-C row cannot claim an outcome")
             if row["action"] == "mark_only" and row["execution_status_after"] != row["execution_status_before"]:
-                raise LedgerError(f"{rid}: mark_only changed the execution status")
+                # R1: the change belongs to the owner's own close after T0, proved by an earlier readback.
+                readback, applied = _ts(row.get("readback_processed_at")), _ts(row.get("applied_at"))
+                owner_closed = (readback is not None and applied is not None and readback < applied)
+                if not owner_closed:
+                    raise LedgerError(f"{rid}: mark_only changed the execution status")
             if row["class"] == "T" and row["execution_status_after"] is not None:
                 raise LedgerError(f"{rid}: a transport row has an execution_status_after")
         card = snapshot.get(rid)
