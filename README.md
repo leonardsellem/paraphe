@@ -67,8 +67,9 @@ the numeric id and make sure you opened a private chat with the bot first.
 Without the two phone settings, cards are printed where you are looking, which
 is what the local run above does.
 
-A repeat ask with the same `external_id` does not notify again — after a
-restart, read the answer with `get_response`.
+A repeat ask with the same `external_id` returns the existing card and does
+not notify again — after a restart, read the answer with `get_response` by
+`external_id`.
 
 Or run the container, with the data location mounted:
 
@@ -80,14 +81,15 @@ docker run --rm -v "$PWD/paraphe-data:/data" \
 ```
 
 It binds loopback inside the container, because the answer path refuses a
-non-loopback bind. To reach it from outside, configure the phone destination
-(a bot token and your Telegram id) and set `PARAPHE_MCP_HOST=0.0.0.0`; the
-answer path is then off, and taps arrive on the phone.
+non-loopback bind. To reach it from outside, publish `8787`
+(`-p 127.0.0.1:8787:8787`), configure the phone destination (a bot token and
+your Telegram id) and set `PARAPHE_MCP_HOST=0.0.0.0`; the answer path is then
+off, and taps arrive on the phone.
 
 ## Connect your agent
 
-Paraphe serves Streamable HTTP at `http://127.0.0.1:8787/mcp`, authenticated
-with the create bearer:
+Paraphe serves Streamable HTTP on the address the ready line prints
+(`http://127.0.0.1:8787/mcp` by default), authenticated with the create bearer:
 
 ```json
 {
@@ -101,7 +103,10 @@ with the create bearer:
 }
 ```
 
-The create bearer creates and reads. It cannot answer.
+The block is Claude Code's `.mcp.json` shape; any Streamable HTTP client takes
+the same URL and header in its own MCP config. The create bearer creates and
+reads. It cannot answer. Keep the file out of version control: that bearer
+reads every card.
 
 ## The loop
 
