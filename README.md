@@ -67,6 +67,9 @@ the numeric id and make sure you opened a private chat with the bot first.
 Without the two phone settings, cards are printed where you are looking, which
 is what the local run above does.
 
+A repeat ask with the same `external_id` does not notify again — after a
+restart, read the answer with `get_response`.
+
 Or run the container, with the data location mounted:
 
 ```bash
@@ -80,6 +83,25 @@ It binds loopback inside the container, because the answer path refuses a
 non-loopback bind. To reach it from outside, configure the phone destination
 (a bot token and your Telegram id) and set `PARAPHE_MCP_HOST=0.0.0.0`; the
 answer path is then off, and taps arrive on the phone.
+
+## Connect your agent
+
+Paraphe serves Streamable HTTP at `http://127.0.0.1:8787/mcp`, authenticated
+with the create bearer:
+
+```json
+{
+  "mcpServers": {
+    "paraphe": {
+      "type": "http",
+      "url": "http://127.0.0.1:8787/mcp",
+      "headers": { "Authorization": "Bearer <mcp_create_bearer>" }
+    }
+  }
+}
+```
+
+The create bearer creates and reads. It cannot answer.
 
 ## The loop
 
