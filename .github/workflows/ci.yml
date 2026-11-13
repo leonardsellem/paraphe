@@ -153,7 +153,17 @@ jobs:
           resolves() { git rev-parse --verify --quiet "${1}^{commit}" >/dev/null; }
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+            if [ "${{ github.event.pull_request.base.ref }}" = "main" ]; then
+              # A promotion pull request adds no commit of its own: the head
+              # branch's commits were scanned by that branch's push run when
+              # each one landed. Scanning base..head here re-charges the
+              # release for the integration branch's whole history, which is
+              # what made every promotion fail on commits it never wrote.
+              echo "a promotion adds no commit message; the head branch's pushes were scanned as they landed."
+              range="${{ github.event.pull_request.head.sha }}..${{ github.event.pull_request.head.sha }}"
+            else
+              range="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+            fi
           elif [ "${{ github.event.deleted }}" = "true" ]; then
             # the branch is gone; its messages were scanned when they landed
             echo "a branch was deleted; there is no pushed range to scan."
