@@ -72,7 +72,12 @@ then the origin, then what each answer authorises:
 ## The phone variant
 
 The same loop with a Telegram bot as the destination is what the deployed
-service runs. There is no recorded asset of it yet: making one needs a phone,
-which this repository cannot operate. Until there is one, the tap path is
-documented in [`../adapters.md`](../adapters.md) and its tests are in
+service runs. There is no recording of it, because recording one needs a phone
+this repository cannot operate. The card and the pinned Pending list are
+instead rendered from the adapter's own output:
+[`phone-approval.png`](phone-approval.png) and
+[`pending-navigator.png`](pending-navigator.png) are what `render_card()` and
+`render_pending_list()` produce for a demo store, set in the destination's own
+palette. The demo cards are fictional; no real inbox appears in them. The tap
+path is documented in [`../adapters.md`](../adapters.md) and its tests are in
 `tests/inbox/test_telegram_port.py`.
