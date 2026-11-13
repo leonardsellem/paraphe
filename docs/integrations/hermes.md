@@ -1,7 +1,7 @@
 # Hermes approval transport
 
 Paraphe ships an optional Hermes plugin, `paraphe-approval-transport`, in
-`paraphe.integrations.hermes`. The plugin component is version 0.4.4; this is
+`paraphe.integrations.hermes`. The plugin component is version 0.5.0; this is
 independent of the Paraphe distribution version. Installing Paraphe does not
 enable the plugin, select a transport, add dependencies, or contact a service.
 The ordinary Paraphe CLI and server do not import Hermes or activate the plugin.
@@ -62,7 +62,7 @@ same-name standalone directory copy can shadow the pip entry point, even when
 Paraphe has been upgraded. `hermes plugins list` and `hermes plugins doctor`
 should identify the source actually loaded; the registration diagnostic also
 fingerprints its module bytes. Directory manifests report component version
-0.4.4; entry-point discovery reports the distribution version from package
+0.5.0; entry-point discovery reports the distribution version from package
 metadata, not that component version.
 
 Choose one source deliberately. Review and back up an existing standalone copy

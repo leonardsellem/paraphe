@@ -67,6 +67,10 @@ the numeric id and make sure you opened a private chat with the bot first.
 Without the two phone settings, cards are printed where you are looking, which
 is what the local run above does.
 
+A repeat ask with the same `external_id` returns the existing card and does
+not notify again — after a restart, read the answer with `get_response` by
+`external_id`.
+
 Or run the container, with the data location mounted:
 
 ```bash
@@ -77,9 +81,32 @@ docker run --rm -v "$PWD/paraphe-data:/data" \
 ```
 
 It binds loopback inside the container, because the answer path refuses a
-non-loopback bind. To reach it from outside, configure the phone destination
-(a bot token and your Telegram id) and set `PARAPHE_MCP_HOST=0.0.0.0`; the
-answer path is then off, and taps arrive on the phone.
+non-loopback bind. To reach it from outside, publish `8787`
+(`-p 127.0.0.1:8787:8787`), configure the phone destination (a bot token and
+your Telegram id) and set `PARAPHE_MCP_HOST=0.0.0.0`; the answer path is then
+off, and taps arrive on the phone.
+
+## Connect your agent
+
+Paraphe serves Streamable HTTP on the address the ready line prints
+(`http://127.0.0.1:8787/mcp` by default), authenticated with the create bearer:
+
+```json
+{
+  "mcpServers": {
+    "paraphe": {
+      "type": "http",
+      "url": "http://127.0.0.1:8787/mcp",
+      "headers": { "Authorization": "Bearer <mcp_create_bearer>" }
+    }
+  }
+}
+```
+
+The block is Claude Code's `.mcp.json` shape; any Streamable HTTP client takes
+the same URL and header in its own MCP config. The create bearer creates and
+reads. It cannot answer. Keep the file out of version control: that bearer
+reads every card.
 
 ## The loop
 
@@ -102,6 +129,20 @@ the exact session that asked.
 ![the approval card on a phone](docs/demo/phone-approval.png)
 
 The approval card as it arrives on the phone.
+
+`/pending` keeps one pinned message in the owner's private chat: every open
+card, oldest first, eight to a page, each row opening that card's own
+rendering and answer buttons in the same message. It refreshes within five
+seconds of a card changing, and it never sends or unpins while refreshing.
+
+![the pinned Pending list](docs/demo/pending-navigator.png)
+
+The pinned Pending list: eight open cards, oldest first, each with the agent,
+the repository and the expiry.
+
+Both images in this section are rendered from the adapter's own output over a
+demo store, in the destination's own palette. They are not device captures, and
+the cards in them are fictional.
 
 [`docs/demo/console-loop.md`](docs/demo/console-loop.md) is a recorded run of
 exactly that, on a clean checkout, with no third-party credential and no

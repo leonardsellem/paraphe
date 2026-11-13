@@ -91,12 +91,14 @@ class TestTreeScan(ScanToolCase):
 
 
 class TestCommitsMode(ScanToolCase):
-    def test_only_the_published_release_message_is_baselined(self) -> None:
+    def test_only_the_baselined_history_is_exempt(self) -> None:
         tool = runpy.run_path(str(TOOL))
+        baselined = sorted(tool["BASELINE_MESSAGES"])
         published = "0cdf7e8848f40e35c9e4e2cb9ed748551fb94320"
+        self.assertIn(published, baselined)
         new = published[:-1] + "1"  # the same short hash is not the same commit
         records = "".join(
-            f"{sha}\x1fsubject carrying {VALUE}\x1e\n" for sha in (published, new)
+            f"{sha}\x1fsubject carrying {VALUE}\x1e\n" for sha in (*baselined, new)
         )
         with patch(
             "subprocess.run",
