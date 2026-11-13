@@ -139,6 +139,17 @@ jobs:
         run: |
           set -euo pipefail
           fetch_main() { git fetch --quiet origin "+refs/heads/main:refs/remotes/origin/main"; }
+          base_ref() {
+            # `dev` is the integration branch: a branch cut from it carries dev's
+            # commits, which main does not, so scanning from main charges a new
+            # branch for history it did not write. Prefer dev, fall back to main.
+            fetch_main
+            if git fetch --quiet origin "+refs/heads/dev:refs/remotes/origin/dev" 2>/dev/null; then
+              printf '%s' "refs/remotes/origin/dev"
+            else
+              printf '%s' "refs/remotes/origin/main"
+            fi
+          }
           resolves() { git rev-parse --verify --quiet "${1}^{commit}" >/dev/null; }
 
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -151,9 +162,8 @@ jobs:
             base="${{ github.event.before }}"
             head="${{ github.event.after }}"
             if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then
-              # a new branch: scan the commits it adds on top of main
-              fetch_main
-              range="$(git merge-base "$head" refs/remotes/origin/main)..${head}"
+              # a new branch: scan the commits it adds on top of its base branch
+              range="$(git merge-base "$head" "$(base_ref)")..${head}"
             elif resolves "$base"; then
               range="${base}..${head}"
             else
@@ -165,10 +175,9 @@ jobs:
               if resolves "$base"; then
                 range="${base}..${head}"
               else
-                fetch_main
-                fork="$(git merge-base "$head" refs/remotes/origin/main 2>/dev/null || true)"
+                fork="$(git merge-base "$head" "$(base_ref)" 2>/dev/null || true)"
                 if [ -n "$fork" ] && [ "$fork" != "$head" ]; then
-                  echo "the previous tip is unreachable; scanning from the fork point with main (${fork})"
+                  echo "the previous tip is unreachable; scanning from the fork point with the base branch (${fork})"
                   range="${fork}..${head}"
                 elif resolves "$head"; then
                   echo "the previous tip is unreachable and there is no fork point; scanning the pushed head's reachable history"
