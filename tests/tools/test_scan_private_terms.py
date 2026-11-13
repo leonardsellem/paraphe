@@ -91,21 +91,16 @@ class TestTreeScan(ScanToolCase):
 
 
 class TestCommitsMode(ScanToolCase):
-    def test_only_the_baselined_history_is_exempt(self) -> None:
+    def test_no_commit_message_is_exempt(self) -> None:
         tool = runpy.run_path(str(TOOL))
-        baselined = sorted(tool["BASELINE_MESSAGES"])
         published = "0cdf7e8848f40e35c9e4e2cb9ed748551fb94320"
-        self.assertIn(published, baselined)
-        new = published[:-1] + "1"  # the same short hash is not the same commit
-        records = "".join(
-            f"{sha}\x1fsubject carrying {VALUE}\x1e\n" for sha in (*baselined, new)
-        )
+        records = f"{published}\x1fsubject carrying {VALUE}\x1e\n"
         with patch(
             "subprocess.run",
             return_value=subprocess.CompletedProcess([], 0, records.encode()),
         ):
             findings = tool["scan_messages"](tool["load_terms"](self.terms), "HEAD")
-        self.assertEqual(findings, [f"message\tsuite_term\t{new[:12]}"])
+        self.assertEqual(findings, [f"message\tsuite_term\t{published[:12]}"])
 
         (self.repo / "notes.md").write_text(f"{VALUE}\n", encoding="utf-8")
         _git(self.repo, "add", "notes.md")

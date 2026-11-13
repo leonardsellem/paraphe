@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "paraphe"
-version = "0.5.0"
+dynamic = ["version"]
 description = "Self-hosted owner decision inbox: an agent asks, the owner answers, the agent resumes."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -30,6 +30,10 @@ paraphe = "paraphe.__main__:main"
 
 [project.entry-points."hermes_agent.plugins"]
 paraphe-approval-transport = "paraphe.integrations.hermes"
+
+[tool.hatch.version]
+path = "src/paraphe/integrations/hermes/plugin.yaml"
+pattern = '(?m)^version:\s*(?P<version>\S+)$'
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/paraphe"]

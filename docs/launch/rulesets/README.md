@@ -31,25 +31,36 @@ gh secret set PRIVATE_TERMS --repo leonardsellem/paraphe < "$HOME/.config/paraph
 
 ## Merge settings at the flip
 
-Rulesets cannot express the merge method, so the repository settings carry it:
-squash-only, and the head branch is deleted after a merge.
+The rulesets constrain the merge method per branch, and the repository settings
+carry the rest: merge commits and squash merges are allowed, rebase is not, and
+the head branch is not deleted automatically.
 
 ```bash
 gh api --method PATCH repos/leonardsellem/paraphe \
-  -f allow_merge_commit=false -f allow_rebase_merge=false \
-  -f allow_squash_merge=true -f delete_branch_on_merge=true
+  -f allow_merge_commit=true -f allow_squash_merge=true \
+  -f allow_rebase_merge=false -f delete_branch_on_merge=false
 ```
 
 Read them back:
 
 ```bash
 gh api repos/leonardsellem/paraphe \
-  --jq '{allow_merge_commit, allow_rebase_merge, allow_squash_merge, delete_branch_on_merge}'
+  --jq '{allow_merge_commit, allow_squash_merge, allow_rebase_merge, delete_branch_on_merge}'
 ```
 
-The automatic deletion covers ordinary change branches. A `dev -> main`
-promotion has `dev` itself as its head, and the `dev` ruleset refuses its
-deletion — which is what keeps `dev` alive through a promotion.
+Each ruleset's `pull_request.parameters.allowed_merge_methods` picks the one
+method its branch accepts: `dev` allows `["squash"]`, so a feature pull request
+is squash-merged (`gh pr merge <N> --squash --delete-branch`); `main` allows
+`["merge"]`, so a promotion is a merge commit (`gh pr merge <N> --merge`,
+never `--delete-branch`).
+
+Head auto-deletion is off. It is not needed, and the old claim that the `dev`
+ruleset kept `dev` alive through a promotion was wrong: #67 measured the head
+deleted two seconds after the merge (`head_ref_deleted`
+2026-11-13T14:22:10Z), because the live `dev` ruleset carried an owner bypass
+actor with `bypass_mode: always` that overrode its `deletion` rule. Both
+rulesets now carry `bypass_actors: []`, and `delete_branch_on_merge=false`
+removes the automatic deletion regardless of who merges.
 
 ## What the rulesets require
 

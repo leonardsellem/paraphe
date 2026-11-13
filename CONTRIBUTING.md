@@ -46,10 +46,20 @@ source check refuses anything else. Direct pushes, force-pushes and branch
 deletion are refused on both branches, and the required checks are listed in
 `docs/launch/rulesets/README.md`.
 
-**Releases** are promotions: `dev` is squash-merged into `main`, and the
-release is tagged `vX.Y.Z` from `main` with notes from the README's quick
-start. Head branches are deleted automatically after a merge, except `dev` —
-its ruleset refuses deletion.
+**Releases** are promotions: `dev` is merged into `main` with a merge commit,
+`gh pr merge <N> --merge` (never `--delete-branch`), so `main` keeps `dev`'s
+history and the next promotion merges without replaying old conflicts. Feature
+pull requests into `dev` are squash-merged — the `dev` ruleset allows only
+squash, the `main` ruleset only merge commits. Head auto-deletion is off
+(`delete_branch_on_merge=false`): delete a feature branch with
+`gh pr merge --squash --delete-branch`, and never pass `--delete-branch` on a
+promotion. The earlier claim that `dev` survived a promotion because deletion
+was refused was false: the live ruleset carried an owner bypass, and the target
+branch's auto-deletion deleted `dev` two seconds after #67 merged. The `dev`
+ruleset now refuses deletion and has no bypass actors. The release is tagged
+`vX.Y.Z` from `main` with notes from the README's quick start. The version is
+authored only in `src/paraphe/integrations/hermes/plugin.yaml`; `pyproject.toml`
+reads it at build time, so a release bumps that one line.
 
 **Commit messages are scanned.** Pushed commit messages go through the same
 private-term list as the tracked files — public history is as permanent as the
