@@ -130,6 +130,20 @@ the exact session that asked.
 
 The approval card as it arrives on the phone.
 
+`/pending` keeps one pinned message in the owner's private chat: every open
+card, oldest first, eight to a page, each row opening that card's own
+rendering and answer buttons in the same message. It refreshes within five
+seconds of a card changing, and it never sends or unpins while refreshing.
+
+![the pinned Pending list](docs/demo/pending-navigator.png)
+
+The pinned Pending list: eight open cards, oldest first, each with the agent,
+the repository and the expiry.
+
+Both images in this section are rendered from the adapter's own output over a
+demo store, in the destination's own palette. They are not device captures, and
+the cards in them are fictional.
+
 [`docs/demo/console-loop.md`](docs/demo/console-loop.md) is a recorded run of
 exactly that, on a clean checkout, with no third-party credential and no
 external service: the agent asks, the card is printed, the agent's own
