@@ -34,6 +34,14 @@ jobs:
         run: |
           python3 -m venv /tmp/paraphe-ci
           /tmp/paraphe-ci/bin/pip install .
+      - name: the installed version matches the manifest
+        run: |
+          /tmp/paraphe-ci/bin/python - <<'PY'
+          import importlib.metadata, pathlib, re
+          manifest = pathlib.Path("src/paraphe/integrations/hermes/plugin.yaml").read_text(encoding="utf-8")
+          declared = re.search(r"(?m)^version:\s*(\S+)$", manifest).group(1)
+          assert importlib.metadata.version("paraphe") == declared, "distribution version drifted from the manifest"
+          PY
       - name: the command runs and prints usage
         run: |
           /tmp/paraphe-ci/bin/paraphe > /tmp/usage.txt
