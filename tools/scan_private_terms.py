@@ -23,19 +23,6 @@ from pathlib import Path
 DEFAULT_TERMS = Path.home() / ".config" / "paraphe" / "private-terms.txt"
 CATEGORIES = ("content", "filename")
 
-# Commit messages that are immutable history: the published v0.2.1 release
-# message, and the two drain commits already on `dev` whose messages name a
-# tracker key. A message cannot be corrected without rewriting a protected
-# branch, so a promotion would otherwise fail on them forever. Files,
-# filenames and every other commit message stay fully scanned.
-BASELINE_MESSAGES = frozenset(
-    {
-        "0cdf7e8848f40e35c9e4e2cb9ed748551fb94320",
-        "b877b126f6ee6ae3e40b0e7b502d5134cda191c3",
-        "5faf405381d340acd733e5fa49c6d2e6f2ccc26e",
-    }
-)
-
 
 def load_terms(path: Path) -> list[tuple[str, re.Pattern[str]]]:
     terms: list[tuple[str, re.Pattern[str]]] = []
@@ -101,10 +88,7 @@ def scan_messages(
     for record in raw.split("\x1e"):
         sha, _, message = record.strip("\n").partition("\x1f")
         sha = sha.strip()
-        # Only immutable history is a baseline: the published v0.2.1 message and
-        # the two drain commits already on the integration branch. Files,
-        # filenames and all other commit messages remain fully scanned.
-        if not sha or sha in BASELINE_MESSAGES:
+        if not sha:
             continue
         lines = message.splitlines()
         # Trailers live in the message's final block, separated from the body by a

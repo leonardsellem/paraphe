@@ -1010,7 +1010,7 @@ class Inbox:
             "version, choices and expires_at for decision validation.\n"
             "The owner answers on the configured destination; read with "
             "get_response, where the answer is nested at response.choice. "
-            "An answer you have read is consumed: close it with mark_processed "
+            "Reading an answer never consumes it: close it with mark_processed "
             "in the same run; listing answers never consumes them.\n"
             "On the phone a card renders as ordered rich sections: an "
             "identity line (agent, runtime, repository, worktree, ticket), a "
