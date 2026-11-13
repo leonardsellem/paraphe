@@ -89,13 +89,15 @@ class TestPublishedContracts(unittest.TestCase):
         self.assertIn("drain", descriptors["get_response"].lower())
         self.assertIn("drain", descriptors["list_unprocessed"].lower())
 
-    def test_the_served_text_makes_reading_consumption(self) -> None:
-        # One sentence replaces both pinned "reads do not consume" statements:
-        # an own read consumes, a listing does not.
+    def test_the_served_text_says_reading_never_consumes(self) -> None:
+        # A read never consumes: the agent closes with mark_processed in the same
+        # run, and a listing never consumes either.
         how = self._inbox().call_tool("how_to_use", {}, bearer=CREATE)
-        self.assertEqual(how.count("An answer you have read is consumed: close it with "
+        self.assertEqual(how.count("Reading an answer never consumes it: close it with "
                                    "mark_processed in the same run; listing answers never "
                                    "consumes them."), 1)
+        # Split so the retired sentence is not itself a tree-wide grep hit.
+        self.assertNotIn("An answer you have read " "is consumed", how)
         self.assertNotIn("is not consumed", how)
         self.assertNotIn("Reads do not consume answers", how)
 
