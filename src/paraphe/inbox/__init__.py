@@ -319,6 +319,10 @@ class NotifyRejected(Exception):
 
 NAVIGATOR_STATE_KEY = "telegram_navigator"
 
+# A failed terminal strip is retried no sooner than this; the cleanup worker
+# rescans cards whose durable keyboard flag is still attached.
+CLEANUP_RETRY_SECONDS = 1.0
+
 
 def _reply_prompt_key(chat_id: int, message_id: int) -> str:
     return f"reply_prompt:{chat_id}:{message_id}"
@@ -369,6 +373,12 @@ class Inbox:
         # Parked clients by request id; the answer claim sets their events.
         self._waiters: dict[str, list[threading.Event]] = {}
         self._wait_lock = threading.Lock()
+        # Terminal keyboard cleanup: the durable card flag is the workset, this
+        # event only wakes the one managed worker (or the local drain path).
+        self._cleanup_wake = threading.Event()
+        self._cleanup_active = False
+        # One in-flight strip per durable locator: a second pass never races it.
+        self._stripping: set[tuple[int, int]] = set()
 
     def __repr__(self) -> str:
         return (
@@ -408,7 +418,22 @@ class Inbox:
                 self._store.close()
                 self._store = None
 
-    def reconcile_notifications(self, *, cancelled: Callable[[], bool] | None = None) -> bool:
+    def wake_cleanup(self) -> None:
+        """Wake the managed cleanup worker; safe from any thread."""
+        self._cleanup_wake.set()
+
+    def reconcile_notifications(
+        self,
+        *,
+        cancelled: Callable[[], bool] | None = None,
+        drain_cleanup: bool = True,
+    ) -> bool:
+        """Startup reconciliation.
+
+        `drain_cleanup=True` is the direct/local path: it drains the strips it
+        requested. A Runtime passes False because its managed cleanup worker
+        owns the drain (and must not be preceded by a blocking pass here).
+        """
         with self._lock:
             self._ensure_store()
             cards = list(self._cards.values())
@@ -435,7 +460,7 @@ class Inbox:
                     and card.telegram_message_id is not None
                     and card.telegram_keyboard_attached
                 ):
-                    healthy = self._request_strip(card) and healthy
+                    self._request_strip(card)
             elif (
                 card.telegram_chat_id is not None
                 and card.telegram_message_id is not None
@@ -444,7 +469,37 @@ class Inbox:
                 self._finalize_telegram(card)
             else:
                 self._notify_owner(card)
-        return healthy
+        # A direct/local Inbox has no worker: draining here keeps its cleanup
+        # contract. Under the Runtime worker this only queues the work.
+        return (self._service_cleanup() if drain_cleanup else True) and healthy
+
+    def cleanup_loop(self, *, cancelled: Callable[[], bool]) -> None:
+        """The one managed cleanup worker: durable terminal flags, bounded retry."""
+        self._cleanup_active = True
+        try:
+            while not cancelled():
+                if self._store is None:
+                    return
+                # Clear before the snapshot: a signal raised during the pass is
+                # not lost, it schedules the next one.
+                self._cleanup_wake.clear()
+                failed = False
+                for card in self._cleanup_snapshot():
+                    if cancelled():
+                        return
+                    if not self._strip_card(card):
+                        failed = True
+                if failed:
+                    deadline = time.monotonic() + CLEANUP_RETRY_SECONDS
+                    while not cancelled():
+                        remaining = deadline - time.monotonic()
+                        if remaining <= 0:
+                            break
+                        self._cleanup_wake.wait(remaining)
+                    continue
+                self._cleanup_wake.wait()
+        finally:
+            self._cleanup_active = False
 
     def record_telegram_message(
         self,
@@ -524,31 +579,38 @@ class Inbox:
         *,
         bearer: str | None = None,
     ) -> Any:
-        with self._lock:
-            args = dict(arguments or {})
-            if name not in TOOL_NAMES:
-                raise InboxError("unknown tool")
-            handlers = {
-                "how_to_use": self._how_to_use,
-                "ask_question": self._ask_question,
-                "request_approval": self._request_approval,
-                "get_response": self._get_response,
-                "list_unprocessed": self._list_unprocessed,
-                "list_pending": self._list_pending,
-                "mark_processed": self._mark_processed,
-                "report_execution": self._report_execution,
-                "update_request": self._update_request,
-                "cancel_request": self._cancel_request,
-                "notify_user": self._notify_user,
-                "request_feedback": self._request_feedback,
-            }
+        # Handlers own their short state locks; no lock spans a remote effect.
+        args = dict(arguments or {})
+        if name not in TOOL_NAMES:
+            raise InboxError("unknown tool")
+        handlers = {
+            "how_to_use": self._how_to_use,
+            "ask_question": self._ask_question,
+            "request_approval": self._request_approval,
+            "get_response": self._get_response,
+            "list_unprocessed": self._list_unprocessed,
+            "list_pending": self._list_pending,
+            "mark_processed": self._mark_processed,
+            "report_execution": self._report_execution,
+            "update_request": self._update_request,
+            "cancel_request": self._cancel_request,
+            "notify_user": self._notify_user,
+            "request_feedback": self._request_feedback,
+        }
+        try:
             result = handlers[name](args, bearer=bearer)
+        finally:
+            # A read that expires a card queues a strip before it may refuse;
+            # drain it past the handler's lock (a worker owns its own drain).
+            self._service_cleanup()
         # The wait parks outside the lock: a parked call must not block the
         # inbox, and the handler above already validated `wait_seconds`.
         if name in WAIT_TOOLS and isinstance(result, dict) and "request_id" in result:
             wait_seconds = self._opt_wait(args) or 0.0
             if wait_seconds > 0:
-                return self._envelope(self._park(result["request_id"], wait_seconds))
+                parked = self._envelope(self._park(result["request_id"], wait_seconds))
+                self._service_cleanup()
+                return parked
         return result
 
     def record_tap(
@@ -571,6 +633,9 @@ class Inbox:
             updated.responded_at = now
             updated.responded_via = responded_via
             self._save(updated)
+        # Queue the terminal cleanup; the worker drains it, or a later direct
+        # call does (this recorder is not itself a presentation effect).
+        self._request_strip(updated)
 
     def claim(
         self,
@@ -586,6 +651,8 @@ class Inbox:
         responded_via: str = "telegram",
         owner_verified: bool = False,
     ) -> dict[str, Any]:
+        refused: ClaimRefused | None = None
+        envelope: dict[str, Any] | None = None
         with self._lock:
             if not owner_verified and from_id != self.owner_telegram_id:
                 raise ClaimRefused("not_owner")
@@ -593,16 +660,34 @@ class Inbox:
             card = self._cards.get(card_id)
             if card is None:
                 raise ClaimRefused("unknown")
-            return self._claim_locked(
-                card,
-                version=version,
-                choice=choice,
-                choice_index=choice_index,
-                text=text,
-                telegram_chat_id=telegram_chat_id,
-                telegram_message_id=telegram_message_id,
-                responded_via=responded_via,
-            )
+            try:
+                envelope = self._claim_locked(
+                    card,
+                    version=version,
+                    choice=choice,
+                    choice_index=choice_index,
+                    text=text,
+                    telegram_chat_id=telegram_chat_id,
+                    telegram_message_id=telegram_message_id,
+                    responded_via=responded_via,
+                )
+            except ClaimRefused as exc:
+                refused = exc
+            current = self._cards.get(card_id)
+        # The strip is a remote effect: request it past the state lock, and let
+        # the cleanup worker own it whenever a Runtime runs one. An expiry
+        # triggered by this read already requested its one strip.
+        if current is not None and not (
+            refused is not None and getattr(refused, "reason", None) == "expired"
+        ):
+            self._request_strip(current)
+        try:
+            if refused is not None:
+                raise refused
+            assert envelope is not None
+            return envelope
+        finally:
+            self._service_cleanup()
 
     def claim_reply(
         self,
@@ -618,6 +703,9 @@ class Inbox:
         state, so it survives a restart. The refusals mirror the tap path:
         an unknown or closed card records nothing.
         """
+        refused: ClaimRefused | None = None
+        envelope: dict[str, Any] | None = None
+        card_id: str | None = None
         with self._lock:
             if from_id != self.owner_telegram_id or chat_id != self.owner_telegram_id:
                 raise ClaimRefused("not_owner")
@@ -633,20 +721,41 @@ class Inbox:
                 card = self._cards.get(bound_id)
                 if card is None:
                     raise ClaimRefused("unknown")
-                return self._claim_locked(
-                    card,
-                    version=bound_version,
-                    text=text,
-                    responded_via="telegram-reply",
-                )
-            return self._claim_locked(
-                card,
-                version=card.version,
-                text=text,
-                telegram_chat_id=chat_id,
-                telegram_message_id=message_id,
-                responded_via="telegram-reply",
-            )
+                card_id = card.request_id
+                try:
+                    envelope = self._claim_locked(
+                        card,
+                        version=bound_version,
+                        text=text,
+                        responded_via="telegram-reply",
+                    )
+                except ClaimRefused as exc:
+                    refused = exc
+            else:
+                card_id = card.request_id
+                try:
+                    envelope = self._claim_locked(
+                        card,
+                        version=card.version,
+                        text=text,
+                        telegram_chat_id=chat_id,
+                        telegram_message_id=message_id,
+                        responded_via="telegram-reply",
+                    )
+                except ClaimRefused as exc:
+                    refused = exc
+            current = self._cards.get(card_id) if card_id is not None else None
+        if current is not None and not (
+            refused is not None and getattr(refused, "reason", None) == "expired"
+        ):
+            self._request_strip(current)
+        try:
+            if refused is not None:
+                raise refused
+            assert envelope is not None
+            return envelope
+        finally:
+            self._service_cleanup()
 
     def pending_cards(self) -> list[Card]:
         """The open Cards in one stable oldest-first order."""
@@ -719,9 +828,10 @@ class Inbox:
             return page, total, next_anchor, expired
 
     def strip_closed(self, cards: list[Card]) -> None:
-        """Strip the just-expired Cards' keyboards with no caller-held lock."""
+        """Request the just-expired Cards' strips from outside the caller's lock."""
         for card in cards:
             self._request_strip(card)
+        self._service_cleanup()
 
     def navigation_payload(self, request_id: str) -> dict[str, Any] | None:
         """The Card payload the navigator renders, with its live state."""
@@ -745,9 +855,27 @@ class Inbox:
             return None
         return state if isinstance(state, dict) else None
 
-    def save_navigator(self, state: dict[str, Any]) -> None:
+    def save_navigator(self, state: dict[str, Any], *, generation: int | None = None) -> bool:
+        """Persist the navigator JSON; a stale generation never overwrites a newer one.
+
+        The generation travels inside the existing navigator JSON (legacy rows
+        default to 0), so no schema change is needed. Returns False when a
+        newer intent/confirmation is already stored.
+        """
         with self._lock:
-            self._ensure_store().save_state(NAVIGATOR_STATE_KEY, json.dumps(state))
+            store = self._ensure_store()
+            if generation is not None:
+                raw = store.load_state(NAVIGATOR_STATE_KEY)
+                current = 0
+                if raw is not None:
+                    try:
+                        current = int(json.loads(raw).get("generation") or 0)
+                    except (ValueError, TypeError, AttributeError):
+                        current = 0
+                if generation < current:
+                    return False
+            store.save_state(NAVIGATOR_STATE_KEY, json.dumps(state))
+            return True
 
     def record_reply_prompt(
         self, chat_id: int, message_id: int, request_id: str, version: int
@@ -789,13 +917,10 @@ class Inbox:
         telegram_message_id: int | None = None,
         responded_via: str = "telegram",
     ) -> dict[str, Any]:
-        was_open = card.state == "open"
         card = self._refresh_expiry(card)
         if version != card.version:
             raise ClaimRefused("stale_version")
         if card.state != "open":
-            if not (was_open and card.state == "expired"):
-                self._request_strip(card)
             reasons = {
                 "expired": "expired",
                 "cancelled": "cancelled",
@@ -858,39 +983,103 @@ class Inbox:
                     telegram_chat_id,
                     telegram_message_id,
                 )
-        self._request_strip(updated)
         return self._envelope(updated)
 
+    def _cleanup_capable(self) -> bool:
+        return hasattr(self._telegram, "strip_message") or hasattr(self._telegram, "edit_and_strip")
+
     def _request_strip(self, card: Card) -> bool:
-        started = time.monotonic()
-        try:
-            strip = getattr(self._telegram, "strip_message", None)
-            located = card.telegram_chat_id is not None and card.telegram_message_id is not None
-            if strip is not None:
-                if not located or not card.telegram_keyboard_attached:
-                    return True
-                # Use the captured durable locator, never a newer adapter-cache entry.
-                strip(card.telegram_chat_id, card.telegram_message_id)
-            else:
+        """Ask for one terminal keyboard strip. Never performs remote I/O for
+        the durable adapter; the managed worker (or the local drain path when
+        no worker runs) reads the card flag back. A locator-less legacy port
+        keeps its one inline call per request."""
+        if not self._cleanup_capable():
+            return True
+        if card.state == "open":
+            return True
+        if getattr(self._telegram, "strip_message", None) is None:
+            try:
                 self._telegram.edit_and_strip(card.request_id, card.version)
-            if located:
-                with self._lock:
-                    current = self._cards.get(card.request_id)
-                    if (
-                        current is not None and current.state != "open"
-                        and current.version == card.version
-                        and current.telegram_chat_id == card.telegram_chat_id
-                        and current.telegram_message_id == card.telegram_message_id
-                    ):
-                        updated = deepcopy(current)
-                        updated.telegram_keyboard_attached = False
-                        self._save(updated)
+            except Exception as exc:
+                print(f"Telegram strip failed: {type(exc).__name__}", flush=True)
+            return True
+        if card.telegram_chat_id is None or card.telegram_message_id is None:
+            return True
+        if not card.telegram_keyboard_attached:
+            return True
+        self._cleanup_wake.set()
+        return True
+
+    def _cleanup_snapshot(self) -> list[Card]:
+        if getattr(self._telegram, "strip_message", None) is None:
+            return []
+        with self._lock:
+            if self._store is None:
+                return []
+            return [
+                card
+                for card in self._cards.values()
+                if card.state != "open"
+                and card.telegram_keyboard_attached
+                and card.telegram_chat_id is not None
+                and card.telegram_message_id is not None
+            ]
+
+    def _service_cleanup(self) -> bool:
+        """Drain pending strips when no worker owns cleanup; otherwise queue only."""
+        if self._cleanup_active or self._store is None:
+            return True
+        self._cleanup_wake.clear()
+        healthy = True
+        for card in self._cleanup_snapshot():
+            if not self._strip_card(card):
+                healthy = False
+        if not healthy:
+            self._cleanup_wake.set()
+        return healthy
+
+    def _strip_card(self, card: Card) -> bool:
+        started = time.monotonic()
+        with self._lock:
+            current = self._cards.get(card.request_id)
+            if (
+                current is None
+                or current.state == "open"
+                or not current.telegram_keyboard_attached
+                or current.telegram_chat_id is None
+                or current.telegram_message_id is None
+            ):
+                return True
+            # The captured durable locator is the identity the strip settles on.
+            chat_id = current.telegram_chat_id
+            message_id = current.telegram_message_id
+            version = current.version
+            locator = (chat_id, message_id)
+            if locator in self._stripping:
+                return True
+            self._stripping.add(locator)
+        try:
+            self._telegram.strip_message(chat_id, message_id)
+            with self._lock:
+                current = self._cards.get(card.request_id)
+                if (
+                    current is not None and current.state != "open"
+                    and current.version == version
+                    and current.telegram_chat_id == chat_id
+                    and current.telegram_message_id == message_id
+                ):
+                    updated = deepcopy(current)
+                    updated.telegram_keyboard_attached = False
+                    self._save(updated)
         except Exception as exc:
             print(
                 f"Telegram strip failed: {type(exc).__name__} "
                 f"elapsed={time.monotonic() - started:.3f}s", flush=True,
             )
             return False
+        finally:
+            with self._lock:
+                self._stripping.discard(locator)
         return True
 
     def _park(self, request_id: str, wait_seconds: float) -> Card:
@@ -1089,214 +1278,260 @@ class Inbox:
 
     def _notify_user(self, args: dict[str, Any], *, bearer: str | None) -> dict[str, Any]:
         self._require_create_bearer(bearer)
-        self._reject_unknown(args, NOTIFY_FIELDS | SHARED_CREATE)
-        self._reject_keys(args, ASK_ONLY | {"details"})
-        title = self._require_str(args, "title", required=True)
-        message = self._opt_str(args, "message")
-        if "result" in args:
-            self._validate_result(args["result"])
-        shared = self._opt_shared(args, require_external=False)
-        if not self._notifications_ready:
-            raise NotifyRejected("Telegram bootstrap is pending")
-        external_id = shared["external_id"]
-        store = self._ensure_store()
-        if external_id and external_id in self._notify_external_ids:
-            return {"ok": True, "duplicate": True, "kind": "notify"}
-        if external_id:
-            store.save_notification_id(external_id)
-            self._notify_external_ids.add(external_id)
+        with self._lock:
+            self._reject_unknown(args, NOTIFY_FIELDS | SHARED_CREATE)
+            self._reject_keys(args, ASK_ONLY | {"details"})
+            title = self._require_str(args, "title", required=True)
+            message = self._opt_str(args, "message")
+            if "result" in args:
+                self._validate_result(args["result"])
+            shared = self._opt_shared(args, require_external=False)
+            if not self._notifications_ready:
+                raise NotifyRejected("Telegram bootstrap is pending")
+            external_id = shared["external_id"]
+            store = self._ensure_store()
+            if external_id and external_id in self._notify_external_ids:
+                return {"ok": True, "duplicate": True, "kind": "notify"}
+            if external_id:
+                store.save_notification_id(external_id)
+                self._notify_external_ids.add(external_id)
+            payload = {
+                "kind": "notify",
+                "title": title,
+                "message": message,
+                "agent_name": shared["agent_name"],
+                "risk": shared["risk"],
+            }
+        # The send is the effect; the reservation above is the durable guard.
         try:
-            self._notifier.notify(
-                {
-                    "kind": "notify",
-                    "title": title,
-                    "message": message,
-                    "agent_name": shared["agent_name"],
-                    "risk": shared["risk"],
-                }
-            )
+            self._notifier.notify(payload)
         except Exception as exc:
             if external_id and isinstance(exc, NotifyRejected):
-                self._notify_external_ids.discard(external_id)
-                try:
-                    store.delete_notification_id(external_id)
-                except Exception:
-                    # ponytail: leftover reservation fail-closes after restart
-                    pass
+                with self._lock:
+                    self._notify_external_ids.discard(external_id)
+                    try:
+                        store.delete_notification_id(external_id)
+                    except Exception:
+                        # ponytail: leftover reservation fail-closes after restart
+                        pass
             raise
         return {"ok": True, "duplicate": False, "kind": "notify"}
 
     def _get_response(self, args: dict[str, Any], *, bearer: str | None) -> dict[str, Any]:
         _ = bearer
-        self._reject_unknown(args, {"request_id", "external_id", "wait_seconds"})
-        if ("request_id" in args) == ("external_id" in args):
-            raise InboxError("exactly one of request_id or external_id is required")
-        if "external_id" in args:
-            external_id = self._require_str(args, "external_id", required=True)
-            self._ensure_store()
-            request_id = self._by_external_id.get(external_id)
-            if request_id is None:
-                raise InboxError("unknown external_id")
-        else:
-            request_id = self._require_str(args, "request_id", required=True)
-        self._opt_wait(args)
-        return self._envelope(self._require_card(request_id))
+        with self._lock:
+            self._reject_unknown(args, {"request_id", "external_id", "wait_seconds"})
+            if ("request_id" in args) == ("external_id" in args):
+                raise InboxError("exactly one of request_id or external_id is required")
+            if "external_id" in args:
+                external_id = self._require_str(args, "external_id", required=True)
+                self._ensure_store()
+                request_id = self._by_external_id.get(external_id)
+                if request_id is None:
+                    raise InboxError("unknown external_id")
+            else:
+                request_id = self._require_str(args, "request_id", required=True)
+            self._opt_wait(args)
+            return self._envelope(self._require_card(request_id))
 
     def _list_unprocessed(self, args: dict[str, Any], *, bearer: str | None) -> list[dict[str, Any]]:
         _ = bearer
-        self._reject_unknown(args, set())
-        self._ensure_store()
-        return [
-            self._envelope(self._refresh_expiry(card))
-            for card in self._cards.values()
-            if card.state == "tapped" and card.processed_at is None
-        ]
+        with self._lock:
+            self._reject_unknown(args, set())
+            self._ensure_store()
+            return [
+                self._envelope(self._refresh_expiry(card))
+                for card in self._cards.values()
+                if card.state == "tapped" and card.processed_at is None
+            ]
 
     def _list_pending(self, args: dict[str, Any], *, bearer: str | None) -> list[dict[str, Any]]:
         _ = bearer
-        self._reject_unknown(args, set())
-        self._ensure_store()
-        return [
-            self._envelope(card)
-            for card in reversed(list(self._cards.values()))
-            if self._refresh_expiry(card).state == "open"
-        ]
+        with self._lock:
+            self._reject_unknown(args, set())
+            self._ensure_store()
+            return [
+                self._envelope(card)
+                for card in reversed(list(self._cards.values()))
+                if self._refresh_expiry(card).state == "open"
+            ]
 
     def _mark_processed(self, args: dict[str, Any], *, bearer: str | None) -> dict[str, Any]:
         _ = bearer
-        self._reject_unknown(args, {"request_id"})
-        request_id = self._require_str(args, "request_id", required=True)
-        card = self._require_card(request_id)
-        if card.processed_at is None:
-            if card.state != "tapped":
-                raise InboxError("card is not tapped")
-            updated = deepcopy(card)
-            updated.processed_at = self._iso_now()
-            self._save(updated)
-            card = updated
-        return self._envelope(card)
+        with self._lock:
+            self._reject_unknown(args, {"request_id"})
+            request_id = self._require_str(args, "request_id", required=True)
+            card = self._require_card(request_id)
+            if card.processed_at is None:
+                if card.state != "tapped":
+                    raise InboxError("card is not tapped")
+                updated = deepcopy(card)
+                updated.processed_at = self._iso_now()
+                self._save(updated)
+                card = updated
+            return self._envelope(card)
 
     def _report_execution(self, args: dict[str, Any], *, bearer: str | None) -> dict[str, Any]:
         _ = bearer
-        self._reject_unknown(args, {"request_id", "outcome", "note", "result"})
-        request_id = self._require_str(args, "request_id", required=True)
-        outcome = args.get("outcome")
-        if outcome not in REPORT_OUTCOMES:
-            raise InboxError("outcome is invalid")
-        card = self._require_card(request_id)
-        if card.kind != "approval":
-            raise InboxError("report_execution is approval-kind")
-        if card.state != "tapped":
-            raise InboxError("card is not tapped")
-        updated = deepcopy(card)
-        if "note" in args:
-            updated.execution_note = self._require_str(args, "note")
-        if "result" in args:
-            self._validate_result(args["result"])
-            updated.execution_result = args["result"]
-        updated.execution_status = str(outcome)
-        self._save(updated)
-        return self._envelope(updated)
+        with self._lock:
+            self._reject_unknown(args, {"request_id", "outcome", "note", "result"})
+            request_id = self._require_str(args, "request_id", required=True)
+            outcome = args.get("outcome")
+            if outcome not in REPORT_OUTCOMES:
+                raise InboxError("outcome is invalid")
+            card = self._require_card(request_id)
+            if card.kind != "approval":
+                raise InboxError("report_execution is approval-kind")
+            if card.state != "tapped":
+                raise InboxError("card is not tapped")
+            updated = deepcopy(card)
+            if "note" in args:
+                updated.execution_note = self._require_str(args, "note")
+            if "result" in args:
+                self._validate_result(args["result"])
+                updated.execution_result = args["result"]
+            updated.execution_status = str(outcome)
+            self._save(updated)
+            return self._envelope(updated)
 
     def _update_request(self, args: dict[str, Any], *, bearer: str | None) -> dict[str, Any]:
         _ = bearer
-        self._reject_unknown(args, UPDATE_FIELDS)
-        request_id = self._require_str(args, "request_id", required=True)
-        expected = args.get("expected_version")
-        if not isinstance(expected, int) or isinstance(expected, bool) or expected < 1:
-            raise InboxError("expected_version is invalid")
-        card = self._require_card(request_id)
-        if card.state != "open":
-            raise InboxError("card is not open")
-        if expected != card.version:
-            raise InboxError("expected_version does not match")
-        if card.kind == "question":
-            self._reject_keys(args, APPROVAL_ONLY)
-        elif card.kind == "approval":
-            self._reject_keys(args, ASK_ONLY)
-        original = deepcopy(card)
-        updated = deepcopy(card)
-        if "title" in args:
-            updated.title = self._require_str(args, "title")
-        if "details" in args:
-            updated.details = self._require_str(args, "details")
-        if "choices" in args:
-            updated.choices = self._opt_choices(args)
-        if "choice_notes" in args:
-            updated.choice_notes = self._opt_choice_notes(args, updated.choices)
-        elif "choices" in args:
-            # New choices invalidate notes that were written for the old ones.
-            updated.choice_notes = []
-        self._apply_shared(updated, args)
-        if args.get("expires_in_seconds") is not None:
-            updated.expires_in_seconds = self._ttl(args)
-            updated.expires_at = self._clock() + updated.expires_in_seconds
-        renotify = args.get("renotify") is True
-        if renotify:
-            updated.notified = False
-        updated.telegram_chat_id = None
-        updated.telegram_message_id = None
-        updated.telegram_keyboard_attached = False
-        updated.version += 1
-        self._save(updated)
-        if original.telegram_chat_id is not None and original.telegram_message_id is not None:
+        with self._lock:
+            self._reject_unknown(args, UPDATE_FIELDS)
+            request_id = self._require_str(args, "request_id", required=True)
+            expected = args.get("expected_version")
+            if not isinstance(expected, int) or isinstance(expected, bool) or expected < 1:
+                raise InboxError("expected_version is invalid")
+            card = self._require_card(request_id)
+            if card.state != "open":
+                raise InboxError("card is not open")
+            if expected != card.version:
+                raise InboxError("expected_version does not match")
+            if card.kind == "question":
+                self._reject_keys(args, APPROVAL_ONLY)
+            elif card.kind == "approval":
+                self._reject_keys(args, ASK_ONLY)
+            original = deepcopy(card)
+            updated = deepcopy(card)
+            if "title" in args:
+                updated.title = self._require_str(args, "title")
+            if "details" in args:
+                updated.details = self._require_str(args, "details")
+            if "choices" in args:
+                updated.choices = self._opt_choices(args)
+            if "choice_notes" in args:
+                updated.choice_notes = self._opt_choice_notes(args, updated.choices)
+            elif "choices" in args:
+                # New choices invalidate notes that were written for the old ones.
+                updated.choice_notes = []
+            self._apply_shared(updated, args)
+            if args.get("expires_in_seconds") is not None:
+                updated.expires_in_seconds = self._ttl(args)
+                updated.expires_at = self._clock() + updated.expires_in_seconds
+            renotify = args.get("renotify") is True
+            if renotify:
+                updated.notified = False
+            updated.telegram_chat_id = None
+            updated.telegram_message_id = None
+            updated.telegram_keyboard_attached = False
+            updated.version += 1
+            self._save(updated)
+            view = self._create_view(updated, duplicate=False)
+            staged = deepcopy(updated)
+        old_chat, old_message = original.telegram_chat_id, original.telegram_message_id
+        if old_chat is not None and old_message is not None:
             try:
-                self._telegram.edit_and_strip(original.request_id, original.version)
+                self._strip_captured(old_chat, old_message, original.request_id, original.version)
             except Exception:
-                self._save(original)
-                raise
+                # A stale failure must never restore over a newer revision or
+                # an answer that landed while the old message strip was blocked.
+                restored = False
+                with self._lock:
+                    current = self._cards.get(request_id)
+                    if (
+                        current is not None and current.version == staged.version
+                        and current.state == "open"
+                        and current.response_choice is None and current.response_text is None
+                    ):
+                        self._save(original)
+                        restored = True
+                if restored:
+                    raise
+                print(
+                    "Telegram update strip failed: newer revision retained",
+                    flush=True,
+                )
         if renotify:
-            self._notify_owner(updated, renotify=True)
-        return self._create_view(updated, duplicate=False)
+            with self._lock:
+                current = self._cards.get(updated.request_id)
+                notify_card = deepcopy(current) if current is not None else staged
+            self._notify_owner(notify_card, renotify=True)
+        return view
+
+    def _strip_captured(
+        self, chat_id: int, message_id: int, card_id: str, version: int
+    ) -> None:
+        """Strip the captured old locator, never the adapter's latest cache."""
+        strip = getattr(self._telegram, "strip_message", None)
+        if strip is not None:
+            strip(chat_id, message_id)
+            return
+        self._telegram.edit_and_strip(card_id, version)
 
     def _cancel_request(self, args: dict[str, Any], *, bearer: str | None) -> dict[str, Any]:
         _ = bearer
-        self._reject_unknown(args, {"request_id", "reason"})
-        request_id = self._require_str(args, "request_id", required=True)
-        reason = args.get("reason", "cancelled")
-        if reason not in CANCEL_REASONS:
-            raise InboxError("reason is invalid")
-        card = self._require_card(request_id)
-        if card.state == "open":
-            updated = deepcopy(card)
-            updated.state = "cancelled"
-            updated.cancel_reason = str(reason)
-            self._save(updated)
-            self._notify_waiters(updated.request_id)
-            self._request_strip(updated)
-            card = updated
+        with self._lock:
+            self._reject_unknown(args, {"request_id", "reason"})
+            request_id = self._require_str(args, "request_id", required=True)
+            reason = args.get("reason", "cancelled")
+            if reason not in CANCEL_REASONS:
+                raise InboxError("reason is invalid")
+            card = self._require_card(request_id)
+            if card.state == "open":
+                updated = deepcopy(card)
+                updated.state = "cancelled"
+                updated.cancel_reason = str(reason)
+                self._save(updated)
+                self._notify_waiters(updated.request_id)
+                card = updated
+        self._request_strip(card)
+        self._service_cleanup()
         return self._envelope(card)
 
     def _create_card(self, *, kind: str, args: dict[str, Any], **fields: Any) -> dict[str, Any]:
-        self._ensure_store()
-        shared = self._opt_shared(args, require_external=True)
-        external_id = shared["external_id"]
-        existing_id = self._by_external_id.get(external_id)
-        if existing_id is not None:
-            existing = self._refresh_expiry(self._cards[existing_id])
-            if existing.kind != kind:
-                raise InboxError("external_id kind mismatch")
-            self._notify_owner(existing)
-            return self._create_view(existing, duplicate=True)
-        ttl = self._ttl(args)
-        now = self._clock()
-        allow_freeform = fields.pop("allow_freeform", None)
-        if allow_freeform is not None and not isinstance(allow_freeform, bool):
-            raise InboxError("allow_freeform is invalid")
-        card = Card(
-            request_id=str(uuid.uuid4()),
-            kind=kind,
-            external_id=external_id,
-            expires_in_seconds=ttl,
-            expires_at=now + ttl,
-            created_at=now,
-            allow_freeform=allow_freeform,
-            **fields,
-            **{k: v for k, v in shared.items() if k != "external_id" and k != "wait_seconds"},
-        )
-        self._save(card)
-        self._notify_owner(card)
-        return self._create_view(card, duplicate=False)
+        with self._lock:
+            self._ensure_store()
+            shared = self._opt_shared(args, require_external=True)
+            external_id = shared["external_id"]
+            existing_id = self._by_external_id.get(external_id)
+            if existing_id is not None:
+                existing = self._refresh_expiry(self._cards[existing_id])
+                if existing.kind != kind:
+                    raise InboxError("external_id kind mismatch")
+                notify_card = deepcopy(existing)
+                view = self._create_view(existing, duplicate=True)
+            else:
+                ttl = self._ttl(args)
+                now = self._clock()
+                allow_freeform = fields.pop("allow_freeform", None)
+                if allow_freeform is not None and not isinstance(allow_freeform, bool):
+                    raise InboxError("allow_freeform is invalid")
+                card = Card(
+                    request_id=str(uuid.uuid4()),
+                    kind=kind,
+                    external_id=external_id,
+                    expires_in_seconds=ttl,
+                    expires_at=now + ttl,
+                    created_at=now,
+                    allow_freeform=allow_freeform,
+                    **fields,
+                    **{k: v for k, v in shared.items() if k != "external_id" and k != "wait_seconds"},
+                )
+                self._save(card)
+                notify_card = deepcopy(card)
+                view = self._create_view(card, duplicate=False)
+        self._notify_owner(notify_card)
+        return view
 
     def _opt_shared(self, args: dict[str, Any], *, require_external: bool) -> dict[str, Any]:
         self._opt_wait(args)
