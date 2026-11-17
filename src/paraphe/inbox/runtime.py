@@ -23,6 +23,9 @@ DEFAULT_MCP_HOST = "127.0.0.1"
 DEFAULT_MCP_PORT = 8787
 DEFAULT_POLL_SECONDS = 25
 TELEGRAM_REQUEST_TIMEOUT_SECONDS = 15
+# answerCallbackQuery only clears the client's spinner; a short socket bound
+# keeps one stuck acknowledgement out of the update loop.
+ANSWER_CALLBACK_TIMEOUT_SECONDS = 1
 NAVIGATOR_TICK_SECONDS = 1
 
 
@@ -132,10 +135,12 @@ class TelegramBotAPI:
             method="POST",
         )
         poll_seconds = int(payload.get("timeout", 0))
-        timeout = (
-            max(TELEGRAM_REQUEST_TIMEOUT_SECONDS, poll_seconds + 10)
-            if poll_seconds > 0 else TELEGRAM_REQUEST_TIMEOUT_SECONDS
-        )
+        if method == "answerCallbackQuery":
+            timeout = ANSWER_CALLBACK_TIMEOUT_SECONDS
+        elif poll_seconds > 0:
+            timeout = max(TELEGRAM_REQUEST_TIMEOUT_SECONDS, poll_seconds + 10)
+        else:
+            timeout = TELEGRAM_REQUEST_TIMEOUT_SECONDS
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 raw = response.read().decode("utf-8")
@@ -213,6 +218,7 @@ class Runtime:
         self._offset_ready = False
         self._reconcile_worker: threading.Thread | None = None
         self._navigator_worker: threading.Thread | None = None
+        self._reconciled = threading.Event()
 
     @classmethod
     def start(cls, environ: Mapping[str, str] | None = None) -> "Runtime":
@@ -350,6 +356,9 @@ class Runtime:
                 print(f"Telegram bootstrap completed elapsed={time.monotonic() - started:.3f}s", flush=True)
         if self._stopping.is_set():
             return
+        # Own cleanup before the first poll: from here the poll thread only
+        # queues strips; the managed worker is the sole drain.
+        self.inbox.own_cleanup()
         with self.inbox._lock:
             if self._reconcile_worker is None and not self._stopping.is_set():
                 self.inbox._notifications_ready = True
@@ -370,10 +379,13 @@ class Runtime:
                 self._stopping.wait(1)
 
     def _reconcile_notifications(self) -> None:
+        """Startup reconciliation, then the one managed terminal-cleanup worker."""
         started = time.monotonic()
         print("Telegram reconcile started", flush=True)
         try:
-            result = self.inbox.reconcile_notifications(cancelled=self._stopping.is_set)
+            result = self.inbox.reconcile_notifications(
+                cancelled=self._stopping.is_set, drain_cleanup=False
+            )
         except Exception as exc:
             print(
                 f"Telegram reconcile failed: {type(exc).__name__} "
@@ -384,6 +396,10 @@ class Runtime:
             if self._stopping.is_set():
                 state = "stopped"
             print(f"Telegram reconcile {state} elapsed={time.monotonic() - started:.3f}s", flush=True)
+        finally:
+            self._reconciled.set()
+        # The same managed thread now serves terminal cleanup until stop/close.
+        self.inbox.cleanup_loop(cancelled=self._stopping.is_set)
 
     def _navigator_refresh(self) -> None:
         while not self._stopping.wait(NAVIGATOR_TICK_SECONDS):
@@ -396,6 +412,7 @@ class Runtime:
 
     def stop(self) -> None:
         self._stopping.set()
+        self.inbox.wake_cleanup()
 
     def close(self) -> None:
         if self._closed:

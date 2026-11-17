@@ -207,8 +207,15 @@ class TestRuntime(unittest.TestCase):
                 self.assertEqual(stored["state"], "tapped")
                 self.assertEqual(stored["response_choice"], "Approve")
                 self.assertEqual(stored["responded_via"], "telegram")
-                self.assertFalse(stored["telegram_keyboard_attached"])
-                self.assertIn(card.telegram_message_id, stripped)
+                # Cleanup is asynchronous now: the tap is recorded and the
+                # poll moves on while the historical strip is still blocked.
+                # The durable keyboard flag keeps its own strip retryable.
+                self.assertTrue(stored["telegram_keyboard_attached"])
+                self.assertNotIn(
+                    card.telegram_message_id,
+                    stripped,
+                    "a tap waited for the blocked historical strip",
+                )
                 with closing(sqlite3.connect(self.store_path)) as conn:
                     self.assertEqual(conn.execute(
                         "SELECT value FROM durable_state WHERE key='telegram_next_offset'"
@@ -355,8 +362,7 @@ class TestRuntime(unittest.TestCase):
 
     def _start_lifecycle(self, runtime):
         def ready():
-            runtime._reconcile_worker.join(2)
-            self.assertFalse(runtime._reconcile_worker.is_alive())
+            self.assertTrue(runtime._reconciled.wait(2))
             runtime.stop()
 
         with mock.patch.object(runtime, "poll_once", side_effect=ready):
@@ -368,8 +374,7 @@ class TestRuntime(unittest.TestCase):
 
         def once():
             try:
-                runtime._reconcile_worker.join(2)
-                self.assertFalse(runtime._reconcile_worker.is_alive())
+                self.assertTrue(runtime._reconciled.wait(2))
                 original()
             finally:
                 runtime.stop()
@@ -528,7 +533,7 @@ class TestRuntime(unittest.TestCase):
                 self._run_one_poll(restarted)
             self._assert_http(restarted)
         self.assertIn("strip failed: RuntimeError", output.getvalue())
-        self.assertIn("reconcile degraded elapsed=", output.getvalue())
+        self.assertIn("Telegram reconcile completed elapsed=", output.getvalue())
         self.assertNotIn("test-secret", output.getvalue())
         self.assertNotIn("card-private-content", output.getvalue())
         self.assertEqual(restarted.inbox.call_tool("get_response", {
@@ -553,9 +558,7 @@ class TestRuntime(unittest.TestCase):
                 release.wait(2)
                 return [{"update_id": 41}]
             assert runtime is not None
-            assert runtime._reconcile_worker is not None
-            runtime._reconcile_worker.join(2)
-            self.assertFalse(runtime._reconcile_worker.is_alive())
+            self.assertTrue(runtime._reconciled.wait(2))
             runtime.stop()
             return [{"update_id": 42, "message": {
                 "from": {"id": 999001}, "chat": {"id": 999001, "type": "private"},

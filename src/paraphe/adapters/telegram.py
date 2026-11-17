@@ -430,9 +430,10 @@ class TelegramAdapter:
         # Two navigator locks: `_nav_state` is short and memory-only,
         # `_nav_edit` spans one Telegram edit. Never wait for `_nav_edit`
         # while holding `_nav_state`, and never hold `_nav_state` across an
-        # inbox or Telegram call.
+        # inbox or Telegram call. `_nav_load` only guards the one store read.
         self._nav_state = threading.RLock()
         self._nav_edit = threading.RLock()
+        self._nav_load = threading.Lock()
         self._nav: dict[str, Any] = {"message_id": None}
         self._nav_loaded = False
         self._nav_generation = 0
@@ -582,7 +583,16 @@ class TelegramAdapter:
         return []
 
     def _send_line(self, text: str) -> None:
-        self._api.send_message(self._owner_id, text, None)
+        """An owner-facing notice; a transport failure never blocks intake."""
+        started = time.monotonic()
+        try:
+            self._api.send_message(self._owner_id, text, None)
+        except Exception as exc:
+            print(
+                f"Telegram notice failed: {type(exc).__name__} "
+                f"elapsed={time.monotonic() - started:.3f}s",
+                flush=True,
+            )
 
     def _on_reply(self, chat_id: int, message_id: int, text: str) -> None:
         try:
@@ -603,28 +613,28 @@ class TelegramAdapter:
     def _on_callback(self, callback: dict[str, Any]) -> None:
         raw_callback_id = callback.get("id")
         callback_id = raw_callback_id if isinstance(raw_callback_id, str) else ""
+        # Acknowledge before any lock, claim or presentation wait. The spinner
+        # is cleared once, and a refusal must never stop the answer being read.
+        self._answer(callback_id)
         sender = callback.get("from")
         message = callback.get("message")
         if not isinstance(sender, dict) or not isinstance(message, dict):
-            self._answer(callback_id)
             return
         chat = message.get("chat")
         if not isinstance(chat, dict):
-            self._answer(callback_id)
             return
         from_id = _positive_int(sender.get("id"))
         chat_id = _positive_int(chat.get("id"))
         if (
             from_id is None
             or chat_id is None
+            or from_id != self._owner_id
             or chat.get("type") != "private"
             or chat_id != self._owner_id
         ):
-            self._answer(callback_id)
             return
         data = callback.get("data")
         if not isinstance(data, str):
-            self._answer(callback_id)
             return
         message_id = _positive_int(message.get("message_id"))
         if data.startswith("n1:"):
@@ -633,7 +643,6 @@ class TelegramAdapter:
         try:
             card_id, version, choice_index = decode_callback_data(data)
         except ValueError:
-            self._answer(callback_id)
             return
         try:
             self._inbox.claim(
@@ -645,25 +654,34 @@ class TelegramAdapter:
                 telegram_message_id=message_id,
             )
         except Exception as exc:
-            if (
-                type(exc).__name__ == "ClaimRefused"
-                and getattr(exc, "reason", None) in {"stale_message", "stale_version"}
-                and message_id is not None
-            ):
+            if type(exc).__name__ != "ClaimRefused":
+                raise
+            reason = str(getattr(exc, "reason", "") or "")
+            if reason in {"stale_message", "stale_version"} and message_id is not None:
                 try:
                     self.strip_stale_message(card_id, chat_id, message_id)
                 except Exception:
                     pass
-            self._answer(callback_id)
-            if type(exc).__name__ != "ClaimRefused":
-                raise
-            return
-        self._answer(callback_id)
+            self._send_line(
+                "Not recorded: "
+                + REFUSAL_LINES.get(reason, "that card is not answerable")
+                + "."
+            )
 
     def _answer(self, callback_id: str) -> None:
         if not callback_id:
             return
-        self._api.answer_callback_query(callback_id)
+        started = time.monotonic()
+        try:
+            self._api.answer_callback_query(callback_id)
+        except Exception as exc:
+            # Empty ACK only: it never claims the answer was recorded, and a
+            # refused or lost acknowledgement cannot poison the batch.
+            print(
+                f"Telegram acknowledgement failed: {type(exc).__name__} "
+                f"elapsed={time.monotonic() - started:.3f}s",
+                flush=True,
+            )
 
     # --- Pending navigator --------------------------------------------------
 
@@ -716,23 +734,43 @@ class TelegramAdapter:
         self._publish(now)
 
     def _navigator_state(self) -> dict[str, Any]:
-        """The navigator state, loaded once from the durable store."""
-        with self._nav_edit:
+        """The navigator state, loaded once from the durable store.
+
+        Never waits for an in-flight edit: a callback must read the active
+        identity while a slow publish is still running.
+        """
+        with self._nav_state:
+            if self._nav_loaded:
+                return self._nav
+        with self._nav_load:
             with self._nav_state:
                 if self._nav_loaded:
                     return self._nav
             loaded = self._inbox.load_navigator()
             with self._nav_state:
                 if not self._nav_loaded:
-                    self._nav = loaded if isinstance(loaded, dict) else {"message_id": None}
+                    state = loaded if isinstance(loaded, dict) else {"message_id": None}
+                    try:
+                        generation = int(state.get("generation") or 0)
+                    except (TypeError, ValueError):
+                        generation = 0
+                    state["generation"] = generation
+                    self._nav = state
+                    self._nav_generation = generation
                     self._nav_loaded = True
                 return self._nav
 
     def _navigator_intent(self, view: dict[str, Any], notice: str | None) -> None:
+        """Record a new intent and persist it before any cursor/progress move."""
         with self._nav_state:
             self._nav["view"] = view
             self._nav["notice"] = notice
             self._nav_generation += 1
+            self._nav["generation"] = self._nav_generation
+            snapshot = dict(self._nav)
+            generation = self._nav_generation
+        # No `_nav_edit`: a slow edit must not delay recording the intent.
+        self._inbox.save_navigator(snapshot, generation=generation)
 
     def _compose(
         self, view: dict[str, Any], notice: str | None
@@ -848,7 +886,8 @@ class TelegramAdapter:
                 state["published_text"] = text
                 state["published_markup"] = markup
                 snapshot = dict(state)
-            self._inbox.save_navigator(snapshot)
+                generation = int(state.get("generation") or 0)
+            self._inbox.save_navigator(snapshot, generation=generation)
             return
         if code == 429:
             wait = exc.retry_after
@@ -864,15 +903,28 @@ class TelegramAdapter:
             with self._nav_state:
                 state["suspended"] = True
                 snapshot = dict(state)
-            self._inbox.save_navigator(snapshot)
+                generation = int(state.get("generation") or 0)
+            self._inbox.save_navigator(snapshot, generation=generation)
             return
         self._back_off(now)
 
-    def _publish(self, now: float) -> None:
-        """The one navigator edit path. It never sends, never pins."""
+    def _publish(self, now: float, *, wait: bool = True) -> None:
+        """The one navigator edit path. It never sends, never pins.
+
+        `wait=False` is the poll-thread caller: it skips a publish already in
+        flight instead of delaying an answer behind a slow remote edit. When
+        an intent lands while an older edit is in flight, the fresh intent is
+        published immediately after that edit returns.
+        """
         expired: list[Any] = []
+        if wait:
+            acquired = self._nav_edit.acquire()
+        else:
+            acquired = self._nav_edit.acquire(blocking=False)
+        if not acquired:
+            return
         try:
-            with self._nav_edit:
+            for _ in range(3):
                 state = self._navigator_state()
                 with self._nav_state:
                     if state.get("suspended") or now < self._nav_next_attempt:
@@ -893,7 +945,7 @@ class TelegramAdapter:
                         self._nav_generation != generation
                         or state.get("message_id") != message_id
                     ):
-                        return
+                        continue
                 if (text, markup) == published:
                     return
                 body = f"{text}\n\n{_updated_line(now)}"
@@ -903,21 +955,30 @@ class TelegramAdapter:
                     )
                 except NotifyRejected as exc:
                     self._edit_rejected(exc, state, text, markup, now)
+                    with self._nav_state:
+                        if self._nav_generation != generation:
+                            continue
+                    return
                 except Exception as exc:
                     if type(exc).__name__ != "TelegramAPIError":
                         raise
                     self._back_off(now)
-                else:
-                    with self._nav_state:
-                        state["published_text"] = text
-                        state["published_markup"] = markup
-                        state["published_at"] = now
-                        self._nav_backoff = 0.0
-                        self._nav_next_attempt = 0.0
-                        # The latest intent and generation, never the snapshot's.
-                        snapshot = dict(state)
-                    self._inbox.save_navigator(snapshot)
+                    return
+                with self._nav_state:
+                    if self._nav_generation != generation:
+                        # A newer intent must be published, never overwritten
+                        # by this older publication's fields.
+                        continue
+                    state["published_text"] = text
+                    state["published_markup"] = markup
+                    state["published_at"] = now
+                    self._nav_backoff = 0.0
+                    self._nav_next_attempt = 0.0
+                    snapshot = dict(state)
+                self._inbox.save_navigator(snapshot, generation=generation)
+                return
         finally:
+            self._nav_edit.release()
             self._inbox.strip_closed(expired)
 
     def _retire(self, previous_id: int | None, new_id: int) -> None:
@@ -953,17 +1014,27 @@ class TelegramAdapter:
                 text = render_pending_list(cards, total, None)
                 markup = self._list_markup(cards, next_anchor)
                 now = time.time()
-                sent = self._api.send_message(
-                    self._owner_id,
-                    f"{text}\n\n{_updated_line(now)}",
-                    markup,
-                    parse_mode="HTML",
-                )
+                try:
+                    sent = self._api.send_message(
+                        self._owner_id,
+                        f"{text}\n\n{_updated_line(now)}",
+                        markup,
+                        parse_mode="HTML",
+                    )
+                except Exception as exc:
+                    # A presentation failure must not starve the update loop.
+                    print(
+                        f"Telegram navigator send failed: {type(exc).__name__}",
+                        flush=True,
+                    )
+                    return
                 message_id = _positive_int(
                     sent.get("message_id") if isinstance(sent, dict) else None
                 )
                 if message_id is None:
                     return
+                with self._nav_state:
+                    generation = max(self._nav_generation, int(state.get("generation") or 0)) + 1
                 new_state = {
                     "message_id": message_id,
                     "view": {"kind": "list", "anchor": None},
@@ -972,9 +1043,10 @@ class TelegramAdapter:
                     "published_text": text,
                     "published_markup": markup,
                     "published_at": now,
+                    "generation": generation,
                 }
                 try:
-                    self._inbox.save_navigator(new_state)
+                    self._inbox.save_navigator(new_state, generation=generation)
                 except Exception as exc:
                     print(
                         f"Telegram navigator activation failed: {type(exc).__name__}",
@@ -984,7 +1056,7 @@ class TelegramAdapter:
                 with self._nav_state:
                     self._nav = new_state
                     self._nav_loaded = True
-                    self._nav_generation += 1
+                    self._nav_generation = generation
                     self._nav_next_attempt = 0.0
                     self._nav_backoff = 0.0
             self._retire(previous_id, message_id)
@@ -999,8 +1071,8 @@ class TelegramAdapter:
         message: dict[str, Any],
         data: str,
     ) -> None:
-        # Acknowledge first: a 15 s edit must never delay it.
-        self._answer(callback_id)
+        # The callback was acknowledged once by `_on_callback`, before any work.
+        _ = callback_id
         if message.get("forward_origin") is not None:
             return
         try:
@@ -1058,7 +1130,7 @@ class TelegramAdapter:
             label = choices[choice] if 0 <= choice < len(choices) else f"option {choice + 1}"
             notice = f"Answer recorded: {label}."
         self._navigator_intent({"kind": "list", "anchor": None}, notice)
-        self._publish(now)
+        self._publish(now, wait=False)
 
     def _navigator_write(self, action: dict[str, Any], now: float) -> None:
         card_id = str(action["card_id"])
@@ -1075,15 +1147,20 @@ class TelegramAdapter:
                 },
                 None,
             )
-            self._publish(now)
+            self._publish(now, wait=False)
             return
         title = str(payload.get("title") or "Paraphe")[:120]
-        sent = self._api.send_message(
-            self._owner_id,
-            f"Write your answer to: {_escape(title)}",
-            {"force_reply": True, "input_field_placeholder": "Your answer"},
-            parse_mode="HTML",
-        )
+        try:
+            sent = self._api.send_message(
+                self._owner_id,
+                f"Write your answer to: {_escape(title)}",
+                {"force_reply": True, "input_field_placeholder": "Your answer"},
+                parse_mode="HTML",
+            )
+        except Exception as exc:
+            # No prompt was sent, so nothing may be bound to a reply.
+            print(f"Telegram prompt send failed: {type(exc).__name__}", flush=True)
+            sent = None
         message_id = _positive_int(sent.get("message_id") if isinstance(sent, dict) else None)
         if message_id is not None:
             try:
@@ -1100,9 +1177,11 @@ class TelegramAdapter:
                 "version": version,
                 "anchor": self._current_anchor(),
             },
-            "Reply to the prompt above to answer in your own words.",
+            "Reply to the prompt above to answer in your own words."
+            if message_id is not None
+            else "Not recorded: the answer prompt could not be sent.",
         )
-        self._publish(now)
+        self._publish(now, wait=False)
 
     def _navigator_open(self, action: dict[str, Any], now: float) -> None:
         card_id = str(action["card_id"])
@@ -1117,11 +1196,11 @@ class TelegramAdapter:
             },
             None,
         )
-        self._publish(now)
+        self._publish(now, wait=False)
 
     def _navigator_back(self, now: float) -> None:
         self._navigator_intent({"kind": "list", "anchor": self._current_anchor()}, None)
-        self._publish(now)
+        self._publish(now, wait=False)
 
     def _navigator_page(self, anchor: str | None, before: bool, now: float) -> None:
         if before:
@@ -1129,7 +1208,7 @@ class TelegramAdapter:
             self._inbox.strip_closed(expired)
             anchor = page[0].request_id if page else None
         self._navigator_intent({"kind": "list", "anchor": anchor}, None)
-        self._publish(now)
+        self._publish(now, wait=False)
 
     def _current_anchor(self) -> str | None:
         with self._nav_state:

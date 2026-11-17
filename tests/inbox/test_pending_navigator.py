@@ -545,8 +545,10 @@ class TestPendingEntryPoint(NavigatorCase):
         self.pending()
         first = self.nav_id()
         self.api.send_errors = [NotifyRejected("rejected", code=500)]
-        with self.assertRaises(NotifyRejected):
+        output = io.StringIO()
+        with redirect_stdout(output):
             self.pending()
+        self.assertIn("Telegram navigator send failed: NotifyRejected", output.getvalue())
         self.assertEqual(self.nav_id(), first)
         self.assertTrue(
             self.adapter._nav_edit.acquire(timeout=1), "_nav_edit stayed held"

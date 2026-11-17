@@ -247,6 +247,20 @@ is the owner's long-press reply, `answer-path` is the local owner answer. A
 reply that is a question or not a decision is not executed: explain, then
 re-ask with a fresh card.
 
+### Durable before visible
+
+Clearing the phone's progress indicator is not an accepted answer. The
+answer is durable when it is the card's stored response; reads
+(`get_response`, `list_unprocessed`, `list_pending`) show it as soon as it is
+committed, even while its keyboard cleanup is still pending, and
+`processed_at` stays null until `mark_processed`. Cleanup is asynchronous and
+retried from the card's stored message identity, so a slow or failed strip
+never loses or delays an answer. If the stored update cursor could not be
+saved after a terminal result, the same update is replayed; an already
+committed answer is refused as answered and never recorded twice. Consumers
+still decide and execute separately, exactly as before: a cleared spinner is
+not an execution receipt.
+
 `report_execution` takes `outcome` (`accepted` | `rejected` | `completed` |
 `failed`) and an optional `result` object: `outcome`
 (`success` | `failure` | `partial`), `files_changed`, `tests_passed`,
