@@ -356,6 +356,9 @@ class Runtime:
                 print(f"Telegram bootstrap completed elapsed={time.monotonic() - started:.3f}s", flush=True)
         if self._stopping.is_set():
             return
+        # Own cleanup before the first poll: from here the poll thread only
+        # queues strips; the managed worker is the sole drain.
+        self.inbox.own_cleanup()
         with self.inbox._lock:
             if self._reconcile_worker is None and not self._stopping.is_set():
                 self.inbox._notifications_ready = True

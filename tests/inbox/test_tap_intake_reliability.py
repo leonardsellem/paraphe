@@ -872,6 +872,49 @@ class IntakeCase(unittest.TestCase):
         self.assertEqual(restarted.stored(third["request_id"])["response_text"], "the reply answer")
         self.assertEqual(restarted.offset(), 13)
 
+        # Startup reconciliation is held: the poll thread still never strips.
+        held = self.harness(store_path=Path(self._tmpdir.name) / "held.sqlite")
+        held_card = held.create(external_id="held-card")
+        held_message = held.stored(held_card["request_id"])["telegram_message_id"]
+        strip_entered, strip_release = threading.Event(), threading.Event()
+        held.api.strip_entered[held_message] = strip_entered
+        held.api.strip_gates[held_message] = (strip_entered, strip_release)
+        reconcile_started, allow_reconcile = threading.Event(), threading.Event()
+        original_reconcile = held.inbox.reconcile_notifications
+
+        def slow_reconcile(**kwargs):
+            reconcile_started.set()
+            allow_reconcile.wait(5)
+            return original_reconcile(**kwargs)
+
+        held.inbox.reconcile_notifications = slow_reconcile
+        held.runtime.next_update_id = 20
+        held.runtime._offset_ready = True
+        held_batch = [held.tap_update(held_card, 20, "cb-held")]
+        held_thread = self.start_runtime(
+            held, lambda offset: held_batch if offset <= 20 else []
+        )
+        try:
+            self.assertTrue(reconcile_started.wait(2), "startup reconciliation never started")
+            self.assertFalse(held.inbox._cleanup_active)
+            self.wait_until(
+                lambda: held.stored(held_card["request_id"])["state"] == "tapped", 3,
+                "the startup-window tap was not recorded",
+            )
+            self.assertEqual(held.offset(), 21)
+            self.assertFalse(
+                strip_entered.wait(0.3),
+                "a startup-window tap stripped on the poll thread",
+            )
+            allow_reconcile.set()
+            self.assertTrue(strip_entered.wait(3), "the worker never drained the queued strip")
+            self.assertEqual(set(held.api.strip_threads[held_message]), {"telegram-reconcile"})
+        finally:
+            allow_reconcile.set()
+            strip_release.set()
+            held.runtime.stop()
+            held_thread.join(5)
+
     def test_cleanup_retry_restart_and_stale_settlement(self) -> None:
         # A failed strip survives on the durable flag, retries no sooner than
         # 1 s and clears once on the matching success.
@@ -1744,4 +1787,3 @@ class IntakeCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

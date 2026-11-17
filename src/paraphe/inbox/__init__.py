@@ -377,6 +377,9 @@ class Inbox:
         # event only wakes the one managed worker (or the local drain path).
         self._cleanup_wake = threading.Event()
         self._cleanup_active = False
+        # A Runtime owns cleanup from its loop start: the poll thread must never
+        # drain a strip itself, even before the managed worker's first pass.
+        self._cleanup_owned = False
         # One in-flight strip per durable locator: a second pass never races it.
         self._stripping: set[tuple[int, int]] = set()
 
@@ -421,6 +424,10 @@ class Inbox:
     def wake_cleanup(self) -> None:
         """Wake the managed cleanup worker; safe from any thread."""
         self._cleanup_wake.set()
+
+    def own_cleanup(self) -> None:
+        """Hand terminal cleanup to the managed worker (the Runtime loop)."""
+        self._cleanup_owned = True
 
     def reconcile_notifications(
         self,
@@ -1027,7 +1034,7 @@ class Inbox:
 
     def _service_cleanup(self) -> bool:
         """Drain pending strips when no worker owns cleanup; otherwise queue only."""
-        if self._cleanup_active or self._store is None:
+        if self._cleanup_owned or self._cleanup_active or self._store is None:
             return True
         self._cleanup_wake.clear()
         healthy = True
