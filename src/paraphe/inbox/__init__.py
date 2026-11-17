@@ -1413,6 +1413,7 @@ class Inbox:
             "external_id": card.external_id,
             "choices": list(card.choices or ["Approve", "Deny"]),
             "expires_at": card.expires_at,
+            "created_at": card.created_at,
             "response": response,
             "processed_at": card.processed_at,
             "execution_status": card.execution_status,

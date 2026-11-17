@@ -89,6 +89,23 @@ class TestPublishedContracts(unittest.TestCase):
         self.assertIn("drain", descriptors["get_response"].lower())
         self.assertIn("drain", descriptors["list_unprocessed"].lower())
 
+    def test_created_at_read_contract_is_documented(self) -> None:
+        for relative in (
+            "docs/tools.md",
+            "docs/specs/paraphe-v1.md",
+            "docs/research/mcp-surface-keep-or-drop.md",
+        ):
+            text = (ROOT / relative).read_text(encoding="utf-8")
+            for literal in (
+                '"created_at":',
+                "Unix epoch seconds",
+                "0.0",
+                "estimate",
+                "never recomputed",
+            ):
+                with self.subTest(document=relative, literal=literal):
+                    self.assertIn(literal, text)
+
     def test_the_served_text_says_reading_never_consumes(self) -> None:
         # A read never consumes: the agent closes with mark_processed in the same
         # run, and a listing never consumes either.
