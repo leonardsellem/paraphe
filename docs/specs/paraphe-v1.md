@@ -135,10 +135,19 @@ Closeout: `note`≤1000, `result` object (`outcome` `success\|failure\|partial`,
 Response envelope after unwrapping MCP `result.content[].text`:
 
 ```
-request_id, external_id, status, version, choices, expires_at,
+request_id, external_id, status, version, choices, expires_at, created_at,
 response.choice, response.text, response.responded_at, response.responded_via,
 processed_at, execution_status, kind, pending
 ```
+
+`created_at` is the Card's stored creation time in Unix epoch seconds (float),
+never recomputed during a read. It travels as `"created_at": 1700000000.25` in
+the envelope. Payloads written before the field existed are
+derived once at load as `expires_at - expires_in_seconds` and saved; that is
+exact for an unrevised card and an `estimate` once a TTL edit moved
+`expires_at`, so it is not presented as recovered history. When the operands
+are missing, null, boolean or text the field is `0.0`: zero means unknown, not
+a recent creation.
 
 `responded_via` keeps live `app` / `auto`. Telegram records `telegram` (tap)
 and `telegram-reply` (owner long-press reply); the local owner answer path

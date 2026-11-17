@@ -130,6 +130,7 @@ The live `get_response` shape, after unwrapping `result.content[].text`:
   "request_id": "…",
   "status": "answered",
   "version": 2,
+  "created_at": 1700000000.25,
   "response": {
     "choice": "Approve activation",
     "text": null,
@@ -154,6 +155,7 @@ The live `get_response` shape, after unwrapping `result.content[].text`:
 | `execution_status` | **Keep** | Authoritative after `report_execution`. |
 | `kind` (`question` vs approval) | **Keep** | `report_execution` is approval-kind; question-kind closeout is `mark_processed` alone. |
 | `pending` on create | **Keep** | Creation proof field. |
+| `created_at` | **Keep** | Card creation time in Unix epoch seconds, float; never recomputed at read time. A legacy payload gets one frozen `estimate` from `expires_at - expires_in_seconds`; `0.0` means unknown, not a recent creation. |
 
 SSE vs JSON Streamable HTTP and the optional `Mcp-Session-Id` are transport
 facts, not product fields. Both are already accepted by callers. The spec should

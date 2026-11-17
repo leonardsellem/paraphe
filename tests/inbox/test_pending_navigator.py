@@ -448,6 +448,7 @@ class TestPendingOrder(NavigatorCase):
                 "execution_status",
                 "kind",
                 "pending",
+                "created_at",
             },
         )
         self.assertEqual(self.inbox.call_tool("list_unprocessed", {}), [])
