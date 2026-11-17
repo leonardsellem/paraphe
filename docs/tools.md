@@ -211,6 +211,7 @@ create acknowledgement; lookup does not create or re-notify a card.
   "external_id": "decision-1",
   "choices": ["Approve", "Deny"],
   "expires_at": 1700000900.0,
+  "created_at": 1700000000.25,
   "response": {
     "choice": "Approve",
     "text": null,
@@ -231,6 +232,14 @@ Unix epoch seconds (or null for legacy cards without expiry). Compare these
 fields with the frozen decision before acting. The additions do not change
 the existing `version`, nested answer or non-consuming read semantics; the
 create bearer still cannot answer a card.
+
+`created_at` is the card's stored creation time in Unix epoch seconds, as a
+float, and it is never recomputed at read time. A payload written before the
+field existed gets one value at load — `expires_at - expires_in_seconds`,
+frozen once and saved. That difference is exact for an unrevised card; for a
+card whose TTL edit moved `expires_at` it is an `estimate`, not a recovered
+historical fact. When either operand is absent, null, boolean or text the
+field is `0.0`: zero means unknown, never a recent creation.
 
 `responded_via` reports how the answer actually arrived, so a locally answered
 card is never reported as a phone tap: `telegram` is a tap, `telegram-reply`
