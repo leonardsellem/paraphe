@@ -508,7 +508,11 @@ class TelegramAdapter:
             )
             return
         start, returned = bounds
-        marks = self._inbox.claims_since(start)
+        try:
+            marks = self._inbox.claims_since(start)
+        except Exception:
+            # A diagnostic must never fail a send that already happened.
+            marks = []
         inside = [mark for mark in marks if start < mark[0] and mark[1] < returned]
         boundary = [
             mark
