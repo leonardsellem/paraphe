@@ -6,6 +6,7 @@ import json
 import os
 import sqlite3
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,11 @@ DATA_DIR_MODE = 0o700
 # configures. Resolving somewhere else while this one holds a store refuses
 # rather than starting a second, empty store.
 LEGACY_STORE_PATH = Path("/var/lib/paraphe/inbox.sqlite")
+# A claim mark is a short-lived send-tail diagnostic: the sender only looks a
+# few seconds back. The epoch offset ties it to one boot, because a monotonic
+# value from another boot is not on this clock.
+CLAIM_MARK_RETENTION_SECONDS = 300.0
+CLAIM_MARK_EPOCH_TOLERANCE_SECONDS = 60.0
 
 
 def default_data_dir() -> Path:
@@ -216,6 +222,14 @@ class Store:
             "key TEXT PRIMARY KEY, "
             "value TEXT NOT NULL)"
         )
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS claim_marks ("
+            "started REAL NOT NULL, "
+            "finished REAL NOT NULL, "
+            "request_id TEXT NOT NULL, "
+            "version INTEGER NOT NULL, "
+            "epoch REAL NOT NULL)"
+        )
         conn.commit()
         self._conn = conn
 
@@ -307,3 +321,41 @@ class Store:
             (key, value),
         )
         self._conn.commit()
+
+    def save_claim_mark(
+        self, started: float, finished: float, request_id: str, version: int
+    ) -> None:
+        """Record one durable answer commit on the diagnostic monotonic clock.
+
+        The mark survives the committing process, so a sender in another
+        process on this host can see that its own send overlapped the answer.
+        """
+        if self._conn is None:
+            raise RuntimeError("store is not open")
+        epoch = time.time() - time.monotonic()
+        self._conn.execute(
+            "DELETE FROM claim_marks WHERE finished < ? OR ABS(epoch - ?) >= ?",
+            (
+                started - CLAIM_MARK_RETENTION_SECONDS,
+                epoch,
+                CLAIM_MARK_EPOCH_TOLERANCE_SECONDS,
+            ),
+        )
+        self._conn.execute(
+            "INSERT INTO claim_marks (started, finished, request_id, version, epoch) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (started, finished, request_id, version, epoch),
+        )
+        self._conn.commit()
+
+    def load_claim_marks_since(self, moment: float) -> list[tuple[float, float, str, int]]:
+        """Marks this boot committed after `moment`; another boot's clock is not ours."""
+        if self._conn is None:
+            raise RuntimeError("store is not open")
+        epoch = time.time() - time.monotonic()
+        rows = self._conn.execute(
+            "SELECT started, finished, request_id, version FROM claim_marks "
+            "WHERE finished > ? AND ABS(epoch - ?) < ? ORDER BY finished",
+            (moment, epoch, CLAIM_MARK_EPOCH_TOLERANCE_SECONDS),
+        ).fetchall()
+        return [(float(row[0]), float(row[1]), str(row[2]), int(row[3])) for row in rows]
