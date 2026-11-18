@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import sqlite3
 import sys
 import tempfile
@@ -50,7 +51,12 @@ class FakeBotAPI:
         self.answers: list[str] = []
 
     def send_message(
-        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None
+        self,
+        chat_id: int,
+        text: str,
+        reply_markup: dict | None,
+        parse_mode: str | None = None,
+        timing: list[float] | None = None,
     ) -> dict:
         msg = {
             "message_id": len(self.messages) + 1,
@@ -136,18 +142,25 @@ class SessionAPI(FakeBotAPI):
     def unpin_chat_message(self, chat_id: int, message_id: int) -> None:
         self.unpins.append((chat_id, message_id))
 
-    def send_message(self, chat_id, text, reply_markup, parse_mode=None):
+    def send_message(
+        self, chat_id, text, reply_markup, parse_mode=None, timing=None
+    ):
         self.send_calls.append({"chat_id": chat_id, "text": text})
         if self.on_send is not None:
             self.on_send()
+        start = time.monotonic()
         gate = self.send_gate
         if gate is not None:
             self.send_gate = None
             gate[0].set()
             gate[1].wait(10)
-        if self.send_errors:
-            raise self.send_errors.pop(0)
-        return super().send_message(chat_id, text, reply_markup, parse_mode)
+        try:
+            if self.send_errors:
+                raise self.send_errors.pop(0)
+            return super().send_message(chat_id, text, reply_markup, parse_mode)
+        finally:
+            if timing is not None:
+                timing[:] = [start, time.monotonic()]
 
     def edit_message_text(self, chat_id, message_id, text, reply_markup, parse_mode="HTML"):
         self.texts.append(
@@ -1154,8 +1167,8 @@ class IntakeCase(unittest.TestCase):
         ambiguous = self.harness(store_path=Path(self._tmpdir.name) / "ambiguous.sqlite")
         original_send = ambiguous.api.send_message
 
-        def accepted_then_lost(chat_id, text, reply_markup, parse_mode=None):
-            original_send(chat_id, text, reply_markup, parse_mode)
+        def accepted_then_lost(chat_id, text, reply_markup, parse_mode=None, timing=None):
+            original_send(chat_id, text, reply_markup, parse_mode, timing)
             raise TimeoutError("lost after accept")
 
         ambiguous.api.send_message = accepted_then_lost
@@ -1783,6 +1796,215 @@ class IntakeCase(unittest.TestCase):
         self.assertEqual(
             healthy.stored(healthy_card["request_id"])["response_choice"], before_choice
         )
+
+
+    # --- U3: safe send-span diagnostics -------------------------------------
+
+    def test_send_span_diagnostic_is_strict_and_fail_closed(self) -> None:
+        """`overlap=yes` only from a genuine inside-call span and a claim
+        bracket strictly inside it; every other shape stays unproven."""
+
+        class SpanAPI(SessionAPI):
+            """A fake transport that brackets its own I/O like the real one."""
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.gate: tuple[threading.Event, threading.Event] | None = None
+
+            def send_message(
+                self, chat_id, text, reply_markup, parse_mode=None, timing=None
+            ):
+                start = time.monotonic()
+                gate = self.gate
+                if gate is not None:
+                    self.gate = None
+                    gate[0].set()
+                    gate[1].wait(10)
+                try:
+                    return super().send_message(chat_id, text, reply_markup, parse_mode)
+                finally:
+                    if timing is not None:
+                        timing[:] = [start, time.monotonic()]
+
+        def send_line(text: str, request_id: str) -> str:
+            lines = [
+                line
+                for line in text.splitlines()
+                if line.startswith("Telegram send ") and f" rid={request_id} " in line
+            ]
+            self.assertEqual(len(lines), 1, f"expected one send line for {request_id}")
+            return lines[0]
+
+        def create_in_thread(harness: Harness, result: dict, external_id: str):
+            def run() -> None:
+                result["card"] = harness.create(external_id=external_id)
+
+            thread = threading.Thread(target=run, daemon=True)
+            thread.start()
+            return thread
+
+        def tap_in_thread(harness: Harness, card: dict, callback_id: str) -> None:
+            done = threading.Event()
+            errors: list[BaseException] = []
+
+            def run() -> None:
+                try:
+                    self.tap_card(harness, card, callback_id=callback_id)
+                except BaseException as exc:
+                    errors.append(exc)
+                finally:
+                    done.set()
+
+            threading.Thread(target=run, daemon=True).start()
+            self.assertTrue(done.wait(3), "the tap waited for the blocked send")
+            self.assertEqual(errors, [])
+
+        # Positive: the claim commits strictly inside the blocked send span.
+        api = SpanAPI()
+        harness = self.harness(api=api)
+        tapped = harness.create(external_id="busy-tap", title="private-title")
+        gate = (threading.Event(), threading.Event())
+        api.gate = gate
+        created: dict = {}
+        thread = create_in_thread(harness, created, "busy-send")
+        output = io.StringIO()
+        with mock.patch("sys.stdout", output):
+            self.assertTrue(gate[0].wait(3), "the send never reached its span")
+            tap_in_thread(harness, tapped, "cb-inside")
+            gate[1].set()
+            thread.join(5)
+        sent = created["card"]
+        line = send_line(output.getvalue(), sent["request_id"])
+        self.assertIn("overlap=yes reason=inside_send", line)
+        self.assertIn(f"v={sent['version']}", line)
+        self.assertIn(f"claim_rid={tapped['request_id']}", line)
+        self.assertIn(f"claim_v={tapped['version']}", line)
+        self.assertIn(f"pid={os.getpid()}", line)
+        for leaked in (TOKEN, "private-title", BEARER):
+            self.assertNotIn(leaked, output.getvalue())
+
+        # RED: a tap after the transport return but before message-id settlement.
+        late_api = SpanAPI()
+        late = self.harness(api=late_api)
+        late_tap = late.create(external_id="late-tap")
+        original_record = late.inbox.record_telegram_message
+        settlement, release = threading.Event(), threading.Event()
+
+        def delayed_record(request_id, **kwargs):
+            if not settlement.is_set():
+                settlement.set()
+                release.wait(5)
+            return original_record(request_id, **kwargs)
+
+        late.inbox.record_telegram_message = delayed_record
+        late_created: dict = {}
+        late_thread = create_in_thread(late, late_created, "late-send")
+        late_output = io.StringIO()
+        with mock.patch("sys.stdout", late_output):
+            self.assertTrue(settlement.wait(3), "settlement was never gated")
+            tap_in_thread(late, late_tap, "cb-after-return")
+            release.set()
+            late_thread.join(5)
+        late_sent = late_created["card"]
+        late_line = send_line(late_output.getvalue(), late_sent["request_id"])
+        self.assertIn("overlap=no reason=claim_after_send", late_line)
+        self.assertIn(f"claim_rid={late_tap['request_id']}", late_line)
+
+        # RED: a tap before the transport entry despite the stored reservation.
+        class PreStartAPI(SpanAPI):
+            def __init__(self) -> None:
+                super().__init__()
+                self.pre: tuple[threading.Event, threading.Event] | None = None
+
+            def send_message(
+                self, chat_id, text, reply_markup, parse_mode=None, timing=None
+            ):
+                pre = self.pre
+                if pre is not None:
+                    self.pre = None
+                    pre[0].set()
+                    pre[1].wait(10)
+                return super().send_message(
+                    chat_id, text, reply_markup, parse_mode, timing
+                )
+
+        early_api = PreStartAPI()
+        early = self.harness(api=early_api)
+        early_tap = early.create(external_id="early-tap")
+        early_gate = (threading.Event(), threading.Event())
+        early_api.pre = early_gate
+        early_created: dict = {}
+        early_thread = create_in_thread(early, early_created, "early-send")
+        early_output = io.StringIO()
+        with mock.patch("sys.stdout", early_output):
+            self.assertTrue(early_gate[0].wait(3), "the send never reached its gate")
+            self.assertTrue(early_thread.is_alive(), "the send gate did not hold")
+            with closing(sqlite3.connect(early.inbox.store_path)) as conn:
+                rows = conn.execute("SELECT payload FROM cards").fetchall()
+            reserved = [
+                json.loads(row[0])
+                for row in rows
+                if json.loads(row[0]).get("external_id") == "early-send"
+            ][0]
+            self.assertTrue(reserved["notified"], "the reservation was not stored")
+            self.assertIsNone(reserved["telegram_message_id"])
+            tap_in_thread(early, early_tap, "cb-before-start")
+            early_gate[1].set()
+            early_thread.join(5)
+        early_sent = early_created["card"]
+        early_line = send_line(early_output.getvalue(), early_sent["request_id"])
+        self.assertIn("overlap=unknown reason=no_claim", early_line)
+
+        # Ambiguous: two claims strictly inside one span are never a pass.
+        both_api = SpanAPI()
+        both = self.harness(api=both_api)
+        first = both.create(external_id="both-a")
+        second = both.create(external_id="both-b")
+        both_gate = (threading.Event(), threading.Event())
+        both_api.gate = both_gate
+        both_created: dict = {}
+        both_thread = create_in_thread(both, both_created, "both-send")
+        both_output = io.StringIO()
+        with mock.patch("sys.stdout", both_output):
+            self.assertTrue(both_gate[0].wait(3), "the send never blocked")
+            tap_in_thread(both, first, "cb-both-a")
+            tap_in_thread(both, second, "cb-both-b")
+            both_gate[1].set()
+            both_thread.join(5)
+        both_sent = both_created["card"]
+        both_line = send_line(both_output.getvalue(), both_sent["request_id"])
+        self.assertIn("overlap=unknown reason=ambiguous_claim", both_line)
+
+        # Absent bounds: an uninstrumented transport can never prove overlap.
+        plain = self.harness(api=FakeBotAPI())
+        plain_output = io.StringIO()
+        with mock.patch("sys.stdout", plain_output):
+            plain_card = plain.create(external_id="plain")
+        plain_line = send_line(plain_output.getvalue(), plain_card["request_id"])
+        self.assertIn("overlap=unknown reason=no_bounds", plain_line)
+
+        # The real API samples its span around urlopen, not after the return.
+        class StampedResponse(_FakeHTTPResponse):
+            def read(self) -> bytes:
+                stamps.append(("read", time.monotonic()))
+                return super().read()
+
+        api_real = TelegramBotAPI(TOKEN)
+        stamps: list[tuple[str, float]] = []
+
+        def fake_urlopen(request, timeout=None):
+            stamps.append(("enter", time.monotonic()))
+            return StampedResponse(b'{"ok":true,"result":{"message_id":7}}')
+
+        bounds: list[float] = []
+        with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
+            sent_result = api_real.send_message(OWNER, "hi", None, timing=bounds)
+        self.assertEqual(sent_result["message_id"], 7)
+        self.assertEqual(len(bounds), 2)
+        enter = next(stamp for name, stamp in stamps if name == "enter")
+        read = next(stamp for name, stamp in stamps if name == "read")
+        self.assertLessEqual(bounds[0], enter)
+        self.assertLessEqual(read, bounds[1])
 
 
 if __name__ == "__main__":

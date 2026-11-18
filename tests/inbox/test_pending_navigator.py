@@ -50,7 +50,7 @@ class NavigatorAPI(FakeBotAPI):
         self.on_strip = None
         self.command_error: BaseException | None = None
 
-    def send_message(self, chat_id, text, reply_markup, parse_mode=None):
+    def send_message(self, chat_id, text, reply_markup, parse_mode=None, timing=None):
         if self.send_errors:
             raise self.send_errors.pop(0)
         return super().send_message(chat_id, text, reply_markup, parse_mode)

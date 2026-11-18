@@ -41,7 +41,7 @@ class FakeBotAPI:
         self.answers: list[str] = []
 
     def send_message(
-        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None
+        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None, timing: list[float] | None = None
     ) -> dict:
         msg = {
             "message_id": len(self.messages) + 1,
