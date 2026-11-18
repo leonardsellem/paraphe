@@ -2170,6 +2170,21 @@ class SendOverlapBranchCase(unittest.TestCase):
         self.assertIn("overlap=unknown reason=claim_version_mismatch", line)
         self.assertIn(f"claim_rid={self.RID} claim_v=3", line)
 
+    def test_a_failing_claim_read_still_prints_the_no_claim_line(self) -> None:
+        class RaisingInbox:
+            def claims_since(self, moment: float):
+                raise RuntimeError("store unavailable")
+
+        adapter = tg.TelegramAdapter(
+            RaisingInbox(), object(), owner_id=OWNER, bot_token=TOKEN
+        )
+        output = io.StringIO()
+        with mock.patch("sys.stdout", output):
+            adapter._log_send_span(
+                {"request_id": self.RID, "version": 2}, [100.0, 100.5]
+            )
+        self.assertIn("overlap=unknown reason=no_claim", output.getvalue())
+
     def test_two_claims_in_one_span_are_ambiguous(self) -> None:
         line = self.verdict([(100.1, 100.2, "first", 1), (100.3, 100.4, "second", 1)])
         self.assertIn("overlap=unknown reason=ambiguous_claim", line)

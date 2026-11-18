@@ -19,8 +19,8 @@ DATA_DIR_MODE = 0o700
 # rather than starting a second, empty store.
 LEGACY_STORE_PATH = Path("/var/lib/paraphe/inbox.sqlite")
 # A claim mark is a short-lived send-tail diagnostic: the sender only looks a
-# few seconds back. The epoch offset ties it to one boot, because a monotonic
-# value from another boot is not on this clock.
+# few seconds back. The epoch offset ties it to one boot: a reboot moves the
+# offset by the previous uptime, far past the tolerance below.
 CLAIM_MARK_RETENTION_SECONDS = 300.0
 CLAIM_MARK_EPOCH_TOLERANCE_SECONDS = 60.0
 
@@ -333,20 +333,25 @@ class Store:
         if self._conn is None:
             raise RuntimeError("store is not open")
         epoch = time.time() - time.monotonic()
-        self._conn.execute(
-            "DELETE FROM claim_marks WHERE finished < ? OR ABS(epoch - ?) >= ?",
-            (
-                started - CLAIM_MARK_RETENTION_SECONDS,
-                epoch,
-                CLAIM_MARK_EPOCH_TOLERANCE_SECONDS,
-            ),
-        )
-        self._conn.execute(
-            "INSERT INTO claim_marks (started, finished, request_id, version, epoch) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (started, finished, request_id, version, epoch),
-        )
-        self._conn.commit()
+        try:
+            self._conn.execute(
+                "DELETE FROM claim_marks WHERE finished < ? OR ABS(epoch - ?) >= ?",
+                (
+                    started - CLAIM_MARK_RETENTION_SECONDS,
+                    epoch,
+                    CLAIM_MARK_EPOCH_TOLERANCE_SECONDS,
+                ),
+            )
+            self._conn.execute(
+                "INSERT INTO claim_marks (started, finished, request_id, version, epoch) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (started, finished, request_id, version, epoch),
+            )
+            self._conn.commit()
+        except Exception:
+            # Never leave the delete's implicit transaction holding a lock.
+            self._conn.rollback()
+            raise
 
     def load_claim_marks_since(self, moment: float) -> list[tuple[float, float, str, int]]:
         """Marks this boot committed after `moment`; another boot's clock is not ours."""
