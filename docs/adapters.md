@@ -73,6 +73,36 @@ suspends that navigator until the next `/pending`. Its message id, view,
 suspension and last published view live in the store, so a restart keeps
 editing the same message.
 
+### Intake: acknowledgement, replay and cleanup
+
+A Telegram callback is acknowledged **once**, empty, before any inbox lock,
+claim or presentation wait. `answerCallbackQuery` gets a fixed 1-second socket
+bound; every other non-poll method keeps 15 s and long polling keeps
+`max(15, poll_seconds + 10)`. The spinner clearing is not an acceptance
+receipt: the answer exists only when the store row says it does. A refused or
+lost acknowledgement is logged safely and cannot stop the answer from being
+recorded, and a reply in the same fetched batch is still handled. Text replies
+have no callback acknowledgement. A valid owner attempt that is refused still
+gets one best-effort owner-facing line; transport failure never becomes an
+approval.
+
+Terminal keyboard cleanup is asynchronous. A committed answer, cancellation or
+expiry leaves a durable "keyboard attached" flag and locator on the card; the
+one managed cleanup worker strips the captured message, retries a failure no
+sooner than 1 s, and clears the flag only on the matching identity. A restart
+rescans the flag, so cleanup survives a crash; a strip in flight never delays
+answering, reading or the next update. The `Runtime` starts and joins that
+worker around the store's lifetime; a direct `Inbox` drains the same work when
+it is called.
+
+The Telegram update cursor advances only after an update reaches its terminal
+local result (an answer, a recorded refusal or a safe ignore). An
+authoritative write failure keeps the stored cursor and replays that update on
+the next poll or restart; there is no unconditional offset skip. The navigator
+records its intent and generation before publishing and refuses to let an older
+publication overwrite a newer selection, so a slow edit never loses the card
+the owner just opened.
+
 `paraphe.adapters.telegram` is one implementation of the same contract, not
 the contract itself. It is the runtime-specific mapping this product was built
 against: it encodes the card into an inline keyboard, strips the keyboard when
