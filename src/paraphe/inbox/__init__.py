@@ -8,6 +8,7 @@ import secrets
 import threading
 import time
 import uuid
+from collections import deque
 from copy import deepcopy
 from dataclasses import asdict, fields as dataclass_fields
 from pathlib import Path
@@ -382,6 +383,9 @@ class Inbox:
         self._cleanup_owned = False
         # One in-flight strip per durable locator: a second pass never races it.
         self._stripping: set[tuple[int, int]] = set()
+        # Durable answer commits: (commit_started, commit_finished, request_id,
+        # version) on the monotonic clock, used only to prove a send span.
+        self._claim_marks: deque[tuple[float, float, str, int]] = deque(maxlen=256)
 
     def __repr__(self) -> str:
         return (
@@ -764,6 +768,13 @@ class Inbox:
         finally:
             self._service_cleanup()
 
+    def claims_since(self, moment: float) -> list[tuple[float, float, str, int]]:
+        """Durable claim commits whose bracket may overlap an effect begun at
+        `moment`; a commit that finished before it cannot. All times come from
+        the one monotonic clock, and nothing here is persisted."""
+        with self._lock:
+            return [mark for mark in self._claim_marks if mark[1] > moment]
+
     def pending_cards(self) -> list[Card]:
         """The open Cards in one stable oldest-first order."""
         with self._lock:
@@ -979,7 +990,11 @@ class Inbox:
             updated.telegram_keyboard_attached = True
         updated.responded_at = self._iso_now()
         updated.responded_via = responded_via
+        commit_started = time.monotonic()
         self._save(updated)
+        self._claim_marks.append(
+            (commit_started, time.monotonic(), updated.request_id, updated.version)
+        )
         self._notify_waiters(updated.request_id)
         if telegram_chat_id is not None and telegram_message_id is not None:
             remember = getattr(self._telegram, "remember_message", None)

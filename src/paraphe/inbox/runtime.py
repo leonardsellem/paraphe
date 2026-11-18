@@ -62,13 +62,14 @@ class TelegramBotAPI:
         text: str,
         reply_markup: dict[str, Any] | None,
         parse_mode: str | None = None,
+        timing: list[float] | None = None,
     ) -> dict[str, Any]:
         payload: dict[str, Any] = {"chat_id": chat_id, "text": text}
         if parse_mode is not None:
             payload["parse_mode"] = parse_mode
         if reply_markup is not None:
             payload["reply_markup"] = reply_markup
-        result = self._call("sendMessage", payload)
+        result = self._call("sendMessage", payload, timing=timing)
         if not isinstance(result, dict):
             raise TelegramAPIError("Telegram returned an invalid message")
         return result
@@ -127,7 +128,13 @@ class TelegramBotAPI:
     ) -> None:
         self._call("setMyCommands", {"commands": commands, "scope": scope})
 
-    def _call(self, method: str, payload: dict[str, Any]) -> Any:
+    def _call(
+        self,
+        method: str,
+        payload: dict[str, Any],
+        *,
+        timing: list[float] | None = None,
+    ) -> Any:
         request = urllib.request.Request(
             self._url + method,
             data=json.dumps(payload).encode("utf-8"),
@@ -141,9 +148,13 @@ class TelegramBotAPI:
             timeout = max(TELEGRAM_REQUEST_TIMEOUT_SECONDS, poll_seconds + 10)
         else:
             timeout = TELEGRAM_REQUEST_TIMEOUT_SECONDS
+        started = time.monotonic()
         try:
             with urllib.request.urlopen(request, timeout=timeout) as response:
                 raw = response.read().decode("utf-8")
+                if timing is not None:
+                    # The application send span, sampled around the actual I/O.
+                    timing[:] = [started, time.monotonic()]
         except urllib.error.HTTPError as exc:
             try:
                 with exc:
