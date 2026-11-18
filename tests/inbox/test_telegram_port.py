@@ -53,7 +53,7 @@ class FakeBotAPI:
         self.fail_edit = False
 
     def send_message(
-        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None
+        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None, timing: list[float] | None = None
     ) -> dict:
         msg = {
             "message_id": len(self.messages) + 1,
@@ -87,7 +87,7 @@ class RejectOnceAfterFirstSend(FakeBotAPI):
         self.rejected = False
 
     def send_message(
-        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None
+        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None, timing: list[float] | None = None
     ) -> dict:
         if self.messages and not self.rejected:
             self.rejected = True
@@ -97,7 +97,7 @@ class RejectOnceAfterFirstSend(FakeBotAPI):
 
 class AcceptSecondThenUnknown(FakeBotAPI):
     def send_message(
-        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None
+        self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None, timing: list[float] | None = None
     ) -> dict:
         sent = super().send_message(chat_id, text, reply_markup, parse_mode)
         if len(self.messages) == 2:
@@ -1270,7 +1270,7 @@ class TestTelegramPort(unittest.TestCase):
     def test_restart_sends_known_unsent_card(self) -> None:
         class RejectSend(FakeBotAPI):
             def send_message(
-                self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None
+                self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None, timing: list[float] | None = None
             ) -> dict:
                 raise NotifyRejected("rejected")
 
@@ -1291,7 +1291,7 @@ class TestTelegramPort(unittest.TestCase):
     def test_accepted_then_unknown_does_not_resend_after_restart(self) -> None:
         class AcceptedThenUnknown(FakeBotAPI):
             def send_message(
-                self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None
+                self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None, timing: list[float] | None = None
             ) -> dict:
                 super().send_message(chat_id, text, reply_markup, parse_mode)
                 raise TimeoutError("lost after accept")
@@ -1426,7 +1426,7 @@ class TestTelegramPort(unittest.TestCase):
     def test_accepted_send_without_message_id_does_not_duplicate(self) -> None:
         class AcceptWithoutId(FakeBotAPI):
             def send_message(
-                self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None
+                self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None, timing: list[float] | None = None
             ) -> dict:
                 super().send_message(chat_id, text, reply_markup, parse_mode)
                 return {"ok": True}

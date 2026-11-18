@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
 from html import escape as _html_escape
@@ -464,7 +465,10 @@ class TelegramAdapter:
         return {"inline_keyboard": [buttons]}
 
     def send(self, created: dict[str, Any], *, text: str) -> None:
-        sent = self._api.send_message(self._owner_id, text, None, parse_mode="HTML")
+        bounds: list[float] = []
+        sent = self._api.send_message(
+            self._owner_id, text, None, parse_mode="HTML", timing=bounds
+        )
         message_id = _positive_int(sent.get("message_id") if isinstance(sent, dict) else None)
         if message_id is None:
             return
@@ -474,10 +478,62 @@ class TelegramAdapter:
             chat_id=self._owner_id,
             message_id=message_id,
         )
+        self._log_send_span(created, bounds)
         self.remember_message(
             created["request_id"], created["version"], self._owner_id, message_id
         )
         self.finalize_message(created)
+
+    def _log_send_span(self, created: dict[str, Any], bounds: list[float]) -> None:
+        """One line joining the send's monotonic span to a durable claim.
+
+        `overlap=yes` needs exactly one claim whose commit bracket lies
+        strictly inside the span; absent, ambiguous or inconsistent marks stay
+        unproven. IDs and numbers only: no text, chat or provider detail.
+        """
+        request_id = created["request_id"]
+        version = created["version"]
+        claim_id, claim_version = "none", "none"
+        if (
+            len(bounds) != 2
+            or type(bounds[0]) not in (int, float)
+            or type(bounds[1]) not in (int, float)
+            or bounds[1] < bounds[0]
+        ):
+            print(
+                f"Telegram send overlap=unknown reason=no_bounds rid={request_id} "
+                f"v={version} claim_rid={claim_id} claim_v={claim_version} "
+                f"start=none return=none pid={os.getpid()}",
+                flush=True,
+            )
+            return
+        start, returned = bounds
+        marks = self._inbox.claims_since(start)
+        inside = [mark for mark in marks if start < mark[0] and mark[1] < returned]
+        boundary = [
+            mark
+            for mark in marks
+            if mark[0] <= start <= mark[1] or mark[0] <= returned <= mark[1]
+        ]
+        if len(inside) == 1 and not boundary:
+            claim_id, claim_version = inside[0][2], inside[0][3]
+            if claim_id == request_id and claim_version != version:
+                verdict = "overlap=unknown reason=claim_version_mismatch"
+            else:
+                verdict = "overlap=yes reason=inside_send"
+        elif inside or boundary:
+            verdict = "overlap=unknown reason=ambiguous_claim"
+        elif marks:
+            claim_id, claim_version = marks[0][2], marks[0][3]
+            verdict = "overlap=no reason=claim_after_send"
+        else:
+            verdict = "overlap=unknown reason=no_claim"
+        print(
+            f"Telegram send {verdict} rid={request_id} v={version} "
+            f"claim_rid={claim_id} claim_v={claim_version} "
+            f"start={start:.6f} return={returned:.6f} pid={os.getpid()}",
+            flush=True,
+        )
 
     def remember_message(
         self, card_id: str, version: int, chat_id: int, message_id: int
