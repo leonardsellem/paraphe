@@ -44,7 +44,10 @@ def telegram(
     api = TelegramBotAPI(settings.bot_token)
     try:
         identity = api.get_me()
-    except NotifyRejected:
+    except NotifyRejected as exc:
+        if exc.reason == "unreachable":
+            print(TELEGRAM_UNREACHABLE, file=err)
+            return 2
         print("paraphe: Telegram refused the configured bot token", file=err)
         return 2
     except TelegramAPIError:
@@ -55,7 +58,10 @@ def telegram(
     print(f"Telegram token identifies {bot}.", file=out)
     try:
         api.send_message(settings.owner_telegram_id, CHECK_MESSAGE, None)
-    except NotifyRejected:
+    except NotifyRejected as exc:
+        if exc.reason == "unreachable":
+            print(TELEGRAM_UNREACHABLE, file=err)
+            return 2
         print(
             f"paraphe: Telegram could not deliver to owner {settings.owner_telegram_id}; "
             "check the id and open a private chat with the bot first",
