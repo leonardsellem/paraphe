@@ -8,7 +8,6 @@ import secrets
 import threading
 import time
 import uuid
-from collections import deque
 from copy import deepcopy
 from dataclasses import asdict, fields as dataclass_fields
 from pathlib import Path
@@ -383,9 +382,6 @@ class Inbox:
         self._cleanup_owned = False
         # One in-flight strip per durable locator: a second pass never races it.
         self._stripping: set[tuple[int, int]] = set()
-        # Durable answer commits: (commit_started, commit_finished, request_id,
-        # version) on the monotonic clock, used only to prove a send span.
-        self._claim_marks: deque[tuple[float, float, str, int]] = deque(maxlen=256)
 
     def __repr__(self) -> str:
         return (
@@ -479,7 +475,10 @@ class Inbox:
             ):
                 self._finalize_telegram(card)
             else:
-                self._notify_owner(card)
+                # No message id means nothing was ever delivered on any path.
+                self._notify_owner(
+                    card, repair=card.notified and card.telegram_message_id is None
+                )
         # A direct/local Inbox has no worker: draining here keeps its cleanup
         # contract. Under the Runtime worker this only queues the work.
         return (self._service_cleanup() if drain_cleanup else True) and healthy
@@ -770,10 +769,11 @@ class Inbox:
 
     def claims_since(self, moment: float) -> list[tuple[float, float, str, int]]:
         """Durable claim commits whose bracket may overlap an effect begun at
-        `moment`; a commit that finished before it cannot. All times come from
-        the one monotonic clock, and nothing here is persisted."""
+        `moment`; a commit that finished before it cannot. Read from the store,
+        so an answer committed by another process on this host is visible. All
+        times come from the one monotonic clock."""
         with self._lock:
-            return [mark for mark in self._claim_marks if mark[1] > moment]
+            return self._ensure_store().load_claim_marks_since(moment)
 
     def pending_cards(self) -> list[Card]:
         """The open Cards in one stable oldest-first order."""
@@ -992,9 +992,14 @@ class Inbox:
         updated.responded_via = responded_via
         commit_started = time.monotonic()
         self._save(updated)
-        self._claim_marks.append(
-            (commit_started, time.monotonic(), updated.request_id, updated.version)
-        )
+        try:
+            self._ensure_store().save_claim_mark(
+                commit_started, time.monotonic(), updated.request_id, updated.version
+            )
+        except Exception:
+            # The answer is durable and must stand; a failed mark only leaves
+            # the send diagnostic unproven.
+            pass
         self._notify_waiters(updated.request_id)
         if telegram_chat_id is not None and telegram_message_id is not None:
             remember = getattr(self._telegram, "remember_message", None)
@@ -1811,12 +1816,15 @@ class Inbox:
         if finalize is not None:
             finalize(payload)
 
-    def _notify_owner(self, card: Card, *, renotify: bool = False) -> None:
+    def _notify_owner(
+        self, card: Card, *, renotify: bool = False, repair: bool = False
+    ) -> None:
         with self._lock:
             current = self._cards.get(card.request_id)
             if (
                 not self._notifications_ready or current is None
-                or current.version != card.version or current.state != "open" or current.notified
+                or current.version != card.version or current.state != "open"
+                or (current.notified and not repair)
             ):
                 return
             reserved = deepcopy(current)

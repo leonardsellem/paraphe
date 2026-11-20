@@ -834,7 +834,7 @@ class TestTelegramPort(unittest.TestCase):
         _again, _again_adapter, after_second_restart = self._restart()
         self.assertEqual(after_second_restart.messages, [])
 
-    def test_ambiguous_renotify_does_not_resend_after_restart(self) -> None:
+    def test_ambiguous_renotify_resends_once_after_restart(self) -> None:
         self._use_api(AcceptSecondThenUnknown())
         created = self._create()
         with self.assertRaises(TimeoutError):
@@ -850,7 +850,7 @@ class TestTelegramPort(unittest.TestCase):
         self.assertEqual(len(self.api.messages), 2)
 
         restarted, _adapter, api = self._restart()
-        self.assertEqual(api.messages, [])
+        self.assertEqual(len(api.messages), 1)
         readback = restarted.call_tool(
             "get_response", {"request_id": created["request_id"]}
         )
@@ -1288,7 +1288,39 @@ class TestTelegramPort(unittest.TestCase):
         self.assertEqual(len(pending), 1)
         self.assertEqual(len(api.messages), 1)
 
-    def test_accepted_then_unknown_does_not_resend_after_restart(self) -> None:
+    def test_unreachable_provider_leaves_the_card_unsent_and_a_retry_sends_it(self) -> None:
+        self._use_api(TelegramBotAPI(TOKEN))
+        with mock.patch(
+            "urllib.request.urlopen",
+            side_effect=urllib.error.URLError(ConnectionRefusedError("refused")),
+        ):
+            with self.assertRaises(NotifyRejected):
+                self._create()
+        card = next(c for c in self.inbox._cards.values() if c.external_id == "tg-1")
+        self.assertFalse(card.notified)
+        self.assertIsNone(card.telegram_message_id)
+
+        self._use_api(FakeBotAPI())
+        retry = self.inbox.call_tool(
+            "request_approval",
+            {"title": "Cut over?", "external_id": "tg-1", "expires_in_seconds": 900},
+            bearer=BEARER,
+        )
+        self.assertTrue(retry["duplicate"])
+        self.assertEqual(len(self.api.messages), 1)
+        self.assertEqual(
+            self._stored(retry["request_id"])["telegram_message_id"],
+            self.api.messages[0]["message_id"],
+        )
+
+    def test_reconcile_leaves_a_delivered_card_alone(self) -> None:
+        self._use_api(FakeBotAPI())
+        delivered = self._create()
+        restarted, _adapter, api = self._restart()
+        self.assertEqual(api.messages, [])
+        self.assertEqual(restarted._cards[delivered["request_id"]].telegram_message_id, 1)
+
+    def test_accepted_then_unknown_resends_once_after_restart(self) -> None:
         class AcceptedThenUnknown(FakeBotAPI):
             def send_message(
                 self, chat_id: int, text: str, reply_markup: dict | None, parse_mode: str | None = None, timing: list[float] | None = None
@@ -1313,7 +1345,9 @@ class TestTelegramPort(unittest.TestCase):
             bearer=BEARER,
         )
         self.assertTrue(retry["duplicate"])
-        self.assertEqual(api.messages, [])
+        # An accepted send with no recorded identity is indistinguishable from
+        # an unsent card, and the restart repairs it rather than losing it.
+        self.assertEqual(len(api.messages), 1)
 
     def test_accepted_keyboard_then_unknown_finalizes_on_restart_without_resend(
         self,
@@ -1341,7 +1375,7 @@ class TestTelegramPort(unittest.TestCase):
         self.assertEqual(after_second_restart.messages, [])
         self.assertEqual(after_second_restart.edits, [])
 
-    def test_message_identity_save_failure_does_not_resend_after_restart(self) -> None:
+    def test_message_identity_save_failure_resends_after_restart(self) -> None:
         self.inbox._notifier = self.adapter
         self.inbox.call_tool("list_pending", {})
         store = self.inbox._store
@@ -1381,7 +1415,7 @@ class TestTelegramPort(unittest.TestCase):
             bearer=BEARER,
         )
         self.assertTrue(retry["duplicate"])
-        self.assertEqual(api.messages, [])
+        self.assertEqual(len(api.messages), 1)
 
     def test_keyboard_state_persist_failure_finalizes_on_restart_without_resend(
         self,

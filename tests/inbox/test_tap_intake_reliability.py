@@ -6,6 +6,7 @@ import io
 import json
 import os
 import sqlite3
+import subprocess
 import sys
 import tempfile
 import threading
@@ -1163,7 +1164,8 @@ class IntakeCase(unittest.TestCase):
         self.assertEqual(len(rejected.api.send_calls), 2)
         self.assertTrue(rejected.stored(retried["request_id"])["notified"])
 
-        # An ambiguous accepted-then-timeout is never resent across a restart.
+        # An ambiguous accepted-then-timeout is resent once across a restart: a
+        # duplicate card costs less than a decision nobody ever saw.
         ambiguous = self.harness(store_path=Path(self._tmpdir.name) / "ambiguous.sqlite")
         original_send = ambiguous.api.send_message
 
@@ -1177,7 +1179,7 @@ class IntakeCase(unittest.TestCase):
         self.assertEqual(len(ambiguous.api.send_calls), 1)
         restarted = self.harness(store_path=ambiguous.inbox.store_path)
         restarted.inbox.reconcile_notifications()
-        self.assertEqual(restarted.api.send_calls, [])
+        self.assertEqual(len(restarted.api.send_calls), 1)
 
         # A concurrent terminal state is not reverted by notifier completion.
         terminal = self.harness(store_path=Path(self._tmpdir.name) / "terminal.sqlite")
@@ -2005,6 +2007,188 @@ class IntakeCase(unittest.TestCase):
         read = next(stamp for name, stamp in stamps if name == "read")
         self.assertLessEqual(bounds[0], enter)
         self.assertLessEqual(read, bounds[1])
+
+    def test_durable_answer_in_another_process_proves_the_send_span(self) -> None:
+        """G6/R2: the answer commits in another process while this process's
+        send is in flight; the durable mark names the tapped card."""
+
+        class SpanAPI(SessionAPI):
+            def __init__(self) -> None:
+                super().__init__()
+                self.gate: tuple[threading.Event, threading.Event] | None = None
+
+            def send_message(self, chat_id, text, reply_markup, parse_mode=None, timing=None):
+                start = time.monotonic()
+                gate = self.gate
+                if gate is not None:
+                    self.gate = None
+                    gate[0].set()
+                    gate[1].wait(10)
+                try:
+                    return super().send_message(chat_id, text, reply_markup, parse_mode)
+                finally:
+                    if timing is not None:
+                        timing[:] = [start, time.monotonic()]
+
+        def answer_in_other_process(harness: Harness, card: dict) -> subprocess.CompletedProcess:
+            script = (
+                "import os, sys\n"
+                "from paraphe.inbox import Inbox\n"
+                "store, rid, version, now = sys.argv[1], sys.argv[2], int(sys.argv[3]), float(sys.argv[4])\n"
+                f"inbox = Inbox(owner_telegram_id={OWNER}, default_ttl_seconds=14400, "
+                "floor_ttl_seconds=900, store_path=store, clock=lambda: now)\n"
+                "inbox.answer(rid, version=version, choice='Approve')\n"
+                "inbox.close()\n"
+                "print(f'child_pid={os.getpid()}')\n"
+            )
+            return subprocess.run(
+                [
+                    sys.executable,
+                    "-c",
+                    script,
+                    str(harness.inbox.store_path),
+                    card["request_id"],
+                    str(card["version"]),
+                    str(self.clock.now),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                env={
+                    **os.environ,
+                    "PYTHONPATH": str(SRC),
+                    "PYTHONDONTWRITEBYTECODE": "1",
+                },
+            )
+
+        def send_line(output: str, request_id: str) -> str:
+            lines = [
+                line
+                for line in output.splitlines()
+                if line.startswith("Telegram send ") and f" rid={request_id} " in line
+            ]
+            self.assertEqual(len(lines), 1, f"expected one send line for {request_id}")
+            return lines[0]
+
+        def create_in_thread(harness: Harness, result: dict, external_id: str):
+            def run() -> None:
+                result["card"] = harness.create(external_id=external_id)
+
+            thread = threading.Thread(target=run, daemon=True)
+            thread.start()
+            return thread
+
+        # Positive: the other process's durable commit lands inside this
+        # process's blocked send span, so the sender can name it.
+        api = SpanAPI()
+        harness = self.harness(api=api)
+        tapped = harness.create(external_id="cross-process-tap")
+        gate = (threading.Event(), threading.Event())
+        api.gate = gate
+        created: dict = {}
+        thread = create_in_thread(harness, created, "cross-process-send")
+        output = io.StringIO()
+        with mock.patch("sys.stdout", output):
+            self.assertTrue(gate[0].wait(3), "the send never reached its span")
+            child = answer_in_other_process(harness, tapped)
+            self.assertEqual(child.returncode, 0, child.stderr)
+            self.assertRegex(child.stdout, r"child_pid=\d+")
+            self.assertNotIn(f"child_pid={os.getpid()}", child.stdout)
+            gate[1].set()
+            thread.join(5)
+        sent = created["card"]
+        line = send_line(output.getvalue(), sent["request_id"])
+        self.assertIn("overlap=yes reason=inside_send", line)
+        self.assertIn(f"claim_rid={tapped['request_id']}", line)
+        self.assertIn(f"claim_v={tapped['version']}", line)
+        self.assertIn(f"pid={os.getpid()}", line)
+        self.assertEqual(harness.stored(tapped["request_id"])["state"], "tapped")
+
+        # RED: the same cross-process answer committed after the transport
+        # returned and before settlement is never overlap.
+        late_api = SpanAPI()
+        late = self.harness(api=late_api)
+        late_tap = late.create(external_id="cross-process-late")
+        original_record = late.inbox.record_telegram_message
+        settlement, release = threading.Event(), threading.Event()
+
+        def delayed_record(request_id, **kwargs):
+            if not settlement.is_set():
+                settlement.set()
+                release.wait(10)
+            return original_record(request_id, **kwargs)
+
+        late.inbox.record_telegram_message = delayed_record
+        late_created: dict = {}
+        late_thread = create_in_thread(late, late_created, "cross-process-late-send")
+        late_output = io.StringIO()
+        with mock.patch("sys.stdout", late_output):
+            self.assertTrue(settlement.wait(3), "settlement was never gated")
+            child = answer_in_other_process(late, late_tap)
+            self.assertEqual(child.returncode, 0, child.stderr)
+            release.set()
+            late_thread.join(5)
+        late_line = send_line(late_output.getvalue(), late_created["card"]["request_id"])
+        self.assertIn("overlap=no reason=claim_after_send", late_line)
+        self.assertIn(f"claim_rid={late_tap['request_id']}", late_line)
+
+
+class SendOverlapBranchCase(unittest.TestCase):
+    """The send-span verdict branches, without threads: each shape alone."""
+
+    RID = "send-card"
+
+    def verdict(self, marks, *, version: int = 2) -> str:
+        class StubInbox:
+            def claims_since(self, moment: float):
+                return [mark for mark in marks if mark[1] > moment]
+
+        adapter = tg.TelegramAdapter(
+            StubInbox(), object(), owner_id=OWNER, bot_token=TOKEN
+        )
+        output = io.StringIO()
+        with mock.patch("sys.stdout", output):
+            adapter._log_send_span(
+                {"request_id": self.RID, "version": version}, [100.0, 100.5]
+            )
+        lines = output.getvalue().splitlines()
+        self.assertEqual(len(lines), 1, "expected one send line")
+        return lines[0]
+
+    def test_one_claim_inside_the_span_names_the_tapped_card(self) -> None:
+        line = self.verdict([(100.1, 100.2, "tapped-card", 4)])
+        self.assertIn("overlap=yes reason=inside_send", line)
+        self.assertIn("claim_rid=tapped-card claim_v=4", line)
+
+    def test_claim_after_send_is_not_overlap(self) -> None:
+        line = self.verdict([(100.6, 100.7, "tapped-card", 1)])
+        self.assertIn("overlap=no reason=claim_after_send", line)
+        self.assertIn("claim_rid=tapped-card claim_v=1", line)
+
+    def test_claim_version_mismatch_stays_unproven(self) -> None:
+        line = self.verdict([(100.1, 100.2, self.RID, 3)])
+        self.assertIn("overlap=unknown reason=claim_version_mismatch", line)
+        self.assertIn(f"claim_rid={self.RID} claim_v=3", line)
+
+    def test_a_failing_claim_read_still_prints_the_no_claim_line(self) -> None:
+        class RaisingInbox:
+            def claims_since(self, moment: float):
+                raise RuntimeError("store unavailable")
+
+        adapter = tg.TelegramAdapter(
+            RaisingInbox(), object(), owner_id=OWNER, bot_token=TOKEN
+        )
+        output = io.StringIO()
+        with mock.patch("sys.stdout", output):
+            adapter._log_send_span(
+                {"request_id": self.RID, "version": 2}, [100.0, 100.5]
+            )
+        self.assertIn("overlap=unknown reason=no_claim", output.getvalue())
+
+    def test_two_claims_in_one_span_are_ambiguous(self) -> None:
+        line = self.verdict([(100.1, 100.2, "first", 1), (100.3, 100.4, "second", 1)])
+        self.assertIn("overlap=unknown reason=ambiguous_claim", line)
 
 
 if __name__ == "__main__":

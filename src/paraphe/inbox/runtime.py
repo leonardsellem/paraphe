@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import os
 import signal
+import socket
+import ssl
 import threading
 import time
 import urllib.error
@@ -161,7 +163,20 @@ class TelegramBotAPI:
                     raw = exc.read().decode("utf-8")
             except (OSError, ValueError):
                 raise TelegramAPIError("Telegram Bot API request failed") from None
-        except (OSError, ValueError, urllib.error.URLError):
+        except (ConnectionError, socket.gaierror):
+            # shortcut: a reset while reading the reply looks pre-write here; a
+            # duplicate card costs less than a decision nobody ever saw.
+            raise NotifyRejected(
+                "Telegram Bot API was unreachable", reason="unreachable"
+            ) from None
+        except urllib.error.URLError as exc:
+            if isinstance(exc.reason, (ConnectionError, socket.gaierror, ssl.SSLError)):
+                # Connect phase (DNS, refused, TLS handshake): nothing was written.
+                raise NotifyRejected(
+                    "Telegram Bot API was unreachable", reason="unreachable"
+                ) from None
+            raise TelegramAPIError("Telegram Bot API request failed") from None
+        except (OSError, ValueError):
             raise TelegramAPIError("Telegram Bot API request failed") from None
         try:
             body = json.loads(raw)

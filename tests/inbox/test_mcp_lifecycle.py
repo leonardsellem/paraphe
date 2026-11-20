@@ -827,6 +827,20 @@ class TestMcpLifecycle(unittest.TestCase):
         self.assertTrue(retry.get("duplicate"))
         self.assertEqual(len(restarted_notifier.sent), 0)
 
+    def test_reconcile_renotifies_a_card_that_was_never_delivered(self) -> None:
+        created = self._ask(external_id="orphan-unsent")
+        card = self.inbox._cards[created["request_id"]]
+        self.assertTrue(card.notified)
+        self.assertIsNone(card.telegram_message_id)
+        restarted_notifier = FakeNotifier()
+        restarted = self._new_inbox(notifier=restarted_notifier)
+        restarted.reconcile_notifications()
+        payloads: list[dict] = restarted_notifier.sent  # type: ignore[assignment]
+        self.assertEqual(
+            [payload["request_id"] for payload in payloads],
+            [created["request_id"]],
+        )
+
     def test_legacy_payload_missing_notified_does_not_renotify_on_duplicate(self) -> None:
         self.inbox.call_tool("list_pending", {})
         store = self.inbox._store
