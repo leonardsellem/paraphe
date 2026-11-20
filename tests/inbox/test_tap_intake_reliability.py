@@ -1164,7 +1164,8 @@ class IntakeCase(unittest.TestCase):
         self.assertEqual(len(rejected.api.send_calls), 2)
         self.assertTrue(rejected.stored(retried["request_id"])["notified"])
 
-        # An ambiguous accepted-then-timeout is never resent across a restart.
+        # An ambiguous accepted-then-timeout is resent once across a restart: a
+        # duplicate card costs less than a decision nobody ever saw.
         ambiguous = self.harness(store_path=Path(self._tmpdir.name) / "ambiguous.sqlite")
         original_send = ambiguous.api.send_message
 
@@ -1178,7 +1179,7 @@ class IntakeCase(unittest.TestCase):
         self.assertEqual(len(ambiguous.api.send_calls), 1)
         restarted = self.harness(store_path=ambiguous.inbox.store_path)
         restarted.inbox.reconcile_notifications()
-        self.assertEqual(restarted.api.send_calls, [])
+        self.assertEqual(len(restarted.api.send_calls), 1)
 
         # A concurrent terminal state is not reverted by notifier completion.
         terminal = self.harness(store_path=Path(self._tmpdir.name) / "terminal.sqlite")

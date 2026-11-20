@@ -9,6 +9,7 @@ import queue
 import selectors
 import socket
 import sqlite3
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -1258,6 +1259,29 @@ class TestTelegramBotAPI(unittest.TestCase):
     def test_timeout_is_ambiguous_telegram_error(self) -> None:
         runtime_module, api, rejected = self._api()
         with mock.patch("urllib.request.urlopen", side_effect=TimeoutError("timed out")):
+            with self.assertRaises(runtime_module.TelegramAPIError) as ctx:
+                api.send_message(1, "hi", None)
+        self.assertNotIsInstance(ctx.exception, rejected)
+
+    def test_connect_phase_failure_is_notify_rejected(self) -> None:
+        runtime_module, api, rejected = self._api()
+        for reason in (
+            ConnectionRefusedError("refused"),
+            socket.gaierror("no such host"),
+            ssl.SSLError("handshake failure"),
+        ):
+            with self.subTest(reason=reason):
+                with mock.patch(
+                    "urllib.request.urlopen", side_effect=urllib.error.URLError(reason)
+                ):
+                    with self.assertRaises(rejected):
+                        api.send_message(1, "hi", None)
+
+    def test_wrapped_read_timeout_stays_ambiguous_telegram_error(self) -> None:
+        runtime_module, api, rejected = self._api()
+        with mock.patch(
+            "urllib.request.urlopen", side_effect=urllib.error.URLError(TimeoutError("timed out"))
+        ):
             with self.assertRaises(runtime_module.TelegramAPIError) as ctx:
                 api.send_message(1, "hi", None)
         self.assertNotIsInstance(ctx.exception, rejected)

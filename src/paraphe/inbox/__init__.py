@@ -475,7 +475,10 @@ class Inbox:
             ):
                 self._finalize_telegram(card)
             else:
-                self._notify_owner(card)
+                # No message id means nothing was ever delivered on any path.
+                self._notify_owner(
+                    card, repair=card.notified and card.telegram_message_id is None
+                )
         # A direct/local Inbox has no worker: draining here keeps its cleanup
         # contract. Under the Runtime worker this only queues the work.
         return (self._service_cleanup() if drain_cleanup else True) and healthy
@@ -1813,12 +1816,15 @@ class Inbox:
         if finalize is not None:
             finalize(payload)
 
-    def _notify_owner(self, card: Card, *, renotify: bool = False) -> None:
+    def _notify_owner(
+        self, card: Card, *, renotify: bool = False, repair: bool = False
+    ) -> None:
         with self._lock:
             current = self._cards.get(card.request_id)
             if (
                 not self._notifications_ready or current is None
-                or current.version != card.version or current.state != "open" or current.notified
+                or current.version != card.version or current.state != "open"
+                or (current.notified and not repair)
             ):
                 return
             reserved = deepcopy(current)
